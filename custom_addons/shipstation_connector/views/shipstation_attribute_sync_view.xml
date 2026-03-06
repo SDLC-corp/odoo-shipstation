@@ -1,0 +1,38 @@
+<odoo>
+    <record id="view_shipstation_attribute_sync_tree" model="ir.ui.view">
+        <field name="name">shipstation.attribute.sync.tree</field>
+        <field name="model">shipstation.attribute.sync</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_attribute_id"/>
+                <field name="name"/>
+                <field name="synced_on"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_attribute_sync_form" model="ir.ui.view">
+        <field name="name">shipstation.attribute.sync.form</field>
+        <field name="model">shipstation.attribute.sync</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Attribute">
+                <header>
+                    <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"/>
+                    <button name="action_push_to_shipstation" type="object" string="Push to ShipStation" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="instance_id"/>
+                        <field name="odoo_attribute_id"/>
+                        <field name="name"/>
+                        <field name="synced_on"/>
+                    </group>
+                    <group string="Payload">
+                        <field name="payload" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

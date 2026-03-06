@@ -1,0 +1,124 @@
+<odoo>
+    <record id="view_shipstation_field_tree" model="ir.ui.view">
+        <field name="name">shipstation.field.tree</field>
+        <field name="model">shipstation.field</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="model"/>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_form" model="ir.ui.view">
+        <field name="name">shipstation.field.form</field>
+        <field name="model">shipstation.field</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Field">
+                <sheet>
+                    <group>
+                        <field name="instance_id"/>
+                        <field name="model"/>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_shipstation_field_mapping_form" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.form</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Field Mapping">
+                <header>
+                    <button name="action_test_mapping"
+                            type="object"
+                            string="Test Mapping"
+                            class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="instance_id"/>
+                        <field name="model" invisible="1"/>
+                        <field name="active"/>
+                    </group>
+                    <group>
+                        <field name="odoo_field_id"/>
+                        <field name="shipstation_field_key"/>
+                        <field name="shipstation_field_description" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_mapping_tree_product" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.tree.product</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_field_id"/>
+                <field name="shipstation_field_key"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_mapping_tree_order" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.tree.order</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_field_id"/>
+                <field name="shipstation_field_key"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_mapping_tree_customer" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.tree.customer</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_field_id"/>
+                <field name="shipstation_field_key"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_mapping_tree_category" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.tree.category</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_field_id"/>
+                <field name="shipstation_field_key"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_field_mapping_tree_attribute" model="ir.ui.view">
+        <field name="name">shipstation.field.mapping.tree.attribute</field>
+        <field name="model">shipstation.field.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_id"/>
+                <field name="odoo_field_id"/>
+                <field name="shipstation_field_key"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+</odoo>

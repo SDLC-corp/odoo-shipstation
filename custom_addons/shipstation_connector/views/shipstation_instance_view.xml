@@ -1,0 +1,137 @@
+<odoo>
+    <record id="view_shipstation_instance_form" model="ir.ui.view">
+        <field name="name">shipstation.instance.form</field>
+        <field name="model">shipstation.instance</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Instance">
+                <header>
+                    <button name="action_test_connection"
+                            type="object"
+                            string="Test Connection"
+                            class="btn-primary"/>
+                    <button name="action_sync_orders"
+                            type="object"
+                            string="Sync Orders"
+                            class="btn-secondary"/>
+                    <button name="action_sync_shipments"
+                            type="object"
+                            string="Sync Shipments"
+                            class="btn-secondary"/>
+                    <button name="action_sync_products"
+                            type="object"
+                            string="Sync Products"
+                            class="btn-secondary"/>
+                    <button name="action_sync_customers"
+                            type="object"
+                            string="Sync Customers"
+                            class="btn-secondary"/>
+                    <button name="action_sync_categories"
+                            type="object"
+                            string="Sync Categories"
+                            class="btn-secondary"/>
+                    <button name="action_sync_attributes"
+                            type="object"
+                            string="Sync Attributes"
+                            class="btn-secondary"/>
+                    <button name="action_push_inventory"
+                            type="object"
+                            string="Push Inventory"
+                            class="btn-secondary"/>
+                    <button name="action_sync_inventory"
+                            type="object"
+                            string="Sync Inventory"
+                            class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group string="Configuration" col="4">
+                        <field name="active"/>
+                        <field name="company_id"/>
+                        <field name="base_url"/>
+                        <field name="store_id"/>
+                        <field name="api_key" password="True"/>
+                        <field name="api_secret" password="True"/>
+                        <field name="order_status"/>
+                        <field name="order_sync_days_back"/>
+                    </group>
+                    <group string="Sync Status" col="4">
+                        <field name="last_order_sync_at" readonly="1"/>
+                        <field name="last_shipment_sync_at" readonly="1"/>
+                        <field name="last_product_sync_at" readonly="1"/>
+                        <field name="last_customer_sync_at" readonly="1"/>
+                        <field name="last_sync" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Webhook">
+                            <group>
+                                <field name="webhook_order_create"/>
+                                <field name="webhook_order_update"/>
+                                <field name="webhook_shipment_update"/>
+                            </group>
+                        </page>
+                        <page string="Cron">
+                            <group>
+                                <field name="cron_sync_orders"/>
+                                <field name="cron_sync_shipments"/>
+                                <field name="cron_sync_products"/>
+                                <field name="cron_sync_customers"/>
+                                <field name="cron_sync_inventory"/>
+                            </group>
+                        </page>
+                        <page string="Store Mapping">
+                            <field name="store_mapping_ids">
+                                <list editable="bottom">
+                                    <field name="shipstation_store_id"/>
+                                    <field name="name"/>
+                                    <field name="warehouse_id"/>
+                                    <field name="sales_team_id"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Carrier Mapping">
+                            <field name="carrier_mapping_ids">
+                                <list editable="bottom">
+                                    <field name="shipstation_carrier_code"/>
+                                    <field name="odoo_carrier_id"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Automation Rules">
+                            <field name="automation_rule_ids">
+                                <list editable="bottom">
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="country_code"/>
+                                    <field name="min_weight"/>
+                                    <field name="max_weight"/>
+                                    <field name="set_shipping_method"/>
+                                    <field name="set_warehouse_id"/>
+                                    <field name="set_sales_team_id"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shipstation_instance_tree" model="ir.ui.view">
+        <field name="name">shipstation.instance.tree</field>
+        <field name="model">shipstation.instance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="active"/>
+                <field name="store_id"/>
+                <field name="last_sync"/>
+            </list>
+        </field>
+    </record>
+</odoo>

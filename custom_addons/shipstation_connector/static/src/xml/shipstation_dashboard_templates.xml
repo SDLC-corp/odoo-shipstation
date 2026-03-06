@@ -1,0 +1,24 @@
+<templates xml:space="preserve">
+    <t t-name="shipstation_dashboard_template" owl="1">
+        <div class="o_shipstation_dashboard">
+            <div class="o_shipstation_dashboard_header">
+                <h2>ShipStation Dashboard</h2>
+            </div>
+            <div class="o_shipstation_dashboard_grid">
+                <t t-foreach="state.instances" t-as="inst" t-key="inst.id">
+                    <div class="o_shipstation_card">
+                        <div class="o_shipstation_card_title">
+                            <span t-esc="inst.name"/>
+                        </div>
+                        <div class="o_shipstation_card_body">
+                            <div>Orders: <strong t-esc="inst.total_orders"/></div>
+                            <div>Shipments: <strong t-esc="inst.total_shipments"/></div>
+                            <div>Revenue: <strong t-esc="inst.total_revenue"/></div>
+                            <div>Last Sync: <span t-esc="inst.last_sync"/></div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

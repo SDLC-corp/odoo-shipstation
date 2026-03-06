@@ -1,0 +1,38 @@
+<odoo>
+    <record id="view_shipstation_report_tree" model="ir.ui.view">
+        <field name="name">shipstation.report.tree</field>
+        <field name="model">shipstation.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/>
+                <field name="instance_id"/>
+                <field name="operation"/>
+                <field name="status"/>
+                <field name="mode"/>
+                <field name="message"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_report_form" model="ir.ui.view">
+        <field name="name">shipstation.report.form</field>
+        <field name="model">shipstation.report</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Report">
+                <sheet>
+                    <group>
+                        <field name="instance_id"/>
+                        <field name="operation"/>
+                        <field name="status"/>
+                        <field name="mode"/>
+                        <field name="reference"/>
+                        <field name="auto"/>
+                    </group>
+                    <group>
+                        <field name="message"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

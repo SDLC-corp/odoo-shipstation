@@ -1,0 +1,114 @@
+<odoo>
+    <menuitem id="menu_shipstation_root" name="ShipStation" sequence="10"/>
+
+    <menuitem id="menu_shipstation_dashboard"
+              name="Dashboard"
+              parent="menu_shipstation_root"
+              action="action_shipstation_dashboard"
+              sequence="5"/>
+
+    <menuitem id="menu_shipstation_instances"
+              name="Instances"
+              parent="menu_shipstation_root"
+              action="action_shipstation_instances"
+              sequence="10"/>
+
+    <menuitem id="menu_shipstation_data"
+              name="ShipStation Data"
+              parent="menu_shipstation_root"
+              sequence="20"/>
+
+    <menuitem id="menu_shipstation_orders"
+              name="Orders"
+              parent="menu_shipstation_data"
+              action="action_shipstation_orders"
+              sequence="10"/>
+
+    <menuitem id="menu_shipstation_customers"
+              name="Customers"
+              parent="menu_shipstation_data"
+              action="action_shipstation_customers"
+              sequence="12"/>
+
+    <menuitem id="menu_shipstation_products"
+              name="Products"
+              parent="menu_shipstation_data"
+              action="action_shipstation_products"
+              sequence="15"/>
+
+    <menuitem id="menu_shipstation_categories"
+              name="Categories"
+              parent="menu_shipstation_data"
+              action="action_shipstation_categories"
+              sequence="16"/>
+
+    <menuitem id="menu_shipstation_attributes"
+              name="Attributes"
+              parent="menu_shipstation_data"
+              action="action_shipstation_attributes"
+              sequence="17"/>
+
+    <menuitem id="menu_shipstation_shipments"
+              name="Shipments"
+              parent="menu_shipstation_data"
+              action="action_shipstation_shipments"
+              sequence="20"/>
+
+    <menuitem id="menu_shipstation_reports"
+              name="Reports"
+              parent="menu_shipstation_root"
+              action="action_shipstation_reports"
+              sequence="30"/>
+
+    <menuitem id="menu_shipstation_sync_logs"
+              name="Sync Logs"
+              parent="menu_shipstation_root"
+              action="action_shipstation_sync_logs"
+              sequence="35"/>
+
+    <menuitem id="menu_shipstation_config"
+              name="Configuration"
+              parent="menu_shipstation_root"
+              sequence="40"/>
+
+    <menuitem id="menu_shipstation_fields"
+              name="Field Keys"
+              parent="menu_shipstation_config"
+              action="action_shipstation_fields"
+              sequence="10"/>
+
+    <menuitem id="menu_shipstation_field_mapping"
+              name="Field Mapping"
+              parent="menu_shipstation_config"
+              sequence="20"/>
+
+    <menuitem id="menu_shipstation_field_mapping_product"
+              name="Products"
+              parent="menu_shipstation_field_mapping"
+              action="action_shipstation_field_mapping_product"
+              sequence="10"/>
+
+    <menuitem id="menu_shipstation_field_mapping_order"
+              name="Orders"
+              parent="menu_shipstation_field_mapping"
+              action="action_shipstation_field_mapping_order"
+              sequence="20"/>
+
+    <menuitem id="menu_shipstation_field_mapping_customer"
+              name="Customers"
+              parent="menu_shipstation_field_mapping"
+              action="action_shipstation_field_mapping_customer"
+              sequence="30"/>
+
+    <menuitem id="menu_shipstation_field_mapping_category"
+              name="Categories"
+              parent="menu_shipstation_field_mapping"
+              action="action_shipstation_field_mapping_category"
+              sequence="40"/>
+
+    <menuitem id="menu_shipstation_field_mapping_attribute"
+              name="Attributes"
+              parent="menu_shipstation_field_mapping"
+              action="action_shipstation_field_mapping_attribute"
+              sequence="50"/>
+</odoo>

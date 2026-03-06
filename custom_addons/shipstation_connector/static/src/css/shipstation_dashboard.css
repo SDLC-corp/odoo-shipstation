@@ -1,0 +1,25 @@
+.o_shipstation_dashboard {
+    padding: 16px;
+}
+
+.o_shipstation_dashboard_header {
+    margin-bottom: 16px;
+}
+
+.o_shipstation_dashboard_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.o_shipstation_card {
+    border: 1px solid #d8dadd;
+    border-radius: 6px;
+    padding: 12px;
+    background: #ffffff;
+}
+
+.o_shipstation_card_title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}

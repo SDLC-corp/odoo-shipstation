@@ -1,0 +1,111 @@
+<odoo>
+    <record id="action_shipstation_instances" model="ir.actions.act_window">
+        <field name="name">ShipStation Instances</field>
+        <field name="res_model">shipstation.instance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_orders" model="ir.actions.act_window">
+        <field name="name">ShipStation Orders</field>
+        <field name="res_model">shipstation.order.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_shipments" model="ir.actions.act_window">
+        <field name="name">ShipStation Shipments</field>
+        <field name="res_model">shipstation.shipment.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_products" model="ir.actions.act_window">
+        <field name="name">ShipStation Products</field>
+        <field name="res_model">shipstation.product.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_customers" model="ir.actions.act_window">
+        <field name="name">ShipStation Customers</field>
+        <field name="res_model">shipstation.customer.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_categories" model="ir.actions.act_window">
+        <field name="name">ShipStation Categories</field>
+        <field name="res_model">shipstation.category.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_attributes" model="ir.actions.act_window">
+        <field name="name">ShipStation Attributes</field>
+        <field name="res_model">shipstation.attribute.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_reports" model="ir.actions.act_window">
+        <field name="name">ShipStation Reports</field>
+        <field name="res_model">shipstation.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_sync_logs" model="ir.actions.act_window">
+        <field name="name">ShipStation Sync Logs</field>
+        <field name="res_model">shipstation.sync.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_fields" model="ir.actions.act_window">
+        <field name="name">ShipStation Fields</field>
+        <field name="res_model">shipstation.field</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_shipstation_field_mapping_product" model="ir.actions.act_window">
+        <field name="name">Product Field Mapping</field>
+        <field name="res_model">shipstation.field.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_shipstation_field_mapping_tree_product"/>
+        <field name="domain">[('model','=','product')]</field>
+        <field name="context">{'default_model':'product'}</field>
+    </record>
+
+    <record id="action_shipstation_field_mapping_order" model="ir.actions.act_window">
+        <field name="name">Order Field Mapping</field>
+        <field name="res_model">shipstation.field.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_shipstation_field_mapping_tree_order"/>
+        <field name="domain">[('model','=','order')]</field>
+        <field name="context">{'default_model':'order'}</field>
+    </record>
+
+    <record id="action_shipstation_field_mapping_customer" model="ir.actions.act_window">
+        <field name="name">Customer Field Mapping</field>
+        <field name="res_model">shipstation.field.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_shipstation_field_mapping_tree_customer"/>
+        <field name="domain">[('model','=','customer')]</field>
+        <field name="context">{'default_model':'customer'}</field>
+    </record>
+
+    <record id="action_shipstation_field_mapping_category" model="ir.actions.act_window">
+        <field name="name">Category Field Mapping</field>
+        <field name="res_model">shipstation.field.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_shipstation_field_mapping_tree_category"/>
+        <field name="domain">[('model','=','category')]</field>
+        <field name="context">{'default_model':'category'}</field>
+    </record>
+
+    <record id="action_shipstation_field_mapping_attribute" model="ir.actions.act_window">
+        <field name="name">Attribute Field Mapping</field>
+        <field name="res_model">shipstation.field.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_shipstation_field_mapping_tree_attribute"/>
+        <field name="domain">[('model','=','attribute')]</field>
+        <field name="context">{'default_model':'attribute'}</field>
+    </record>
+
+    <record id="action_shipstation_dashboard" model="ir.actions.client">
+        <field name="name">ShipStation Dashboard</field>
+        <field name="tag">shipstation_dashboard</field>
+    </record>
+</odoo>
