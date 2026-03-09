@@ -29,14 +29,6 @@
                             type="object"
                             string="Sync Categories"
                             class="btn-secondary"/>
-                    <button name="action_sync_attributes"
-                            type="object"
-                            string="Sync Attributes"
-                            class="btn-secondary"/>
-                    <button name="action_push_inventory"
-                            type="object"
-                            string="Push Inventory"
-                            class="btn-secondary"/>
                     <button name="action_sync_inventory"
                             type="object"
                             string="Sync Inventory"
@@ -55,6 +47,8 @@
                         <field name="api_secret" password="True"/>
                         <field name="order_status"/>
                         <field name="order_sync_days_back"/>
+                        <field name="inventory_update_odoo_stock"/>
+                        <field name="inventory_warehouse_id" invisible="inventory_update_odoo_stock == False"/>
                     </group>
                     <group string="Sync Status" col="4">
                         <field name="last_order_sync_at" readonly="1"/>

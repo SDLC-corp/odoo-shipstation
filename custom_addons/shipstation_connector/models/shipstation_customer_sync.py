@@ -103,12 +103,26 @@ class ShipStationCustomerSync(models.Model):
                 raise
         if response is None:
             if last_error and self._is_not_found_endpoint_error(last_error):
-                raise UserError(
-                    _(
-                        "ShipStation customer write endpoints are not available on this API cluster. "
-                        "Customer pull can still work, but push/update customers is not supported."
-                    )
+                self.synced_on = fields.Datetime.now()
+                self.payload = str(
+                    {
+                        "request": payload,
+                        "warning": "Customer push skipped: endpoint not supported on this API cluster.",
+                    }
                 )
+                return {
+                    "type": "ir.actions.client",
+                    "tag": "display_notification",
+                    "params": {
+                        "title": _("Customer Push Skipped"),
+                        "message": _(
+                            "Customer write endpoints are not available on this ShipStation API cluster. "
+                            "Customer pull still works."
+                        ),
+                        "type": "warning",
+                        "sticky": False,
+                    },
+                }
             if last_error:
                 raise last_error
             raise UserError(_("Unable to push customer to ShipStation."))

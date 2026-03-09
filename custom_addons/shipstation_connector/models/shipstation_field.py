@@ -21,7 +21,6 @@ class ShipStationField(models.Model):
             ("order", "Order"),
             ("customer", "Customer"),
             ("category", "Category"),
-            ("attribute", "Attribute"),
         ],
         required=True,
         default="product",
@@ -86,9 +85,6 @@ class ShipStationField(models.Model):
             ],
             "category": [
                 ("name", "Category name."),
-            ],
-            "attribute": [
-                ("name", "Attribute name."),
             ],
         }
 

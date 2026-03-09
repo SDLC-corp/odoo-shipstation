@@ -52,6 +52,8 @@ class ShipStationInstance(models.Model):
     cron_sync_products = fields.Boolean(default=True)
     cron_sync_customers = fields.Boolean(default=False)
     cron_sync_inventory = fields.Boolean(default=False)
+    inventory_update_odoo_stock = fields.Boolean(default=False)
+    inventory_warehouse_id = fields.Many2one("stock.warehouse", string="Inventory Warehouse")
 
     total_orders = fields.Integer(compute="_compute_totals")
     total_shipments = fields.Integer(compute="_compute_totals")
@@ -59,6 +61,27 @@ class ShipStationInstance(models.Model):
     store_mapping_ids = fields.One2many("shipstation.store.mapping", "instance_id", string="Store Mappings")
     carrier_mapping_ids = fields.One2many("shipstation.carrier.mapping", "instance_id", string="Carrier Mappings")
     automation_rule_ids = fields.One2many("shipstation.automation.rule", "instance_id", string="Automation Rules")
+
+    def init(self):
+        """Schema safety net for environments running updated code before module upgrade."""
+        self.env.cr.execute(
+            """
+            ALTER TABLE shipstation_instance
+            ADD COLUMN IF NOT EXISTS cron_sync_inventory boolean
+            """
+        )
+        self.env.cr.execute(
+            """
+            ALTER TABLE shipstation_instance
+            ADD COLUMN IF NOT EXISTS inventory_update_odoo_stock boolean
+            """
+        )
+        self.env.cr.execute(
+            """
+            ALTER TABLE shipstation_instance
+            ADD COLUMN IF NOT EXISTS inventory_warehouse_id integer
+            """
+        )
 
     def _extract_store_id_from_response(self, stores_response):
         """Return first valid store ID from /stores response."""
@@ -283,20 +306,6 @@ class ShipStationInstance(models.Model):
             },
         }
 
-    def action_push_inventory(self):
-        self.ensure_one()
-        self._push_inventory(mode="manual")
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Inventory Pushed"),
-                "message": _("Inventory pushed to ShipStation."),
-                "type": "success",
-                "sticky": False,
-            },
-        }
-
     def action_sync_inventory(self):
         self.ensure_one()
         self._sync_inventory(mode="manual")
@@ -465,13 +474,14 @@ class ShipStationInstance(models.Model):
         return self._apply_field_mappings(payload, order, "order")
 
     def _build_product_payload(self, product):
+        stock_level = self._get_template_stock_qty(product)
         sku = product.default_code or product.product_variant_id.default_code or ""
         payload = {
             "sku": sku,
             "name": product.name,
             "price": float(product.list_price or 0.0),
             "weight": float(product.weight or 0.0),
-            "stockLevel": float(product.qty_available or 0.0),
+            "stockLevel": float(stock_level or 0.0),
         }
         self._apply_field_mappings(payload, product, "product")
         if product.categ_id:
@@ -492,6 +502,22 @@ class ShipStationInstance(models.Model):
                         ", ".join(values),
                     )
         return payload
+
+    def _get_template_stock_qty(self, product_template):
+        """Compute accurate template stock, optionally scoped to configured warehouse."""
+        if not product_template:
+            return 0.0
+        variants = product_template.product_variant_ids
+        if not variants:
+            return 0.0
+        location = self.inventory_warehouse_id.lot_stock_id if self.inventory_warehouse_id else False
+        if not location:
+            return float(sum(variants.mapped("qty_available")) or 0.0)
+        Quant = self.env["stock.quant"].sudo()
+        qty = 0.0
+        for variant in variants:
+            qty += float(Quant._get_available_quantity(variant, location) or 0.0)
+        return qty
 
     def _build_customer_payload(self, partner):
         payload = {
@@ -528,6 +554,8 @@ class ShipStationInstance(models.Model):
                 if self._is_customer_endpoint_not_found(exc):
                     continue
                 raise
+        if last_error and self._is_customer_endpoint_not_found(last_error):
+            return None
         if last_error:
             raise last_error
         raise UserError(_("Unable to push customer to ShipStation."))
@@ -626,6 +654,7 @@ class ShipStationInstance(models.Model):
             ("customer_rank", ">", 0),
         ])
         pushed = 0
+        skipped = 0
         for partner in partners:
             if partner.shipstation_pushed and partner.shipstation_customer_id:
                 continue
@@ -635,6 +664,16 @@ class ShipStationInstance(models.Model):
                     payload,
                     customer_id=partner.shipstation_customer_id,
                 )
+                if not response:
+                    skipped += 1
+                    self._create_report(
+                        operation="Customer Push",
+                        status="failed",
+                        message="Customer push skipped: endpoint not supported on this API cluster.",
+                        mode=mode,
+                        reference=partner.display_name,
+                    )
+                    continue
                 customer_id = response.get("customerId") or response.get("customer_id")
                 partner.write({
                     "shipstation_customer_id": customer_id or partner.shipstation_customer_id,
@@ -660,7 +699,7 @@ class ShipStationInstance(models.Model):
         self._create_report(
             operation="Customer Push",
             status="success",
-            message=f"{pushed} customers pushed successfully",
+            message=f"{pushed} customers pushed successfully, {skipped} skipped",
             mode=mode,
         )
 
@@ -1182,54 +1221,36 @@ class ShipStationInstance(models.Model):
             mode=mode,
         )
 
-    def _push_inventory(self, mode="manual"):
-        self.ensure_one()
-        Product = self.env["product.template"].with_company(self.company_id)
-        products = Product.search([("company_id", "=", self.company_id.id)])
-        pushed = 0
-        for product in products:
-            sku = product.default_code or product.product_variant_id.default_code
-            if not sku:
-                continue
-            payload = {
-                "sku": sku,
-                "name": product.name,
-                "stockLevel": float(product.qty_available or 0.0),
-                "price": float(product.list_price or 0.0),
-                "weight": float(product.weight or 0.0),
-            }
-            try:
-                self._ss_request("POST", "/products", data=payload)
-                pushed += 1
-            except Exception as exc:
-                self._create_report(
-                    operation="Inventory Push",
-                    status="failed",
-                    message=str(exc),
-                    mode=mode,
-                    reference=sku,
-                )
-        self.last_sync = fields.Datetime.now()
-        self._create_report(
-            operation="Inventory Push",
-            status="success",
-            message=f"{pushed} inventory records pushed successfully",
-            mode=mode,
-        )
-
     def _sync_inventory(self, mode="manual"):
         self.ensure_one()
         page = 1
         page_size = 100
         synced = 0
+        Quant = self.env["stock.quant"].sudo()
+        location = self.inventory_warehouse_id.lot_stock_id if self.inventory_warehouse_id else False
+        ProductProduct = self.env["product.product"].with_company(self.company_id)
         while True:
-            data = self._ss_request("GET", "/products", params={"page": page, "pageSize": page_size})
+            params = {"page": page, "pageSize": page_size}
+            if self.store_id and str(self.store_id).isdigit():
+                params["storeId"] = int(self.store_id)
+            data = self._ss_request("GET", "/products", params=params)
             products = (data or {}).get("products") or []
             if not products:
                 break
             for product_data in products:
                 try:
                     self.env["shipstation.product.sync"]._upsert_from_payload(self, product_data)
+                    self.env["shipstation.inventory"]._upsert_from_payload(self, product_data)
+                    if self.inventory_update_odoo_stock and location:
+                        sku = str(product_data.get("sku") or "").strip()
+                        if sku:
+                            product = ProductProduct.search([("default_code", "=", sku)], limit=1)
+                            if product:
+                                target_qty = max(float(product_data.get("stockLevel") or 0.0), 0.0)
+                                current_qty = Quant._get_available_quantity(product, location)
+                                diff = target_qty - current_qty
+                                if abs(diff) > 0.0001:
+                                    Quant._update_available_quantity(product, location, diff)
                     synced += 1
                 except Exception as exc:
                     self._create_report(

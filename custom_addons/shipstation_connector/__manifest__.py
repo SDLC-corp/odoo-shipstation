@@ -23,6 +23,7 @@
         "views/shipstation_customer_sync_view.xml",
         "views/shipstation_shipment_sync_view.xml",
         "views/shipstation_product_sync_view.xml",
+        "views/shipstation_inventory_view.xml",
         "views/shipstation_category_sync_view.xml",
         "views/shipstation_attribute_sync_view.xml",
         "views/shipstation_report_view.xml",

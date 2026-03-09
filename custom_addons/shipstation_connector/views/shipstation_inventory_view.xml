@@ -1,0 +1,48 @@
+<odoo>
+    <record id="view_shipstation_inventory_tree" model="ir.ui.view">
+        <field name="name">shipstation.inventory.tree</field>
+        <field name="model">shipstation.inventory</field>
+        <field name="arch" type="xml">
+            <list>
+                <header>
+                    <button name="action_refresh_inventory" type="object" string="Refresh Inventory" class="btn-primary"/>
+                </header>
+                <field name="instance_id"/>
+                <field name="shipstation_product_id"/>
+                <field name="sku"/>
+                <field name="name"/>
+                <field name="stock_level"/>
+                <field name="stock_status"/>
+                <field name="modify_date"/>
+                <field name="synced_on"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shipstation_inventory_form" model="ir.ui.view">
+        <field name="name">shipstation.inventory.form</field>
+        <field name="model">shipstation.inventory</field>
+        <field name="arch" type="xml">
+            <form string="ShipStation Inventory">
+                <header>
+                    <button name="action_update_inventory" type="object" string="Update Inventory" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="instance_id"/>
+                        <field name="shipstation_product_id"/>
+                        <field name="sku"/>
+                        <field name="name"/>
+                        <field name="stock_level"/>
+                        <field name="stock_status"/>
+                        <field name="modify_date"/>
+                        <field name="synced_on"/>
+                    </group>
+                    <group>
+                        <field name="payload"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

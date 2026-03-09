@@ -11,6 +11,7 @@ from . import shipstation_order_sync
 from . import shipstation_shipment_sync
 from . import shipstation_rate
 from . import shipstation_product_sync
+from . import shipstation_inventory
 from . import shipstation_customer_sync
 from . import shipstation_category_sync
 from . import shipstation_attribute_sync

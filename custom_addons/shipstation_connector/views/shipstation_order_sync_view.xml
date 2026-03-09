@@ -22,6 +22,10 @@
                 <header>
                     <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"/>
                     <button name="action_push_to_shipstation" type="object" string="Push to ShipStation" class="btn-primary"/>
+                    <button name="action_get_rates" type="object" string="Get Rates" class="btn-secondary"/>
+                    <button name="action_select_best_rate" type="object" string="Select Best Rate" class="btn-secondary"/>
+                    <button name="action_create_label" type="object" string="Create Label" class="btn-secondary"/>
+                    <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"/>
                 </header>
                 <sheet>
                     <group>
@@ -40,7 +44,29 @@
                         <field name="total_amount"/>
                         <field name="currency"/>
                     </group>
-                    <!-- Label/rates fields removed due to missing model fields -->
+                    <group string="Shipping / Label">
+                        <field name="carrier_code"/>
+                        <field name="service_code"/>
+                        <field name="package_code"/>
+                        <field name="confirmation"/>
+                        <field name="ship_date"/>
+                        <field name="tracking_number"/>
+                        <field name="tracking_url"/>
+                        <field name="label_url"/>
+                        <field name="shipstation_shipment_id"/>
+                    </group>
+                    <group string="Rates">
+                        <field name="rate_ids">
+                            <list>
+                                <field name="carrier_code"/>
+                                <field name="service_code"/>
+                                <field name="shipment_cost"/>
+                                <field name="other_cost"/>
+                                <field name="tax_amount"/>
+                                <field name="delivery_days"/>
+                            </list>
+                        </field>
+                    </group>
                     <group>
                         <field name="payload"/>
                     </group>

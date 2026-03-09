@@ -1,4 +1,7 @@
 import ast
+import base64
+
+import requests
 
 from odoo import fields, models, _
 from odoo.exceptions import UserError
@@ -49,20 +52,42 @@ class ShipStationOrderSync(models.Model):
         if not instance or not isinstance(payload, dict):
             return overrides
 
-        # Mapping model is sale.order; map common fields to sync listing fields.
+        # Mapping based on selected Odoo field (highest priority).
         field_to_listing = {
             "name": "shipstation_order_number",
+            "shipstation_order_number": "shipstation_order_number",
+            "shipstation_order_id": "shipstation_order_id",
+            "shipstation_store_id": "shipstation_store_id",
             "client_order_ref": "shipstation_order_number",
             "amount_total": "total_amount",
             "date_order": "order_date",
             "shipstation_status": "status",
             "partner_id": "customer_name",
+            "partner_invoice_id": "customer_name",
+            "partner_shipping_id": "customer_name",
+        }
+        # Key-wise mapping so listing updates by selected ShipStation key
+        # even if Odoo field selection is different.
+        key_to_listing = {
+            "orderNumber": "shipstation_order_number",
+            "orderStatus": "status",
+            "orderTotal": "total_amount",
+            "orderDate": "order_date",
+            "customerName": "customer_name",
+            "customerUsername": "customer_name",
+            "customerEmail": "customer_email",
+            "billTo.name": "customer_name",
+            "billTo.email": "customer_email",
+            "shipTo.name": "customer_name",
+            "shipTo.email": "customer_email",
         }
         for mapping in instance._get_field_mappings("order"):
-            listing_field = field_to_listing.get(mapping.odoo_field_id.name)
+            shipstation_key = mapping.shipstation_field_key.name
+            # User-selected Odoo field mapping should override generic key mapping.
+            listing_field = field_to_listing.get(mapping.odoo_field_id.name) or key_to_listing.get(shipstation_key)
             if not listing_field:
                 continue
-            value = self._payload_get(payload, mapping.shipstation_field_key.name)
+            value = self._payload_get(payload, shipstation_key)
             if value in (None, ""):
                 continue
             overrides[listing_field] = value
@@ -297,6 +322,33 @@ class ShipStationOrderSync(models.Model):
             },
         }
 
+    def action_select_best_rate(self):
+        self.ensure_one()
+        if not self.rate_ids:
+            raise UserError(_("No rates found. Click Get Rates first."))
+        best = sorted(
+            self.rate_ids,
+            key=lambda r: (r.shipment_cost or 0.0) + (r.other_cost or 0.0) + (r.tax_amount or 0.0),
+        )[0]
+        self.write(
+            {
+                "carrier_code": best.carrier_code,
+                "service_code": best.service_code,
+                "package_code": best.package_code,
+                "confirmation": best.confirmation,
+            }
+        )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Best Rate Selected"),
+                "message": _("Cheapest rate has been applied to the order."),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
     def action_create_label(self):
         self.ensure_one()
         if not self.instance_id:
@@ -327,6 +379,38 @@ class ShipStationOrderSync(models.Model):
         self.tracking_url = response.get("trackingUrl") or False
         self.label_url = response.get("labelDownload") or False
         self.payload = str(response) if response else self.payload
+
+        # Download and attach label PDF to related delivery order when available.
+        if self.label_url:
+            try:
+                pdf_resp = requests.get(self.label_url, timeout=30)
+                if pdf_resp.status_code < 400 and pdf_resp.content:
+                    order = self.instance_id._find_order(
+                        self.shipstation_order_id,
+                        self.shipstation_order_number,
+                        self.shipstation_store_id,
+                    )
+                    target_model = "sale.order"
+                    target_id = order.id if order else False
+                    picking = order.picking_ids.filtered(
+                        lambda p: p.state != "cancel" and p.picking_type_code == "outgoing"
+                    )[:1] if order else False
+                    if picking:
+                        target_model = "stock.picking"
+                        target_id = picking.id
+                    if target_id:
+                        self.env["ir.attachment"].create(
+                            {
+                                "name": f"ShipStation_Label_{self.shipstation_order_number or self.id}.pdf",
+                                "datas": base64.b64encode(pdf_resp.content),
+                                "mimetype": "application/pdf",
+                                "res_model": target_model,
+                                "res_id": target_id,
+                            }
+                        )
+            except Exception:
+                # Do not fail label creation if attachment download/storage fails.
+                pass
 
         if self.shipstation_shipment_id:
             self.env["shipstation.shipment.sync"]._upsert_from_payload(self.instance_id, {
@@ -454,6 +538,7 @@ class ShipStationOrderSync(models.Model):
         order_date_val = overrides.get("order_date", order_data.get("orderDate"))
         status_val = overrides.get("status", order_data.get("orderStatus"))
         customer_name_val = overrides.get("customer_name", order_data.get("customerName") or order_data.get("customerUsername"))
+        customer_email_val = overrides.get("customer_email", order_data.get("customerEmail"))
         vals = {
             "instance_id": instance.id,
             "shipstation_order_id": order_id or False,
@@ -461,7 +546,7 @@ class ShipStationOrderSync(models.Model):
             "shipstation_store_id": store_id or False,
             "status": str(status_val).strip() if status_val not in (None, "") else False,
             "customer_name": str(customer_name_val).strip() if customer_name_val not in (None, "") else False,
-            "customer_email": order_data.get("customerEmail"),
+            "customer_email": str(customer_email_val).strip() if customer_email_val not in (None, "") else False,
             "total_amount": self._to_float(total_amount_val, 0.0),
             "currency": order_data.get("currencyCode"),
             "order_date": instance._parse_ss_datetime(order_date_val),

@@ -42,16 +42,34 @@
               action="action_shipstation_categories"
               sequence="16"/>
 
-    <menuitem id="menu_shipstation_attributes"
-              name="Attributes"
-              parent="menu_shipstation_data"
-              action="action_shipstation_attributes"
-              sequence="17"/>
 
     <menuitem id="menu_shipstation_shipments"
               name="Shipments"
               parent="menu_shipstation_data"
               action="action_shipstation_shipments"
+              sequence="20"/>
+
+    <menuitem id="menu_shipstation_inventory"
+              name="Inventory"
+              parent="menu_shipstation_root"
+              action="action_shipstation_inventory"
+              sequence="25"/>
+
+    <menuitem id="menu_shipstation_shipping"
+              name="Shipping"
+              parent="menu_shipstation_root"
+              sequence="27"/>
+
+    <menuitem id="menu_shipstation_delivery_orders"
+              name="Delivery Orders"
+              parent="menu_shipstation_shipping"
+              action="action_shipstation_delivery_orders"
+              sequence="10"/>
+
+    <menuitem id="menu_shipstation_tracking"
+              name="Tracking"
+              parent="menu_shipstation_shipping"
+              action="action_shipstation_tracking"
               sequence="20"/>
 
     <menuitem id="menu_shipstation_reports"
@@ -106,9 +124,17 @@
               action="action_shipstation_field_mapping_category"
               sequence="40"/>
 
+    <menuitem id="menu_shipstation_attributes"
+              name="Attributes"
+              parent="menu_shipstation_data"
+              action="action_shipstation_attributes"
+              sequence="17"
+              active="False"/>
+
     <menuitem id="menu_shipstation_field_mapping_attribute"
               name="Attributes"
               parent="menu_shipstation_field_mapping"
               action="action_shipstation_field_mapping_attribute"
-              sequence="50"/>
+              sequence="50"
+              active="False"/>
 </odoo>

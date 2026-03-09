@@ -21,19 +21,27 @@ class ShipStationSyncBase(models.AbstractModel):
     def _log_sync_request(self, status, method, endpoint, params=None, data=None, response_text=None, error_message=None):
         if self._name != "shipstation.instance":
             return
-        self.env["shipstation.sync.log"].create(
-            {
-                "instance_id": self.id,
-                "operation": "request",
-                "model_name": endpoint,
-                "status": status,
-                "method": method,
-                "endpoint": endpoint,
-                "request_payload": str(params if params else data),
-                "response_payload": response_text or False,
-                "error_message": error_message or False,
-            }
-        )
+        try:
+            self.env.cr.execute("SELECT to_regclass(%s)", ("shipstation_sync_log",))
+            exists = self.env.cr.fetchone()[0]
+            if not exists:
+                return
+            self.env["shipstation.sync.log"].create(
+                {
+                    "instance_id": self.id,
+                    "operation": "request",
+                    "model_name": endpoint,
+                    "status": status,
+                    "method": method,
+                    "endpoint": endpoint,
+                    "request_payload": str(params if params else data),
+                    "response_payload": response_text or False,
+                    "error_message": error_message or False,
+                }
+            )
+        except Exception:
+            # Logging must never break business flow.
+            return
 
     def _extract_ss_error_message(self, response):
         text = (response.text or "").strip()

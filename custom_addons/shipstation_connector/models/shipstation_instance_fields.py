@@ -1,11 +1,6 @@
-from odoo import fields, models
+from odoo import models
 
 
 class ShipStationInstanceFields(models.Model):
+    """Reserved extension hook for shipstation.instance."""
     _inherit = "shipstation.instance"
-
-    cron_sync_orders = fields.Boolean(default=True)
-    cron_sync_shipments = fields.Boolean(default=True)
-    cron_sync_products = fields.Boolean(default=True)
-    cron_sync_customers = fields.Boolean(default=False)
-    cron_sync_inventory = fields.Boolean(default=False)

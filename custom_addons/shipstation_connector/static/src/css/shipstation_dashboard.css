@@ -1,25 +1,330 @@
 .o_shipstation_dashboard {
-    padding: 16px;
+    --ss-bg: #f2f6f9;
+    --ss-surface: #ffffff;
+    --ss-border: #d8e3ea;
+    --ss-ink: #102a43;
+    --ss-subtle: #486581;
+    --ss-brand-a: #0f766e;
+    --ss-brand-b: #155e75;
+    --ss-ok: #0f766e;
+    --ss-warn: #b45309;
+    --ss-critical: #b91c1c;
+    padding: 22px;
+    font-family: "Segoe UI Variable", "Franklin Gothic Medium", "Trebuchet MS", Tahoma, sans-serif;
+    background:
+        radial-gradient(circle at 10% 4%, rgba(15, 118, 110, 0.12), transparent 35%),
+        radial-gradient(circle at 88% 6%, rgba(21, 94, 117, 0.12), transparent 30%),
+        linear-gradient(180deg, #f8fbfd 0%, var(--ss-bg) 100%);
+    min-height: 100%;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-.o_shipstation_dashboard_header {
-    margin-bottom: 16px;
-}
-
-.o_shipstation_dashboard_grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+.o_shipstation_hero {
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, var(--ss-brand-a) 0%, var(--ss-brand-b) 70%, #0b4860 100%);
+    color: #ffffff;
+    box-shadow: 0 18px 34px rgba(8, 47, 73, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 16px;
 }
 
-.o_shipstation_card {
-    border: 1px solid #d8dadd;
-    border-radius: 6px;
-    padding: 12px;
-    background: #ffffff;
+.o_shipstation_hero_title {
+    font-size: 27px;
+    font-weight: 750;
+    letter-spacing: 0.25px;
 }
 
-.o_shipstation_card_title {
+.o_shipstation_hero_subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    opacity: 0.9;
+    max-width: 740px;
+}
+
+.o_shipstation_hero_meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.o_shipstation_meta_chip {
+    min-width: 180px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 12px;
+    backdrop-filter: blur(2px);
+}
+
+.o_shipstation_meta_chip span {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.o_shipstation_meta_chip strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.o_shipstation_kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.o_shipstation_kpi {
+    background: var(--ss-surface);
+    border: 1px solid var(--ss-border);
+    border-radius: 12px;
+    padding: 13px 14px;
+    box-shadow: 0 8px 18px rgba(16, 42, 67, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.o_shipstation_kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(16, 42, 67, 0.13);
+}
+
+.o_shipstation_kpi_label {
+    font-size: 12px;
+    color: var(--ss-subtle);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+}
+
+.o_shipstation_kpi_value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ss-ink);
+}
+
+.o_shipstation_kpi_hint {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ss-subtle);
+}
+
+.o_shipstation_kpi_warn {
+    border-color: #f2d3a2;
+    background: #fff8ee;
+}
+
+.o_shipstation_kpi_ok {
+    border-color: #b8e2d8;
+    background: #f2fbf8;
+}
+
+.o_shipstation_grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.o_shipstation_panel {
+    background: var(--ss-surface);
+    border: 1px solid var(--ss-border);
+    border-radius: 12px;
+    padding: 14px 15px;
+    box-shadow: 0 8px 20px rgba(16, 42, 67, 0.08);
+    max-height: 540px;
+    overflow: auto;
+}
+
+.o_shipstation_span_2 {
+    grid-column: span 2;
+}
+
+.o_shipstation_panel_error {
+    border-color: #e88f8f;
+    background: #fff5f5;
+}
+
+.o_shipstation_panel_title {
+    font-size: 15px;
+    font-weight: 750;
+    color: var(--ss-ink);
+    margin-bottom: 11px;
+}
+
+.o_shipstation_table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.o_shipstation_table th,
+.o_shipstation_table td {
+    border-bottom: 1px solid #e8edf2;
+    padding: 9px 6px;
+    text-align: left;
+}
+
+.o_shipstation_table tbody tr:hover {
+    background: #f8fbfe;
+}
+
+.o_shipstation_table th {
+    font-size: 12px;
+    color: var(--ss-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.25px;
+}
+
+.o_shipstation_health {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+}
+
+.o_shipstation_health_healthy {
+    background: #e6f8f1;
+    color: var(--ss-ok);
+}
+
+.o_shipstation_health_warning {
+    background: #fff3df;
+    color: var(--ss-warn);
+}
+
+.o_shipstation_health_critical {
+    background: #fee8e8;
+    color: var(--ss-critical);
+}
+
+.o_shipstation_failure_list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.o_shipstation_failure_list li {
+    border-bottom: 1px solid #edf2f6;
+    padding: 9px 0;
+}
+
+.o_shipstation_failure_time {
+    font-size: 11px;
+    color: #61788f;
+}
+
+.o_shipstation_failure_endpoint {
+    font-size: 12px;
     font-weight: 600;
-    margin-bottom: 8px;
+    color: #243b53;
+}
+
+.o_shipstation_failure_error {
+    font-size: 12px;
+    color: #7b3d3d;
+}
+
+.o_shipstation_activity_list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.o_shipstation_activity_list li {
+    border-bottom: 1px solid #edf2f6;
+    padding: 9px 0;
+}
+
+.o_shipstation_activity_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.o_shipstation_status_badge {
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.o_shipstation_status_success {
+    background: #e7f8f1;
+    color: #0f766e;
+}
+
+.o_shipstation_status_failed {
+    background: #fde8e8;
+    color: #b91c1c;
+}
+
+.o_shipstation_reveal_1,
+.o_shipstation_reveal_2,
+.o_shipstation_reveal_3 {
+    animation: ssReveal 0.36s ease-out both;
+}
+
+.o_shipstation_reveal_2 {
+    animation-delay: 0.06s;
+}
+
+.o_shipstation_reveal_3 {
+    animation-delay: 0.12s;
+}
+
+@keyframes ssReveal {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1200px) {
+    .o_shipstation_kpis {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+    }
+    .o_shipstation_grid {
+        grid-template-columns: 1fr;
+    }
+    .o_shipstation_span_2 {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 700px) {
+    .o_shipstation_dashboard {
+        padding: 14px;
+    }
+    .o_shipstation_hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .o_shipstation_hero_meta {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .o_shipstation_meta_chip {
+        min-width: 140px;
+    }
+    .o_shipstation_kpis {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+    }
 }

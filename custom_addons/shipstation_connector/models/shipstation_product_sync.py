@@ -29,6 +29,8 @@ class ShipStationProductSync(models.Model):
     def _build_payload(self):
         """Build ShipStation Product payload."""
         self.ensure_one()
+        source_product = self._get_mapping_source_product_template()
+        stock_level = self._get_template_stock_qty(source_product) if source_product else float(self.stock_level or 0.0)
         payload = {
             # ShipStation expects productId on update; omit on create
             "productId": self.shipstation_product_id or None,
@@ -36,7 +38,7 @@ class ShipStationProductSync(models.Model):
             "name": self.name or "",
             "price": float(self.price or 0.0),
             "weight": float(self.weight or 0.0),
-            "stockLevel": float(self.stock_level or 0.0),
+            "stockLevel": float(stock_level or 0.0),
         }
         if not payload["productId"]:
             payload.pop("productId", None)
@@ -44,7 +46,6 @@ class ShipStationProductSync(models.Model):
         # Apply instance field mappings for "product" model.
         # Field mappings are configured against product.template, so prefer a
         # source template resolved by SKU.
-        source_product = self._get_mapping_source_product_template()
         source_record = source_product or self
         payload = self.instance_id._apply_field_mappings(payload, source_record, "product")
 
@@ -61,6 +62,21 @@ class ShipStationProductSync(models.Model):
                     payload.pop(number_key, None)
 
         return payload
+
+    def _get_template_stock_qty(self, product_template):
+        if not product_template or not self.instance_id:
+            return 0.0
+        variants = product_template.product_variant_ids
+        if not variants:
+            return 0.0
+        location = self.instance_id.inventory_warehouse_id.lot_stock_id if self.instance_id.inventory_warehouse_id else False
+        if not location:
+            return float(sum(variants.mapped("qty_available")) or 0.0)
+        Quant = self.env["stock.quant"].sudo()
+        qty = 0.0
+        for variant in variants:
+            qty += float(Quant._get_available_quantity(variant, location) or 0.0)
+        return qty
 
     def _to_float(self, value, default=0.0):
         try:

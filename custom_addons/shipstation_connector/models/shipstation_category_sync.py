@@ -17,6 +17,14 @@ class ShipStationCategorySync(models.Model):
     synced_on = fields.Datetime(default=fields.Datetime.now)
     payload = fields.Text()
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            ALTER TABLE shipstation_category_sync
+            ADD COLUMN IF NOT EXISTS shipstation_category_id varchar
+            """
+        )
+
     def _json_dump(self, obj):
         try:
             return json.dumps(obj, ensure_ascii=False, indent=2, default=str)
