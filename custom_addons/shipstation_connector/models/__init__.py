@@ -1,4 +1,5 @@
 from . import shipstation_sync_base
+from . import res_config_settings
 from . import shipstation_instance
 from . import shipstation_instance_fields
 from . import shipstation_field
@@ -18,4 +19,5 @@ from . import shipstation_attribute_sync
 from . import shipstation_report
 from . import shipstation_report_line
 from . import shipstation_sale
+from . import shipstation_ai_insight
 from . import shipstation_dashboard

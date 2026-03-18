@@ -4,7 +4,7 @@
             <div class="o_shipstation_hero o_shipstation_reveal_1">
                 <div>
                     <div class="o_shipstation_hero_title">ShipStation Command Center</div>
-                    <div class="o_shipstation_hero_subtitle">Operational visibility for sync health, shipping flow, and inventory risk.</div>
+                    <div class="o_shipstation_hero_subtitle">Operational visibility for sync health, shipping flow, inventory risk, and AI guidance.</div>
                 </div>
                 <div class="o_shipstation_hero_meta">
                     <div class="o_shipstation_meta_chip">
@@ -15,6 +15,9 @@
                         <span>24h Success Rate</span>
                         <strong><t t-esc="state.summary.success_rate_24h"/>%</strong>
                     </div>
+                    <button class="btn btn-light o_shipstation_ai_button" t-on-click="generateInsights" t-att-disabled="state.generatingInsights">
+                        <t t-esc="state.generatingInsights ? 'Generating...' : 'Generate AI Insights'"/>
+                    </button>
                 </div>
             </div>
 
@@ -61,16 +64,59 @@
                         <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.inventory_items)"/></div>
                     </div>
                     <div class="o_shipstation_kpi o_shipstation_kpi_warn">
-                        <div class="o_shipstation_kpi_label">Failed Sync (Total)</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.failed_sync)"/></div>
-                    </div>
-                    <div class="o_shipstation_kpi o_shipstation_kpi_warn">
                         <div class="o_shipstation_kpi_label">Failed Sync (24h)</div>
                         <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.failed_sync_24h)"/></div>
                     </div>
                     <div class="o_shipstation_kpi o_shipstation_kpi_ok">
                         <div class="o_shipstation_kpi_label">Success Sync (24h)</div>
                         <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.success_sync_24h)"/></div>
+                    </div>
+                </div>
+
+                <div class="o_shipstation_ai_grid o_shipstation_reveal_3">
+                    <div class="o_shipstation_panel">
+                        <div class="o_shipstation_panel_title">AI Insights</div>
+                        <div class="o_shipstation_ai_status_line">
+                            <span class="o_shipstation_health o_shipstation_health_healthy">
+                                <t t-esc="state.ai_insight.status || 'draft'"/>
+                            </span>
+                            <span t-if="state.ai_insight.generated_at">Last generated: <t t-esc="state.ai_insight.generated_at"/></span>
+                        </div>
+                        <div class="o_shipstation_ai_summary">
+                            <t t-esc="state.ai_insight.summary_text || 'Generate AI insights to see a shipment and sync summary.'"/>
+                        </div>
+                        <div class="o_shipstation_failure_error" t-if="state.ai_insight.error_message" t-esc="state.ai_insight.error_message"/>
+                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.actionable_recommendations || []).length">
+                            <li t-foreach="state.ai_insight.actionable_recommendations" t-as="item" t-key="item">
+                                <t t-esc="item"/>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="o_shipstation_panel">
+                        <div class="o_shipstation_panel_title">Pending Tracking</div>
+                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.pending_tracking_shipments || []).length">
+                            <li t-foreach="state.ai_insight.pending_tracking_shipments" t-as="item" t-key="item.order_number || item.order_id">
+                                <div class="o_shipstation_failure_endpoint"><strong t-esc="item.order_number || item.order_id || '-'"/></div>
+                                <div class="o_shipstation_failure_time">
+                                    <t t-esc="item.status || 'pending_tracking'"/>
+                                    <t t-if="item.ship_date"> · <t t-esc="item.ship_date"/></t>
+                                </div>
+                            </li>
+                        </ul>
+                        <div t-else="">No shipment tracking gaps detected.</div>
+                    </div>
+                    <div class="o_shipstation_panel">
+                        <div class="o_shipstation_panel_title">Low Stock Inventory</div>
+                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.low_stock_inventory || []).length">
+                            <li t-foreach="state.ai_insight.low_stock_inventory" t-as="item" t-key="item.sku || item.name">
+                                <div class="o_shipstation_failure_endpoint"><strong t-esc="item.name || item.sku || '-'"/></div>
+                                <div class="o_shipstation_failure_time">
+                                    <t t-esc="item.instance_name || '-'"/> · SKU: <t t-esc="item.sku || '-'"/>
+                                </div>
+                                <div class="o_shipstation_failure_error">Stock: <t t-esc="item.stock_level"/></div>
+                            </li>
+                        </ul>
+                        <div t-else="">No low-stock inventory risks detected.</div>
                     </div>
                 </div>
 

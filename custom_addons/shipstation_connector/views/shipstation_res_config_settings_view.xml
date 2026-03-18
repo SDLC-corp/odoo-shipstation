@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_shipstation_ai" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.shipstation.ai</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="ShipStation Connector" name="shipstation_connector_ai">
+                    <block title="AI Features">
+                        <setting string="Enable ShipStation AI" help="Enable AI insights and assistant features for the ShipStation dashboard.">
+                            <field name="shipstation_ai_enabled"/>
+                        </setting>
+                        <setting string="AI Provider">
+                            <field name="shipstation_ai_provider" placeholder="openai"/>
+                        </setting>
+                        <setting string="AI API Key">
+                            <field name="shipstation_ai_api_key" password="True"/>
+                        </setting>
+                        <setting string="AI Model">
+                            <field name="shipstation_ai_model" placeholder="gpt-4o-mini"/>
+                        </setting>
+                        <setting string="AI Max Tokens">
+                            <field name="shipstation_ai_max_tokens"/>
+                        </setting>
+                        <setting string="AI Endpoint" help="Optional override for OpenAI-compatible endpoints.">
+                            <field name="shipstation_ai_endpoint" placeholder="https://api.openai.com/v1/chat/completions"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

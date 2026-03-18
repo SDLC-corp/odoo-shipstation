@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shipstation_connector.SimpleChatbot">
+        <div t-if="state.isVisible" class="ss-chatbot-root">
+            <button t-if="!state.isOpen" class="ss-chatbot-toggle" t-on-click="toggleOpen" title="Open AI Assistant">
+                <span>AI</span>
+            </button>
+
+            <div t-if="state.isOpen" class="ss-chatbot-popup">
+                <div class="ss-chatbot-header">
+                    <span class="ss-chatbot-title">AI Assistant</span>
+                    <button class="ss-chatbot-close" t-on-click="closePopup">x</button>
+                </div>
+
+                <div class="ss-chatbot-quick-actions">
+                    <button t-foreach="state.quickActions" t-as="action" t-key="action" class="ss-chatbot-chip" t-att-data-prompt="action" t-on-click="sendQuickAction">
+                        <t t-esc="action"/>
+                    </button>
+                </div>
+
+                <div class="ss-chatbot-body">
+                    <div t-foreach="state.messages" t-as="message" t-key="message_index" t-att-class="'ss-chatbot-message ' + message.role">
+                        <div class="ss-chatbot-bubble">
+                            <t t-esc="message.text"/>
+                        </div>
+                    </div>
+                    <div t-if="state.isLoading" class="ss-chatbot-loading">Replying...</div>
+                </div>
+
+                <div class="ss-chatbot-footer">
+                    <textarea class="ss-chatbot-input" rows="2" placeholder="Ask about ShipStation data" t-att-value="state.input" t-on-input="onInput" t-on-keydown="onKeydown"></textarea>
+                    <button class="btn btn-primary ss-chatbot-send" t-on-click="sendMessage" t-att-disabled="state.isLoading">Send</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

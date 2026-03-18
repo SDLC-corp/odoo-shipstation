@@ -1,4 +1,10 @@
+import json
+from collections import Counter
+from datetime import datetime, timedelta
+
 from odoo import api, models
+
+from ..services.shipstation_ai_service import ShipStationAIService
 
 
 class ShipStationDashboard(models.Model):
@@ -8,6 +14,151 @@ class ShipStationDashboard(models.Model):
     def _table_exists(self, table_name):
         self.env.cr.execute("SELECT to_regclass(%s)", (table_name,))
         return bool(self.env.cr.fetchone()[0])
+
+    def _latest_ai_insight(self, range_days=30):
+        insight = self.env["shipstation.ai.insight"].sudo().search(
+            [
+                ("scope", "=", "all"),
+                ("instance_id", "=", False),
+                ("range_days", "=", int(range_days or 30)),
+            ],
+            limit=1,
+        )
+        if not insight:
+            return {
+                "summary_text": "",
+                "status": "draft",
+                "generated_at": False,
+                "error_message": "",
+                "pending_tracking_shipments": [],
+                "low_stock_inventory": [],
+                "failing_instances": [],
+                "top_carriers": [],
+                "shipment_summary": {},
+                "actionable_recommendations": [],
+            }
+        return insight.get_payload()
+
+    def _shipment_window_summary(self, days):
+        Shipment = self.env["shipstation.shipment.sync"].sudo()
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        shipments = Shipment.search([("ship_date", ">=", cutoff.strftime("%Y-%m-%d %H:%M:%S"))])
+        order_refs = list(
+            {
+                shipment.shipstation_order_id
+                for shipment in shipments
+                if shipment.shipstation_order_id
+            }
+        )
+        revenue = 0.0
+        if order_refs:
+            orders = self.env["shipstation.order.sync"].sudo().search(
+                [("shipstation_order_id", "in", order_refs)]
+            )
+            revenue = sum(orders.mapped("total_amount"))
+        return {
+            "count": len(shipments),
+            "revenue": revenue,
+        }
+
+    def _build_ai_metrics(self):
+        Shipment = self.env["shipstation.shipment.sync"].sudo()
+        Inventory = self.env["shipstation.inventory"].sudo()
+
+        pending_tracking = Shipment.search(
+            [
+                "|",
+                ("tracking_number", "=", False),
+                ("status", "=", "shipped_pending_tracking"),
+            ],
+            order="ship_date desc, id desc",
+            limit=10,
+        )
+        low_stock = Inventory.search(
+            [("stock_level", "<=", 5)],
+            order="stock_level asc, modify_date desc, id desc",
+            limit=10,
+        )
+        instance_rows = self.get_dashboard_data().get("instances", [])
+        failing_instances = [
+            {
+                "id": inst["id"],
+                "name": inst["name"],
+                "failed_24h": inst["failed_24h"],
+                "success_24h": inst["success_24h"],
+                "health": inst["health"],
+            }
+            for inst in instance_rows
+            if inst.get("failed_24h", 0) > 0
+        ][:5]
+
+        carrier_counts = Counter()
+        for shipment in Shipment.search(
+            [("ship_date", ">=", (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S"))],
+            limit=500,
+        ):
+            carrier = shipment.carrier_code or "Unknown"
+            carrier_counts[carrier] += 1
+
+        return {
+            "shipments_last_7_days": self._shipment_window_summary(7),
+            "shipments_last_30_days": self._shipment_window_summary(30),
+            "pending_tracking_count": Shipment.search_count(
+                [
+                    "|",
+                    ("tracking_number", "=", False),
+                    ("status", "=", "shipped_pending_tracking"),
+                ]
+            ),
+            "pending_tracking_shipments": [
+                {
+                    "order_id": row.shipstation_order_id,
+                    "order_number": row.shipstation_order_number,
+                    "status": row.status,
+                    "ship_date": row.ship_date,
+                    "tracking_number": row.tracking_number,
+                }
+                for row in pending_tracking
+            ],
+            "low_stock_inventory": [
+                {
+                    "sku": row.sku,
+                    "name": row.name,
+                    "stock_level": row.stock_level,
+                    "instance_name": row.instance_id.name,
+                }
+                for row in low_stock
+            ],
+            "failing_instances": failing_instances,
+            "top_carriers": [
+                {"carrier_code": carrier, "shipments": count}
+                for carrier, count in carrier_counts.most_common(5)
+            ],
+        }
+
+    @api.model
+    def generate_ai_insights(self, range=30):
+        range_days = int(range or 30)
+        metrics = self._build_ai_metrics()
+        context_meta = {
+            "range_days": range_days,
+            "summary": self.get_dashboard_data().get("summary", {}),
+        }
+        result = ShipStationAIService(self.env).generate_operational_insights(metrics, context_meta)
+        record = self.env["shipstation.ai.insight"].sudo().upsert_latest(
+            {
+                "name": "AI Insight - ShipStation",
+                "scope": "all",
+                "instance_id": False,
+                "range_days": range_days,
+                "summary_text": result["summary_text"],
+                "insight_json": json.dumps(result["insight_payload"], default=str),
+                "status": result["status"],
+                "generated_at": result["generated_at"],
+                "error_message": result.get("error_message") or False,
+            }
+        )
+        return record.get_payload()
 
     @api.model
     def get_dashboard_data(self):
@@ -36,16 +187,13 @@ class ShipStationDashboard(models.Model):
                 "recent_failures": [],
                 "recent_activity": [],
                 "low_stock_items": [],
+                "ai_insight": self._latest_ai_insight(30),
             }
 
         table_orders = self._table_exists("shipstation_order_sync")
-        table_shipments = self._table_exists("shipstation_shipment_sync")
-        table_products = self._table_exists("shipstation_product_sync")
-        table_customers = self._table_exists("shipstation_customer_sync")
         table_inventory = self._table_exists("shipstation_inventory")
         table_logs = self._table_exists("shipstation_sync_log")
 
-        # Base instance list
         cr.execute(
             """
             SELECT
@@ -60,8 +208,7 @@ class ShipStationDashboard(models.Model):
             """
         )
         instance_map = {}
-        for row in cr.fetchall():
-            inst_id, name, company_name, active, sync_dt = row
+        for inst_id, name, company_name, active, sync_dt in cr.fetchall():
             sync_text = sync_dt.strftime("%Y-%m-%d %H:%M:%S") if sync_dt else ""
             instance_map[inst_id] = {
                 "id": inst_id,
@@ -202,8 +349,8 @@ class ShipStationDashboard(models.Model):
                     COALESCE(inv.stock_level, 0.0)
                 FROM shipstation_inventory inv
                 LEFT JOIN shipstation_instance si ON si.id = inv.instance_id
-                WHERE COALESCE(inv.stock_level, 0.0) <= 0.0
-                ORDER BY inv.modify_date DESC NULLS LAST, inv.id DESC
+                WHERE COALESCE(inv.stock_level, 0.0) <= 5.0
+                ORDER BY inv.stock_level ASC, inv.modify_date DESC NULLS LAST, inv.id DESC
                 LIMIT 8
                 """
             )
@@ -225,7 +372,6 @@ class ShipStationDashboard(models.Model):
             else:
                 inst["health"] = "healthy"
             instances.append(inst)
-
             summary["orders"] += inst["total_orders"]
             summary["shipments"] += inst["total_shipments"]
             summary["products"] += inst["total_products"]
@@ -238,14 +384,14 @@ class ShipStationDashboard(models.Model):
             if inst["last_sync"] and (not summary["last_sync"] or inst["last_sync"] > summary["last_sync"]):
                 summary["last_sync"] = inst["last_sync"]
 
-        failed_24h = sum(x.get("failed_24h", 0) for x in instances)
-        success_24h = sum(x.get("success_24h", 0) for x in instances)
+        failed_24h = sum(item.get("failed_24h", 0) for item in instances)
+        success_24h = sum(item.get("success_24h", 0) for item in instances)
         total_24h = failed_24h + success_24h
         summary["failed_sync_24h"] = failed_24h
         summary["success_sync_24h"] = success_24h
         summary["success_rate_24h"] = round((success_24h * 100.0 / total_24h), 2) if total_24h else 100.0
 
-        instances.sort(key=lambda x: (x.get("failed_24h", 0), x.get("total_orders", 0)), reverse=True)
+        instances.sort(key=lambda x: (x.get("failed_24h", 0), x.get("total_shipments", 0)), reverse=True)
 
         return {
             "summary": summary,
@@ -253,4 +399,5 @@ class ShipStationDashboard(models.Model):
             "recent_failures": recent_failures,
             "recent_activity": recent_activity,
             "low_stock_items": low_stock_items,
+            "ai_insight": self._latest_ai_insight(30),
         }

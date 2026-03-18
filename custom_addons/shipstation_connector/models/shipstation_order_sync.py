@@ -533,10 +533,19 @@ class ShipStationOrderSync(models.Model):
         order_id = str(order_data.get("orderId") or "")
         order_number = order_data.get("orderNumber") or ""
         store_id = str(order_data.get("storeId") or "")
+        existing = self.search(
+            [
+                ("shipstation_order_id", "=", order_id),
+                ("instance_id", "=", instance.id),
+            ],
+            limit=1,
+        )
+        previous_status = str(existing.status or "").strip().lower() if existing else ""
         order_number_val = overrides.get("shipstation_order_number", order_number)
         total_amount_val = overrides.get("total_amount", order_data.get("orderTotal"))
         order_date_val = overrides.get("order_date", order_data.get("orderDate"))
         status_val = overrides.get("status", order_data.get("orderStatus"))
+        normalized_status = str(status_val or "").strip().lower()
         customer_name_val = overrides.get("customer_name", order_data.get("customerName") or order_data.get("customerUsername"))
         customer_email_val = overrides.get("customer_email", order_data.get("customerEmail"))
         vals = {
@@ -554,14 +563,33 @@ class ShipStationOrderSync(models.Model):
             "synced_on": fields.Datetime.now(),
             "payload": str(order_data),
         }
-        existing = self.search(
-            [
-                ("shipstation_order_id", "=", order_id),
-                ("instance_id", "=", instance.id),
-            ],
-            limit=1,
-        )
         if existing:
             existing.write(vals)
-            return existing
-        return self.create(vals)
+            record = existing
+        else:
+            record = self.create(vals)
+
+        shipments_exist = self.env["shipstation.shipment.sync"].search_count(
+            [
+                ("instance_id", "=", instance.id),
+                "|",
+                ("shipstation_order_id", "=", order_id or "__missing__"),
+                ("shipstation_order_number", "=", order_number or "__missing__"),
+            ]
+        )
+        should_sync_shipment = normalized_status == "shipped" and (
+            previous_status != "shipped" or not shipments_exist
+        )
+        if should_sync_shipment:
+            self.env["shipstation.shipment.sync"].sync_for_order(
+                instance,
+                {
+                    "orderId": order_id,
+                    "orderNumber": order_number,
+                    "storeId": store_id,
+                    "shipDate": order_data.get("shipDate"),
+                    "modifyDate": order_data.get("modifyDate"),
+                },
+                create_placeholder=True,
+            )
+        return record

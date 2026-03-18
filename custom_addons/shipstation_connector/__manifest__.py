@@ -28,6 +28,7 @@
         "views/shipstation_attribute_sync_view.xml",
         "views/shipstation_report_view.xml",
         "views/shipstation_sync_log_view.xml",
+        "views/shipstation_res_config_settings_view.xml",
         "views/shipstation_dashboard_action.xml",
         "views/shipstation_actions.xml",
         "views/menu.xml",
@@ -35,7 +36,10 @@
     "assets": {
         "web.assets_backend": [
             "shipstation_connector/static/src/css/shipstation_dashboard.css",
+            "shipstation_connector/static/src/scss/chatbot.scss",
             "shipstation_connector/static/src/js/shipstation_dashboard.js",
+            "shipstation_connector/static/src/js/chatbot.js",
+            "shipstation_connector/static/src/xml/chatbot.xml",
             "shipstation_connector/static/src/xml/shipstation_dashboard_templates.xml",
         ],
     },

@@ -77,11 +77,42 @@
     font-weight: 700;
 }
 
+.o_shipstation_ai_button {
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 700;
+    color: #0f766e;
+}
+
 .o_shipstation_kpis {
     display: grid;
     grid-template-columns: repeat(5, minmax(150px, 1fr));
     gap: 14px;
     margin-bottom: 18px;
+}
+
+.o_shipstation_ai_grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.o_shipstation_ai_status_line {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    color: var(--ss-subtle);
+    font-size: 12px;
+}
+
+.o_shipstation_ai_summary {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ss-ink);
+    margin-bottom: 10px;
 }
 
 .o_shipstation_kpi {
@@ -300,6 +331,9 @@
 @media (max-width: 1200px) {
     .o_shipstation_kpis {
         grid-template-columns: repeat(3, minmax(150px, 1fr));
+    }
+    .o_shipstation_ai_grid {
+        grid-template-columns: 1fr;
     }
     .o_shipstation_grid {
         grid-template-columns: 1fr;

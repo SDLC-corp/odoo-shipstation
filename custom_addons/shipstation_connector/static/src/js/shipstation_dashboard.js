@@ -28,24 +28,62 @@ class ShipStationDashboard extends Component {
             recent_failures: [],
             recent_activity: [],
             low_stock_items: [],
+            ai_insight: {
+                summary_text: "",
+                status: "draft",
+                generated_at: "",
+                error_message: "",
+                pending_tracking_shipments: [],
+                low_stock_inventory: [],
+                failing_instances: [],
+                top_carriers: [],
+                shipment_summary: {},
+                actionable_recommendations: [],
+            },
             loading: true,
+            generatingInsights: false,
             error: "",
         });
 
         onWillStart(async () => {
-            try {
-                const data = await this.orm.call("shipstation.dashboard", "get_dashboard_data", []);
-                this.state.summary = data.summary || this.state.summary;
-                this.state.instances = data.instances || [];
-                this.state.recent_failures = data.recent_failures || [];
-                this.state.recent_activity = data.recent_activity || [];
-                this.state.low_stock_items = data.low_stock_items || [];
-            } catch (err) {
-                this.state.error = (err && err.message) || "Failed to load ShipStation dashboard.";
-            } finally {
-                this.state.loading = false;
-            }
+            await this.loadData();
         });
+    }
+
+    async loadData() {
+        this.state.loading = true;
+        try {
+            const data = await this.orm.call("shipstation.dashboard", "get_dashboard_data", []);
+            this.state.summary = data.summary || this.state.summary;
+            this.state.instances = data.instances || [];
+            this.state.recent_failures = data.recent_failures || [];
+            this.state.recent_activity = data.recent_activity || [];
+            this.state.low_stock_items = data.low_stock_items || [];
+            this.state.ai_insight = data.ai_insight || this.state.ai_insight;
+            this.state.error = "";
+        } catch (err) {
+            this.state.error = (err && err.message) || "Failed to load ShipStation dashboard.";
+        } finally {
+            this.state.loading = false;
+        }
+    }
+
+    async generateInsights() {
+        if (this.state.generatingInsights) {
+            return;
+        }
+        this.state.generatingInsights = true;
+        try {
+            this.state.ai_insight = await this.orm.call(
+                "shipstation.dashboard",
+                "generate_ai_insights",
+                [],
+                { range: 30 }
+            ) || this.state.ai_insight;
+            await this.loadData();
+        } finally {
+            this.state.generatingInsights = false;
+        }
     }
 
     formatMoney(amount) {

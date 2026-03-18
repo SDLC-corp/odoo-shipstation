@@ -8,12 +8,10 @@
                     <button name="action_open_delivery_order" type="object" string="Open Delivery" class="btn-secondary"/>
                     <button name="action_open_tracking" type="object" string="Open Tracking" class="btn-secondary"/>
                 </header>
-                <field name="shipstation_shipment_id"/>
+                <field name="shipstation_order_id"/>
                 <field name="shipstation_order_number"/>
-                <field name="carrier_code"/>
-                <field name="tracking_number"/>
-                <field name="tracking_url"/>
                 <field name="ship_date"/>
+                <field name="status"/>
                 <field name="synced_on"/>
             </list>
         </field>
