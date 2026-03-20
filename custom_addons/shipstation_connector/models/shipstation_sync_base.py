@@ -18,6 +18,16 @@ class ShipStationSyncBase(models.AbstractModel):
     _description = "ShipStation Sync Base"
     _abstract = True
 
+    def _normalize_shipstation_base_url(self, base_url):
+        normalized = (base_url or "https://api.shipstation.com").strip().rstrip("/")
+        if not normalized:
+            normalized = "https://api.shipstation.com"
+        normalized = normalized.replace("https://ssapi.shipstation.com", "https://api.shipstation.com")
+        normalized = normalized.replace("http://ssapi.shipstation.com", "https://api.shipstation.com")
+        if normalized == "https://ssapi.shipstation.com":
+            normalized = "https://api.shipstation.com"
+        return normalized
+
     def _log_sync_request(self, status, method, endpoint, params=None, data=None, response_text=None, error_message=None):
         if self._name != "shipstation.instance":
             return
@@ -66,7 +76,7 @@ class ShipStationSyncBase(models.AbstractModel):
         if not self.api_key or not self.api_secret:
             raise UserError(_("ShipStation API credentials are missing."))
 
-        base_url = (self.base_url or "https://ssapi.shipstation.com").rstrip("/")
+        base_url = self._normalize_shipstation_base_url(self.base_url)
         if not endpoint.startswith("/"):
             endpoint = f"/{endpoint}"
         url = f"{base_url}{endpoint}"
@@ -143,6 +153,131 @@ class ShipStationSyncBase(models.AbstractModel):
             return result
 
         return {}
+
+    def _ss_v2_request(self, method, endpoint, params=None, data=None):
+        """Perform ShipStation v2 API requests using API-Key header auth."""
+        self.ensure_one()
+        if not self.api_key:
+            raise UserError(_("ShipStation API key is missing."))
+
+        base_url = "https://api.shipstation.com"
+        if not endpoint.startswith("/"):
+            endpoint = f"/{endpoint}"
+        if not endpoint.startswith("/v2/"):
+            endpoint = f"/v2{endpoint}"
+        url = f"{base_url}{endpoint}"
+        headers = {"API-Key": str(self.api_key or "").strip()}
+
+        retries = 3
+        backoff = 1.0
+        for attempt in range(retries + 1):
+            try:
+                response = requests.request(
+                    method,
+                    url,
+                    headers=headers,
+                    params=params,
+                    json=data,
+                    timeout=30,
+                )
+            except requests.RequestException as exc:
+                _logger.warning("ShipStation v2 request error on %s: %s", url, exc)
+                if attempt >= retries:
+                    raise UserError(str(exc))
+                time.sleep(backoff)
+                backoff = min(backoff * 2.0, 30.0)
+                continue
+
+            if response.status_code in (429, 500, 502, 503, 504):
+                _logger.warning("ShipStation v2 transient status %s on %s", response.status_code, url)
+                if attempt >= retries:
+                    message = self._extract_ss_error_message(response)
+                    raise UserError(f"ShipStation API error {response.status_code} on {endpoint}: {message}")
+                time.sleep(backoff)
+                backoff = min(backoff * 2.0, 30.0)
+                continue
+
+            if response.status_code >= 400:
+                message = self._extract_ss_error_message(response)
+                _logger.warning(
+                    "ShipStation v2 request failed %s %s status=%s params=%s data=%s response=%s",
+                    method,
+                    url,
+                    response.status_code,
+                    params,
+                    data,
+                    (response.text or "")[:1000],
+                )
+                raise UserError(f"ShipStation API error {response.status_code} on {endpoint}: {message}")
+
+            return response.json() if response.text else {}
+
+        return {}
+
+    def _ss_legacy_products_request(self, params=None):
+        """Fallback for legacy product listing when v2 products is unauthorized."""
+        self.ensure_one()
+        if not self.api_key or not self.api_secret:
+            raise UserError(_("ShipStation API credentials are missing."))
+
+        url = "https://ssapi.shipstation.com/products"
+        retries = 1
+        backoff = 1.0
+        for attempt in range(retries + 1):
+            try:
+                response = requests.get(
+                    url,
+                    auth=(self.api_key, self.api_secret),
+                    params=params,
+                    timeout=30,
+                )
+            except requests.RequestException as exc:
+                _logger.warning("ShipStation legacy product request error on %s: %s", url, exc)
+                if attempt >= retries:
+                    raise UserError(str(exc))
+                time.sleep(backoff)
+                continue
+
+            if response.status_code >= 400:
+                message = self._extract_ss_error_message(response)
+                _logger.warning(
+                    "ShipStation legacy product request failed %s status=%s params=%s response=%s",
+                    url,
+                    response.status_code,
+                    params,
+                    (response.text or "")[:1000],
+                )
+                raise UserError(f"ShipStation API error {response.status_code} on /products: {message}")
+
+            return response.json() if response.text else {}
+
+        return {}
+
+    def _fetch_products_with_fallback(self, *, page=1, page_size=100, sku=None, product_id=None, legacy_params=None):
+        """Fetch products, preferring v2 but falling back to legacy /products when v2 is unauthorized."""
+        self.ensure_one()
+        v2_params = {"page": page, "page_size": page_size}
+        if sku:
+            v2_params["sku"] = sku
+        if product_id:
+            v2_params["product_id"] = product_id
+        try:
+            return self._ss_v2_request("GET", "/products", params=v2_params)
+        except UserError as exc:
+            message = str(exc)
+            if " 401 " not in f" {message} " and " 403 " not in f" {message} " and "Access denied" not in message:
+                raise
+            _logger.warning(
+                "ShipStation v2 products unavailable, falling back to legacy /products. params=%s error=%s",
+                v2_params,
+                message,
+            )
+        fallback_params = legacy_params or {}
+        if sku:
+            fallback_params = dict(fallback_params, sku=sku)
+        if product_id:
+            fallback_params = dict(fallback_params, productId=product_id)
+        return self._ss_legacy_products_request(params=fallback_params)
 
     def _get_sync_window(self, last_sync_at, days_back=7):
         end_dt = fields.Datetime.now()

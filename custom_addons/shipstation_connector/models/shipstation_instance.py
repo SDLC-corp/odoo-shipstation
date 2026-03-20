@@ -1,6 +1,8 @@
 import ast
 import logging
 
+import requests
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -14,7 +16,7 @@ class ShipStationInstance(models.Model):
     _inherit = "shipstation.sync.base"
 
     name = fields.Char(required=True)
-    base_url = fields.Char(default="https://ssapi.shipstation.com")
+    base_url = fields.Char(default="https://api.shipstation.com")
     api_key = fields.Char(required=True)
     api_secret = fields.Char(required=True)
     store_id = fields.Char()
@@ -101,26 +103,26 @@ class ShipStationInstance(models.Model):
         return False
 
     def _auto_set_store_id(self, force=False):
-        """Fetch and assign ShipStation store_id from API when available."""
+        """Keep any manually configured store_id; do not depend on /stores."""
         for rec in self:
             if not rec.api_key or not rec.api_secret:
                 continue
             if rec.store_id and not force:
                 continue
-            try:
-                stores_response = rec._ss_request("GET", "/stores")
-                fetched_store_id = rec._extract_store_id_from_response(stores_response)
-            except Exception as exc:
-                _logger.warning("ShipStation auto store fetch failed for instance %s: %s", rec.name, exc)
-                continue
-
-            if fetched_store_id and fetched_store_id != rec.store_id:
-                rec.with_context(skip_store_autofill=True).write({"store_id": fetched_store_id})
-                _logger.info("ShipStation instance %s store_id auto-set to %s", rec.name, fetched_store_id)
+            _logger.info(
+                "ShipStation auto store fetch skipped for instance %s; keep store_id=%s",
+                rec.name,
+                rec.store_id or "",
+            )
 
     @api.model_create_multi
     def create(self, vals_list):
-        records = super().create(vals_list)
+        normalized_vals_list = []
+        for vals in vals_list:
+            vals = dict(vals)
+            vals["base_url"] = self._normalize_shipstation_base_url(vals.get("base_url"))
+            normalized_vals_list.append(vals)
+        records = super().create(normalized_vals_list)
         if not self.env.context.get("skip_store_autofill"):
             records._auto_set_store_id(force=False)
         ShipStationField = self.env["shipstation.field"]
@@ -129,6 +131,8 @@ class ShipStationInstance(models.Model):
         return records
 
     def write(self, vals):
+        if "base_url" in vals:
+            vals["base_url"] = self._normalize_shipstation_base_url(vals.get("base_url"))
         res = super().write(vals)
         if self.env.context.get("skip_store_autofill"):
             return res
@@ -159,10 +163,17 @@ class ShipStationInstance(models.Model):
     def action_test_connection(self):
         updated_store_ids = []
         for rec in self:
-            stores_response = rec._ss_request("GET", "/stores")
-            fetched_store_id = rec._extract_store_id_from_response(stores_response)
-            if fetched_store_id and fetched_store_id != rec.store_id:
-                rec.with_context(skip_store_autofill=True).write({"store_id": fetched_store_id})
+            response = requests.get(
+                "https://api.shipstation.com/v2/products",
+                headers={"api-key": str(rec.api_key or "").strip()},
+                params={"page": 1, "page_size": 1},
+                timeout=30,
+            )
+            if response.status_code >= 400:
+                raise UserError(
+                    _("ShipStation API error %s on /v2/products: %s")
+                    % (response.status_code, (response.text or "")[:1000])
+                )
             self.env["shipstation.field"].ensure_default_fields_for_instance(rec)
             if rec.store_id:
                 updated_store_ids.append(rec.store_id)
@@ -1054,7 +1065,7 @@ class ShipStationInstance(models.Model):
         fetched_any = False
 
         while True:
-            params = {
+            legacy_params = {
                 "page": page,
                 "pageSize": page_size,
                 "sortBy": "ModifyDate",
@@ -1063,9 +1074,9 @@ class ShipStationInstance(models.Model):
                 "modifyDateEnd": self._format_ss_datetime(end_dt),
             }
             if self.store_id and str(self.store_id).isdigit():
-                params["storeId"] = self.store_id
-            _logger.info("ShipStation product sync params: %s", params)
-            data = self._ss_request("GET", "/products", params=params)
+                legacy_params["storeId"] = self.store_id
+            _logger.info("ShipStation product sync params: %s", legacy_params)
+            data = self._fetch_products_with_fallback(page=page, page_size=page_size, legacy_params=legacy_params)
             products = data.get("products", [])
             if not products:
                 break
@@ -1073,7 +1084,15 @@ class ShipStationInstance(models.Model):
 
             for product_data in products:
                 try:
+                    _logger.info(
+                        "ShipStation product sync raw payload sku=%s payload=%s",
+                        product_data.get("sku"),
+                        str(product_data)[:1500],
+                    )
                     self.env["shipstation.product.sync"]._upsert_from_payload(
+                        self, product_data
+                    )
+                    self.env["shipstation.inventory"]._upsert_from_payload(
                         self, product_data
                     )
                     synced += 1
@@ -1094,22 +1113,30 @@ class ShipStationInstance(models.Model):
         if mode == "manual" and not fetched_any:
             page = 1
             while True:
-                params = {
+                legacy_params = {
                     "page": page,
                     "pageSize": page_size,
                     "sortBy": "ModifyDate",
                     "sortDir": "ASC",
                 }
                 if self.store_id and str(self.store_id).isdigit():
-                    params["storeId"] = self.store_id
-                _logger.info("ShipStation product sync no-date params: %s", params)
-                data = self._ss_request("GET", "/products", params=params)
+                    legacy_params["storeId"] = self.store_id
+                _logger.info("ShipStation product sync no-date params: %s", legacy_params)
+                data = self._fetch_products_with_fallback(page=page, page_size=page_size, legacy_params=legacy_params)
                 products = data.get("products", [])
                 if not products:
                     break
                 for product_data in products:
                     try:
+                        _logger.info(
+                            "ShipStation product sync raw payload sku=%s payload=%s",
+                            product_data.get("sku"),
+                            str(product_data)[:1500],
+                        )
                         self.env["shipstation.product.sync"]._upsert_from_payload(
+                            self, product_data
+                        )
+                        self.env["shipstation.inventory"]._upsert_from_payload(
                             self, product_data
                         )
                         synced += 1
@@ -1230,23 +1257,28 @@ class ShipStationInstance(models.Model):
         location = self.inventory_warehouse_id.lot_stock_id if self.inventory_warehouse_id else False
         ProductProduct = self.env["product.product"].with_company(self.company_id)
         while True:
-            params = {"page": page, "pageSize": page_size}
+            legacy_params = {"page": page, "pageSize": page_size}
             if self.store_id and str(self.store_id).isdigit():
-                params["storeId"] = int(self.store_id)
-            data = self._ss_request("GET", "/products", params=params)
+                legacy_params["storeId"] = int(self.store_id)
+            data = self._fetch_products_with_fallback(page=page, page_size=page_size, legacy_params=legacy_params)
             products = (data or {}).get("products") or []
             if not products:
                 break
             for product_data in products:
                 try:
+                    _logger.info(
+                        "ShipStation inventory sync raw payload sku=%s payload=%s",
+                        product_data.get("sku"),
+                        str(product_data)[:1500],
+                    )
                     self.env["shipstation.product.sync"]._upsert_from_payload(self, product_data)
-                    self.env["shipstation.inventory"]._upsert_from_payload(self, product_data)
+                    inventory_record = self.env["shipstation.inventory"]._upsert_from_payload(self, product_data)
                     if self.inventory_update_odoo_stock and location:
                         sku = str(product_data.get("sku") or "").strip()
                         if sku:
                             product = ProductProduct.search([("default_code", "=", sku)], limit=1)
                             if product:
-                                target_qty = max(float(product_data.get("stockLevel") or 0.0), 0.0)
+                                target_qty = max(float(inventory_record.stock_level or 0.0), 0.0)
                                 current_qty = Quant._get_available_quantity(product, location)
                                 diff = target_qty - current_qty
                                 if abs(diff) > 0.0001:

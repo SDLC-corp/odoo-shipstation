@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 
 from odoo import fields, models, _
 from odoo.exceptions import UserError
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ShipStationProductSync(models.Model):
@@ -120,6 +124,24 @@ class ShipStationProductSync(models.Model):
             overrides[listing_field] = value
         return overrides
 
+    def _select_display_value(self, payload_value, override_value, value_type="char"):
+        if value_type == "char":
+            if payload_value not in (None, ""):
+                return str(payload_value).strip()
+            if override_value not in (None, ""):
+                return str(override_value).strip()
+            return False
+        if payload_value not in (None, ""):
+            return payload_value
+        if override_value not in (None, ""):
+            return override_value
+        return False
+
+    def _resolve_stock_level(self, instance, product_data):
+        inventory_model = self.env["shipstation.inventory"]
+        stock_level, inventory_payload, issue = inventory_model.resolve_stock_level(instance, product_data)
+        return stock_level, inventory_payload, issue
+
     def _get_mapping_source_product_template(self):
         self.ensure_one()
         if not self.instance_id:
@@ -145,6 +167,19 @@ class ShipStationProductSync(models.Model):
         except Exception:
             return str(obj)
 
+    def _get_existing_shipstation_active(self):
+        self.ensure_one()
+        payload_data = {}
+        try:
+            payload_data = json.loads(self.payload or "{}")
+        except Exception:
+            payload_data = {}
+        if isinstance(payload_data, dict):
+            product_payload = payload_data.get("product") if isinstance(payload_data.get("product"), dict) else payload_data
+            if isinstance(product_payload, dict) and "active" in product_payload:
+                return bool(product_payload.get("active"))
+        return True
+
     # -------------------------------------------------------------------------
     # Buttons (called from form view)
     # -------------------------------------------------------------------------
@@ -163,9 +198,18 @@ class ShipStationProductSync(models.Model):
         if self.shipstation_product_id:
             endpoint = f"/products/{self.shipstation_product_id}"
             method = "PUT"
+            payload.setdefault("active", self._get_existing_shipstation_active())
         else:
             endpoint = "/products"
             method = "POST"
+
+        _logger.info(
+            "ShipStation product push sku=%s method=%s endpoint=%s payload=%s",
+            self.sku,
+            method,
+            endpoint,
+            payload,
+        )
 
         response = self.instance_id._ss_request(method, endpoint, data=payload)
 
@@ -207,7 +251,13 @@ class ShipStationProductSync(models.Model):
         if not params:
             raise UserError(_("Set a ShipStation product ID or SKU before pulling."))
 
-        data = self.instance_id._ss_request("GET", "/products", params=params)
+        data = self.instance_id._fetch_products_with_fallback(
+            page=1,
+            page_size=1,
+            sku=self.sku if not self.shipstation_product_id else None,
+            product_id=self.shipstation_product_id or None,
+            legacy_params=params,
+        )
         products = (data or {}).get("products") or []
 
         if not products:
@@ -244,13 +294,26 @@ class ShipStationProductSync(models.Model):
             or ""
         ).strip()
         overrides = self._extract_listing_overrides_from_mapping(instance, product_data)
-        sku_val = overrides.get("sku", product_data.get("sku"))
-        name_val = overrides.get("name", product_data.get("name"))
-        price_val = overrides.get("price", product_data.get("price"))
-        weight_val = overrides.get("weight", product_data.get("weight"))
-        stock_val = overrides.get("stock_level", product_data.get("stockLevel"))
+        stock_val, inventory_payload, issue = self._resolve_stock_level(instance, product_data)
+        sku_val = self._select_display_value(product_data.get("sku"), overrides.get("sku"))
+        name_val = self._select_display_value(product_data.get("name"), overrides.get("name"))
+        price_val = self._select_display_value(product_data.get("price"), overrides.get("price"), value_type="float")
+        weight_val = self._select_display_value(product_data.get("weight"), overrides.get("weight"), value_type="float")
+        inventory_model = self.env["shipstation.inventory"]
+        _logger.info(
+            "ShipStation product write start sku=%s product_id=%s raw_product_candidates=%s raw_inventory_candidates=%s mapped_stock=%s issue=%s record_id=%s",
+            product_data.get("sku"),
+            product_id,
+            inventory_model._extract_stock_candidates(product_data),
+            inventory_model._extract_stock_candidates(inventory_payload),
+            stock_val,
+            issue or "none",
+            self.id,
+        )
+        if stock_val is None:
+            stock_val = self.stock_level
 
-        self.write({
+        vals = {
             "shipstation_product_id": product_id or self.shipstation_product_id,
             "sku": str(sku_val).strip() if sku_val not in (None, "") else self.sku,
             "name": str(name_val).strip() if name_val not in (None, "") else self.name,
@@ -258,7 +321,23 @@ class ShipStationProductSync(models.Model):
             "weight": self._to_float(weight_val, 0.0),
             "stock_level": self._to_float(stock_val, 0.0),
             "modify_date": instance._parse_ss_datetime(product_data.get("modifyDate")),
-        })
+            "payload": self._json_dump({"product": product_data, "inventory": inventory_payload} if inventory_payload else product_data),
+        }
+        if issue in ("invalid_credentials", "unavailable"):
+            vals["payload"] = self._json_dump(
+                {
+                    "product": product_data,
+                    "inventory_warning": "ShipStation inventory endpoint did not return stock with the configured API credentials.",
+                    "stock_preserved": True,
+                }
+            )
+        self.write(vals)
+        _logger.info(
+            "ShipStation product write done sku=%s record_id=%s stored_stock=%s",
+            self.sku,
+            self.id,
+            self.stock_level,
+        )
 
     def _upsert_from_payload(self, instance, product_data):
         """Create or update a shipstation.product.sync record from payload."""
@@ -268,11 +347,12 @@ class ShipStationProductSync(models.Model):
             or ""
         ).strip()
         overrides = self._extract_listing_overrides_from_mapping(instance, product_data)
-        sku_val = overrides.get("sku", product_data.get("sku"))
-        name_val = overrides.get("name", product_data.get("name"))
-        price_val = overrides.get("price", product_data.get("price"))
-        weight_val = overrides.get("weight", product_data.get("weight"))
-        stock_val = overrides.get("stock_level", product_data.get("stockLevel"))
+        stock_val, inventory_payload, issue = self._resolve_stock_level(instance, product_data)
+        sku_val = self._select_display_value(product_data.get("sku"), overrides.get("sku"))
+        name_val = self._select_display_value(product_data.get("name"), overrides.get("name"))
+        price_val = self._select_display_value(product_data.get("price"), overrides.get("price"), value_type="float")
+        weight_val = self._select_display_value(product_data.get("weight"), overrides.get("weight"), value_type="float")
+        inventory_model = self.env["shipstation.inventory"]
 
         vals = {
             "instance_id": instance.id,
@@ -281,10 +361,10 @@ class ShipStationProductSync(models.Model):
             "name": str(name_val).strip() if name_val not in (None, "") else False,
             "price": self._to_float(price_val, 0.0),
             "weight": self._to_float(weight_val, 0.0),
-            "stock_level": self._to_float(stock_val, 0.0),
+            "stock_level": self._to_float(stock_val, 0.0) if stock_val is not None else 0.0,
             "modify_date": instance._parse_ss_datetime(product_data.get("modifyDate")),
             "synced_on": fields.Datetime.now(),
-            "payload": self._json_dump(product_data),
+            "payload": self._json_dump({"product": product_data, "inventory": inventory_payload} if inventory_payload else product_data),
         }
 
         existing = False
@@ -299,9 +379,42 @@ class ShipStationProductSync(models.Model):
                 [("sku", "=", product_data.get("sku")), ("instance_id", "=", instance.id)],
                 limit=1,
             )
+        _logger.info(
+            "ShipStation product upsert start sku=%s product_id=%s raw_product_candidates=%s raw_inventory_candidates=%s mapped_stock=%s issue=%s existing_id=%s",
+            product_data.get("sku"),
+            product_id,
+            inventory_model._extract_stock_candidates(product_data),
+            inventory_model._extract_stock_candidates(inventory_payload),
+            stock_val,
+            issue or "none",
+            existing.id if existing else False,
+        )
+        if existing and stock_val is None:
+            vals["stock_level"] = existing.stock_level
+        if issue in ("invalid_credentials", "unavailable"):
+            vals["payload"] = self._json_dump(
+                {
+                    "product": product_data,
+                    "inventory_warning": "ShipStation inventory endpoint did not return stock with the configured API credentials.",
+                    "stock_preserved": bool(existing),
+                }
+            )
 
         if existing:
             existing.write(vals)
+            _logger.info(
+                "ShipStation product upsert write sku=%s record_id=%s stored_stock=%s",
+                existing.sku,
+                existing.id,
+                existing.stock_level,
+            )
             return existing
 
-        return self.create(vals)
+        created = self.create(vals)
+        _logger.info(
+            "ShipStation product upsert create sku=%s record_id=%s stored_stock=%s",
+            created.sku,
+            created.id,
+            created.stock_level,
+        )
+        return created

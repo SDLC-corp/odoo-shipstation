@@ -11,7 +11,7 @@
                 <field name="shipstation_product_id"/>
                 <field name="sku"/>
                 <field name="name"/>
-                <field name="stock_level"/>
+                <field name="stock_level" string="In Stock"/>
                 <field name="stock_status"/>
                 <field name="modify_date"/>
                 <field name="synced_on"/>
@@ -33,7 +33,7 @@
                         <field name="shipstation_product_id"/>
                         <field name="sku"/>
                         <field name="name"/>
-                        <field name="stock_level"/>
+                        <field name="stock_level" string="In Stock"/>
                         <field name="stock_status"/>
                         <field name="modify_date"/>
                         <field name="synced_on"/>

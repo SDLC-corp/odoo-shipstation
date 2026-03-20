@@ -7,7 +7,7 @@
                 <field name="sku"/>
                 <field name="name"/>
                 <field name="price"/>
-                <field name="stock_level"/>
+                <field name="stock_level" string="In Stock"/>
                 <field name="modify_date"/>
                 <field name="synced_on"/>
             </list>
@@ -31,7 +31,7 @@
                         <field name="name"/>
                         <field name="price"/>
                         <field name="weight"/>
-                        <field name="stock_level"/>
+                        <field name="stock_level" string="In Stock"/>
                         <field name="modify_date"/>
                         <field name="synced_on"/>
                     </group>
