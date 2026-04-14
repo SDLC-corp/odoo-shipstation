@@ -1,1154 +1,1123 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDLC Maintenance QR Code - User Guide</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-            --color-primary: #714B67;
-            --color-primary-light: #875A7B;
-            --color-primary-lighter: #f0e6ef;
-            --color-primary-dark: #5a3a52;
-            --color-bg: #ffffff;
-            --color-bg-secondary: #f6f8fa;
-            --color-bg-sidebar: #ffffff;
-            --color-text: #1c1e21;
-            --color-text-secondary: #606770;
-            --color-border: #e3e8ee;
-            --color-link: #714B67;
-            --color-link-hover: #5a3a52;
-            --color-success: #00a86b;
-            --color-info: #4aa3df;
-            --color-warning: #e6a817;
-            --color-tip: #00a86b;
-            --color-danger: #e74c3c;
-            --sidebar-width: 280px;
-            --toc-width: 220px;
-            --header-height: 60px;
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        }
-        body { font-family: var(--font-family); font-size: 16px; line-height: 1.65; color: var(--color-text); background: var(--color-bg); }
-        a { color: var(--color-link); text-decoration: none; }
-        a:hover { color: var(--color-link-hover); text-decoration: underline; }
-        html { scroll-behavior: smooth; }
-        .navbar { position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--color-bg); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; padding: 0 24px; z-index: 100; }
-        .navbar-brand { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
-        .navbar-brand:hover { text-decoration: none; color: var(--color-primary-dark); }
-        .navbar-brand svg { width: 32px; height: 32px; }
-        .navbar-separator { width: 1px; height: 24px; background: var(--color-border); margin: 0 16px; }
-        .navbar-module-name { font-size: 0.95rem; font-weight: 500; color: var(--color-text-secondary); }
-        .navbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
-        .navbar-version { background: var(--color-primary-lighter); color: var(--color-primary); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-        .mobile-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text); padding: 4px; }
-        .layout { display: flex; margin-top: var(--header-height); min-height: calc(100vh - var(--header-height)); }
-        .sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); background: var(--color-bg-sidebar); border-right: 1px solid var(--color-border); position: fixed; top: var(--header-height); left: 0; bottom: 0; overflow-y: auto; padding: 16px 0; z-index: 90; }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
-        .sidebar-category { margin-bottom: 4px; }
-        .sidebar-category-label { display: flex; align-items: center; gap: 8px; padding: 8px 20px; font-size: 0.85rem; font-weight: 700; color: var(--color-text); text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; user-select: none; transition: background 0.15s; }
-        .sidebar-category-label:hover { background: var(--color-bg-secondary); }
-        .sidebar-category-label .caret { margin-left: auto; font-size: 0.65rem; transition: transform 0.2s; color: var(--color-text-secondary); }
-        .sidebar-category.collapsed .caret { transform: rotate(-90deg); }
-        .sidebar-category.collapsed .sidebar-items { display: none; }
-        .sidebar-items { list-style: none; }
-        .sidebar-item a { display: block; padding: 6px 20px 6px 44px; font-size: 0.875rem; color: var(--color-text-secondary); transition: all 0.15s; border-left: 3px solid transparent; }
-        .sidebar-item a:hover { background: var(--color-bg-secondary); color: var(--color-primary); text-decoration: none; }
-        .sidebar-item a.active { background: var(--color-primary-lighter); color: var(--color-primary); border-left-color: var(--color-primary); font-weight: 600; }
-        .main-wrapper { margin-left: var(--sidebar-width); flex: 1; display: flex; min-width: 0; }
-        .main-content { flex: 1; max-width: 820px; padding: 32px 48px 80px; min-width: 0; }
-        .breadcrumbs { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 20px; flex-wrap: wrap; }
-        .breadcrumbs a { color: var(--color-text-secondary); }
-        .breadcrumbs a:hover { color: var(--color-primary); text-decoration: underline; }
-        .breadcrumbs .separator { font-size: 0.7rem; }
-        .main-content h1 { font-size: 2.2rem; font-weight: 700; color: var(--color-text); margin-bottom: 8px; line-height: 1.25; }
-        .main-content h2 { font-size: 1.5rem; font-weight: 700; color: var(--color-text); margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); scroll-margin-top: calc(var(--header-height) + 16px); }
-        .main-content h2 .anchor-link { opacity: 0; margin-left: 8px; font-size: 0.85em; color: var(--color-text-secondary); transition: opacity 0.15s; }
-        .main-content h2:hover .anchor-link { opacity: 1; }
-        .main-content h3 { font-size: 1.2rem; font-weight: 600; color: var(--color-text); margin-top: 32px; margin-bottom: 12px; scroll-margin-top: calc(var(--header-height) + 16px); }
-        .main-content h4 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin-top: 24px; margin-bottom: 8px; }
-        .main-content p { margin-bottom: 16px; color: var(--color-text); }
-        .main-content ul, .main-content ol { margin-bottom: 16px; padding-left: 24px; }
-        .main-content li { margin-bottom: 6px; }
-        .main-content strong { font-weight: 600; }
-        .main-content code { background: var(--color-bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
-        .main-content hr { border: none; border-top: 1px solid var(--color-border); margin: 32px 0; }
-        .lead-text { font-size: 1.15rem; color: var(--color-text-secondary); margin-bottom: 24px; line-height: 1.7; }
-        .doc-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.925rem; }
-        .doc-table th { background: var(--color-bg-secondary); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--color-border); }
-        .doc-table td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
-        .doc-table tr:last-child td { border-bottom: none; }
-        .doc-table tbody tr:hover { background: var(--color-bg-secondary); }
-        .admonition { padding: 16px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid; }
-        .admonition-title { font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .admonition-info { background: #eef6fc; border-color: var(--color-info); }
-        .admonition-info .admonition-title { color: var(--color-info); }
-        .admonition-tip { background: #e6f7ef; border-color: var(--color-tip); }
-        .admonition-tip .admonition-title { color: var(--color-tip); }
-        .admonition-warning { background: #fef9e7; border-color: var(--color-warning); }
-        .admonition-warning .admonition-title { color: var(--color-warning); }
-        .admonition-note { background: var(--color-primary-lighter); border-color: var(--color-primary); }
-        .admonition-note .admonition-title { color: var(--color-primary); }
-        .admonition-danger { background: #fde8e8; border-color: var(--color-danger); }
-        .admonition-danger .admonition-title { color: var(--color-danger); }
-        .screenshot-container { margin: 24px 0; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: var(--color-bg-secondary); }
-        .screenshot-container img { width: 100%; height: auto; display: block; }
-        .screenshot-caption { padding: 10px 16px; font-size: 0.85rem; color: var(--color-text-secondary); text-align: center; font-style: italic; border-top: 1px solid var(--color-border); }
-        .steps-list { counter-reset: step-counter; list-style: none; padding: 0; margin: 16px 0 24px; }
-        .steps-list li { counter-increment: step-counter; padding: 12px 16px 12px 56px; position: relative; margin-bottom: 12px; background: var(--color-bg-secondary); border-radius: 8px; border: 1px solid var(--color-border); }
-        .steps-list li::before { content: counter(step-counter); position: absolute; left: 16px; top: 12px; width: 28px; height: 28px; background: var(--color-primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 20px 0 28px; }
-        .feature-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 8px; padding: 20px; transition: box-shadow 0.2s, border-color 0.2s; }
-        .feature-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--color-primary-light); }
-        .feature-card-icon { font-size: 1.5rem; margin-bottom: 10px; }
-        .feature-card h4 { font-size: 0.95rem; font-weight: 600; margin: 0 0 8px; color: var(--color-text); }
-        .feature-card p { font-size: 0.85rem; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
-        .badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
-        .badge-purple { background: var(--color-primary-lighter); color: var(--color-primary); }
-        .badge-green { background: #e6f7ef; color: var(--color-success); }
-        .badge-blue { background: #eef6fc; color: var(--color-info); }
-        .badge-red { background: #fde8e8; color: var(--color-danger); }
-        .badge-orange { background: #fff3e0; color: #e67e22; }
-        .pagination-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--color-border); }
-        .pagination-nav a { display: block; padding: 16px 20px; border: 1px solid var(--color-border); border-radius: 8px; transition: border-color 0.2s; text-decoration: none; }
-        .pagination-nav a:hover { border-color: var(--color-primary); text-decoration: none; }
-        .pagination-label { font-size: 0.78rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-        .pagination-title { font-weight: 600; color: var(--color-primary); font-size: 0.95rem; }
-        .pagination-next { text-align: right; }
-        .toc { width: var(--toc-width); min-width: var(--toc-width); padding: 32px 16px 32px 0; position: sticky; top: var(--header-height); max-height: calc(100vh - var(--header-height)); overflow-y: auto; align-self: flex-start; }
-        .toc-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text); margin-bottom: 10px; }
-        .toc-list { list-style: none; border-left: 2px solid var(--color-border); }
-        .toc-list li a { display: block; padding: 4px 12px; font-size: 0.8rem; color: var(--color-text-secondary); border-left: 2px solid transparent; margin-left: -2px; transition: all 0.15s; }
-        .toc-list li a:hover, .toc-list li a.active { color: var(--color-primary); border-left-color: var(--color-primary); text-decoration: none; }
-        .footer { margin-left: var(--sidebar-width); border-top: 1px solid var(--color-border); padding: 24px 48px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--color-text-secondary); background: var(--color-bg-secondary); }
-        .footer a { color: var(--color-text-secondary); }
-        .footer a:hover { color: var(--color-primary); }
-        .footer-links { display: flex; gap: 20px; }
-        .doc-page { display: none; }
-        .doc-page.active { display: block; }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 85; }
-        .sidebar-overlay.active { display: block; }
-        .code-block { background: #1e1e2e; color: #cdd6f4; padding: 16px 20px; border-radius: 8px; font-family: var(--font-mono); font-size: 0.9rem; margin: 16px 0 24px; overflow-x: auto; line-height: 1.6; }
-        .code-block .keyword { color: #cba6f7; }
-        .code-block .string { color: #a6e3a1; }
-        .code-block .comment { color: #6c7086; font-style: italic; }
-        .code-block .field { color: #89b4fa; }
-        .label-preview { display: inline-block; border: 2px solid var(--color-border); border-radius: 8px; padding: 12px; text-align: center; background: #fff; margin: 16px 0; min-width: 180px; }
-        .label-preview .lp-header { background: #6b4096; color: #fff; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 4px 4px 0 0; letter-spacing: 0.04em; }
-        .label-preview .lp-qr { width: 80px; height: 80px; background: var(--color-bg-secondary); margin: 8px auto; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #999; }
-        .label-preview .lp-code { font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem; margin-top: 4px; }
-        .label-preview .lp-name { font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 2px; }
-        @media (max-width: 1100px) { .toc { display: none; } .main-content { max-width: 100%; } }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; width: 280px; min-width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main-wrapper { margin-left: 0; }
-            .footer { margin-left: 0; padding: 20px 24px; flex-direction: column; gap: 12px; }
-            .main-content { padding: 24px 20px 60px; }
-            .mobile-toggle { display: block; }
-            .navbar-module-name { display: none; }
-            .pagination-nav { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar">
-    <button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">&#9776;</button>
-    <a href="#" class="navbar-brand" onclick="showPage('intro'); return false;">
-        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#714B67"/><text x="5" y="23" font-family="Arial" font-weight="bold" font-size="18" fill="#fff">SC</text></svg>
-        SDLC Corp
-    </a>
-    <div class="navbar-separator"></div>
-    <span class="navbar-module-name">Maintenance QR Code Documentation</span>
-    <div class="navbar-right">
-        <span class="navbar-version">v17.0 / v18.0 / v19.0</span>
-    </div>
-</nav>
-
-<!-- SIDEBAR -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Welcome</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" class="active" data-page="intro" onclick="showPage('intro'); return false;">Introduction</a></li>
-        </ul>
-    </div>
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Installation</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" data-page="getting-started" onclick="showPage('getting-started'); return false;">Getting Started</a></li>
-            <li class="sidebar-item"><a href="#" data-page="dependencies" onclick="showPage('dependencies'); return false;">Dependencies</a></li>
-        </ul>
-    </div>
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Configuration</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" data-page="security" onclick="showPage('security'); return false;">Security &amp; Access</a></li>
-            <li class="sidebar-item"><a href="#" data-page="sequence" onclick="showPage('sequence'); return false;">Equipment Code Sequence</a></li>
-        </ul>
-    </div>
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Usage Guide</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" data-page="equipment-code" onclick="showPage('equipment-code'); return false;">Equipment Codes</a></li>
-            <li class="sidebar-item"><a href="#" data-page="qr-preview" onclick="showPage('qr-preview'); return false;">QR Code Preview</a></li>
-            <li class="sidebar-item"><a href="#" data-page="print-wizard" onclick="showPage('print-wizard'); return false;">Print Wizard</a></li>
-            <li class="sidebar-item"><a href="#" data-page="label-layouts" onclick="showPage('label-layouts'); return false;">Label Layouts</a></li>
-            <li class="sidebar-item"><a href="#" data-page="scanning" onclick="showPage('scanning'); return false;">Scanning QR Codes</a></li>
-        </ul>
-    </div>
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Label Design</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" data-page="label-anatomy" onclick="showPage('label-anatomy'); return false;">Label Anatomy</a></li>
-            <li class="sidebar-item"><a href="#" data-page="customization" onclick="showPage('customization'); return false;">Customization</a></li>
-        </ul>
-    </div>
-    <div class="sidebar-category">
-        <div class="sidebar-category-label" onclick="toggleCategory(this)"><span>Reference</span><span class="caret">&#9660;</span></div>
-        <ul class="sidebar-items">
-            <li class="sidebar-item"><a href="#" data-page="data-models" onclick="showPage('data-models'); return false;">Data Models</a></li>
-            <li class="sidebar-item"><a href="#" data-page="report-engine" onclick="showPage('report-engine'); return false;">Report Engine</a></li>
-            <li class="sidebar-item"><a href="#" data-page="release-notes" onclick="showPage('release-notes'); return false;">Release Notes</a></li>
-        </ul>
-    </div>
-</aside>
-
-<!-- MAIN LAYOUT -->
-<div class="layout">
-<div class="main-wrapper">
-<article class="main-content">
-
-
-<!-- ============================================================ -->
-<!--                      PAGE: INTRO                             -->
-<!-- ============================================================ -->
-<div class="doc-page active" id="page-intro">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Maintenance QR Code</span><span class="separator">&#8250;</span><span>Introduction</span></div>
-
-    <h1>SDLC Maintenance QR Code</h1>
-    <p class="lead-text">Welcome to the official documentation for <strong>SDLC Maintenance QR Code</strong> &mdash; a module for Odoo 17, 18 &amp; 19 Community Edition that generates unique equipment codes, creates scannable QR codes for maintenance equipment, and prints professional QR label sheets in multiple layouts.</p>
-
-    <h2 id="intro-what">What is Maintenance QR Code? <a href="#intro-what" class="anchor-link">#</a></h2>
-    <p>This module extends Odoo's standard Maintenance module by adding auto-generated equipment codes, scannable QR codes that link directly to equipment records, and a print wizard for producing professional label sheets. Warehouse and maintenance teams can scan QR labels on physical equipment to instantly pull up the corresponding record in Odoo &mdash; no manual searching required.</p>
-
-    <h2 id="intro-features">Key Features <a href="#intro-features" class="anchor-link">#</a></h2>
-    <div class="feature-grid">
-        <div class="feature-card">
-            <div class="feature-card-icon">&#128287;</div>
-            <h4>Auto Equipment Codes</h4>
-            <p>Unique codes generated automatically on creation using a yearly-resetting sequence (MEQ/2026/00001).</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-card-icon">&#9641;</div>
-            <h4>Scannable QR Codes</h4>
-            <p>QR codes encode a direct URL to the equipment form. Scan with any mobile device to open the record.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-card-icon">&#128424;</div>
-            <h4>Label Printing</h4>
-            <p>Print professional QR label sheets in Dymo, 2x7, 4x7, or custom layouts with zero-margin PDF output.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-card-icon">&#127912;</div>
-            <h4>Custom Header Color</h4>
-            <p>Choose the label header color via a color picker to match your company branding.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-card-icon">&#128203;</div>
-            <h4>Multi-Copy Printing</h4>
-            <p>Print multiple copies of each label in a single batch for placing on equipment and spare tracking.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-card-icon">&#128274;</div>
-            <h4>Manager-Only Code Generation</h4>
-            <p>Equipment code generation restricted to Equipment Managers for controlled asset tracking.</p>
-        </div>
-    </div>
-
-    <h2 id="intro-capabilities">Capabilities Overview <a href="#intro-capabilities" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Capability</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Equipment Code</strong></td><td>Auto-generated unique code per equipment: <code>MEQ/YYYY/NNNNN</code></td></tr>
-            <tr><td><strong>QR Code Preview</strong></td><td>Live QR code displayed in a dedicated tab on the equipment form</td></tr>
-            <tr><td><strong>QR Payload URL</strong></td><td>Encodes direct deep-link: <code>{base_url}/web#id={id}&amp;model=maintenance.equipment&amp;view_type=form</code></td></tr>
-            <tr><td><strong>Label Layouts</strong></td><td>Dymo (1x1), 2x7, 4x7, or fully custom columns &amp; rows</td></tr>
-            <tr><td><strong>Label Header</strong></td><td>"PROPERTY OF {company}" banner with customizable color</td></tr>
-            <tr><td><strong>PDF Output</strong></td><td>Zero-margin A4 portrait for direct printing to label sheets</td></tr>
-            <tr><td><strong>Batch Printing</strong></td><td>Select multiple equipment from list view and print all labels at once</td></tr>
-            <tr><td><strong>Search &amp; Filter</strong></td><td>Equipment code added to search view for quick lookup</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="intro-versions">Supported Versions <a href="#intro-versions" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Detail</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Odoo Version</strong></td><td>17.0, 18.0, 19.0 (Community Edition)</td></tr>
-            <tr><td><strong>Module Version</strong></td><td>17.0.1.0.0 / 18.0.1.0.0 / 19.0.1.0.0</td></tr>
-            <tr><td><strong>Category</strong></td><td>Maintenance</td></tr>
-            <tr><td><strong>License</strong></td><td>LGPL-3</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="intro-quickstart">Quick Start <a href="#intro-quickstart" class="anchor-link">#</a></h2>
-    <ol class="steps-list">
-        <li><strong>Install the module</strong> &mdash; Download and install <code>sdlc_maintenance_qr_code</code> from the Odoo Apps menu.</li>
-        <li><strong>Open Maintenance</strong> &mdash; Navigate to <strong>Maintenance &gt; Equipment</strong>.</li>
-        <li><strong>Create or open equipment</strong> &mdash; Equipment codes are auto-assigned on creation. For existing equipment, click <em>Generate Code</em>.</li>
-        <li><strong>View the QR code</strong> &mdash; Open the <em>QR Code</em> tab on the equipment form to see the live QR preview.</li>
-        <li><strong>Print labels</strong> &mdash; Click <strong>Equipment QR Label</strong>, choose layout and options, then click <em>Print Labels</em>.</li>
-    </ol>
-
-    <div class="pagination-nav">
-        <div></div>
-        <a href="#" onclick="showPage('getting-started'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Getting Started</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: GETTING STARTED                       -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-getting-started">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Installation</span><span class="separator">&#8250;</span><span>Getting Started</span></div>
-
-    <h1>Getting Started</h1>
-    <p class="lead-text">Install the module and start generating QR labels for your maintenance equipment with zero configuration.</p>
-
-    <h2 id="gs-prereq">Prerequisites <a href="#gs-prereq" class="anchor-link">#</a></h2>
-    <ul>
-        <li>A working <strong>Odoo 17, 18, or 19</strong> Community Edition instance</li>
-        <li>The <strong>Maintenance</strong> (<code>maintenance</code>) module installed and configured</li>
-        <li>Admin or Equipment Manager access</li>
-    </ul>
-
-    <h2 id="gs-install">Installation Steps <a href="#gs-install" class="anchor-link">#</a></h2>
-    <ol class="steps-list">
-        <li><strong>Download the Module</strong><br>Download <code>sdlc_maintenance_qr_code</code> from the Odoo App Store or obtain it from SDLC Corp.</li>
-        <li><strong>Upload to Your Server</strong><br>Place the folder in your Odoo addons directory.</li>
-        <li><strong>Update Apps List</strong><br>Go to <strong>Settings &gt; Technical &gt; Update Apps List</strong> and click <em>Update</em>.</li>
-        <li><strong>Install the Module</strong><br>Navigate to <strong>Apps</strong>, search for <em>"SDLC Maintenance QR Code"</em>, and click <em>Install</em>.</li>
-    </ol>
-
-    <h2 id="gs-verify">Verify Installation <a href="#gs-verify" class="anchor-link">#</a></h2>
-    <p>After installation you will see:</p>
-    <ul>
-        <li>A new <strong>Equipment QR Label</strong> button on the equipment form and list view header</li>
-        <li>A new <strong>Equipment Code</strong> field and <strong>Generate Code</strong> button on the equipment form</li>
-        <li>A new <strong>QR Code</strong> tab on the equipment form showing the live QR preview</li>
-        <li>An <strong>Equipment Code</strong> column in the equipment list view</li>
-        <li>Equipment Code searchable in the search bar</li>
-    </ul>
-
-    <div class="screenshot-container">
-        <img src="photo4.png" alt="Equipment form with QR buttons">
-        <div class="screenshot-caption">Equipment form showing the Equipment QR Label button, Equipment Code, and Generate Code link</div>
-    </div>
-
-    <div class="admonition admonition-info">
-        <div class="admonition-title">&#8505; No Configuration Needed</div>
-        <p>The module works out of the box. Equipment codes are auto-assigned on creation and the QR code sequence is set up automatically during installation.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('intro'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Introduction</div></a>
-        <a href="#" onclick="showPage('dependencies'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Dependencies</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                   PAGE: DEPENDENCIES                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-dependencies">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Installation</span><span class="separator">&#8250;</span><span>Dependencies</span></div>
-
-    <h1>Dependencies</h1>
-    <p class="lead-text">The module has a single Odoo dependency and no external Python libraries.</p>
-
-    <h2 id="dep-odoo">Odoo Module Dependencies <a href="#dep-odoo" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Module</th><th>Technical Name</th><th>Purpose</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Maintenance</strong></td><td><code>maintenance</code></td><td>Core maintenance module &mdash; provides equipment model, forms, views, and Equipment Manager security group</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="dep-builtin">Built-in Odoo Features Used <a href="#dep-builtin" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Feature</th><th>Purpose</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Barcode endpoint</strong></td><td><code>/report/barcode/</code> &mdash; generates QR code images on the fly (built into Odoo)</td></tr>
-            <tr><td><strong>ir.sequence</strong></td><td>Auto-numbering for equipment codes with yearly reset</td></tr>
-            <tr><td><strong>QWeb Reports</strong></td><td>PDF label rendering via Odoo's built-in report engine</td></tr>
-        </tbody>
-    </table>
-
-    <div class="admonition admonition-tip">
-        <div class="admonition-title">&#128161; No Python Libraries</div>
-        <p>This module does not require any external Python libraries. QR code generation uses Odoo's built-in barcode rendering endpoint.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('getting-started'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Getting Started</div></a>
-        <a href="#" onclick="showPage('security'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Security &amp; Access</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: SECURITY & ACCESS                     -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-security">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Configuration</span><span class="separator">&#8250;</span><span>Security &amp; Access</span></div>
-
-    <h1>Security &amp; Access Control</h1>
-    <p class="lead-text">The module uses Odoo's built-in Maintenance security groups with appropriate access levels for managers and regular users.</p>
-
-    <h2 id="sec-groups">Access Control Rules <a href="#sec-groups" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Model</th><th>Group</th><th>Read</th><th>Write</th><th>Create</th><th>Delete</th></tr></thead>
-        <tbody>
-            <tr><td><code>maintenance.qr.print.wizard</code></td><td>Equipment Manager</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
-            <tr><td><code>maintenance.qr.print.wizard</code></td><td>All Users (<code>base.group_user</code>)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="sec-code-gen">Code Generation Permissions <a href="#sec-code-gen" class="anchor-link">#</a></h2>
-    <p>The <strong>Generate Code</strong> button on the equipment form is restricted:</p>
-    <ul>
-        <li>Only visible to users in the <strong>Equipment Manager</strong> group (<code>maintenance.group_equipment_manager</code>)</li>
-        <li>If a non-manager user somehow triggers the action, a <code>UserError</code> is raised</li>
-        <li>The button is hidden automatically once an equipment code has been assigned</li>
-    </ul>
-
-    <div class="admonition admonition-info">
-        <div class="admonition-title">&#8505; Auto-Generation</div>
-        <p>Equipment codes are auto-assigned when new equipment records are created, regardless of the user's group. The Generate Code button is only needed for equipment that existed before the module was installed.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('dependencies'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Dependencies</div></a>
-        <a href="#" onclick="showPage('sequence'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Equipment Code Sequence</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--               PAGE: EQUIPMENT CODE SEQUENCE                  -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-sequence">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Configuration</span><span class="separator">&#8250;</span><span>Equipment Code Sequence</span></div>
-
-    <h1>Equipment Code Sequence</h1>
-    <p class="lead-text">Equipment codes are generated automatically using an <code>ir.sequence</code> with a yearly-resetting counter.</p>
-
-    <h2 id="sq-format">Code Format <a href="#sq-format" class="anchor-link">#</a></h2>
-    <div class="code-block">
-        <span class="keyword">MEQ</span>/<span class="field">%(year)s</span>/<span class="string">#####</span>
-    </div>
-    <table class="doc-table">
-        <thead><tr><th>Part</th><th>Description</th><th>Example</th></tr></thead>
-        <tbody>
-            <tr><td><strong>MEQ</strong></td><td>Fixed prefix (Maintenance Equipment)</td><td><code>MEQ</code></td></tr>
-            <tr><td><strong>%(year)s</strong></td><td>Current year (resets counter each year)</td><td><code>2026</code></td></tr>
-            <tr><td><strong>#####</strong></td><td>5-digit zero-padded counter</td><td><code>00001</code></td></tr>
-        </tbody>
-    </table>
-
-    <h3>Example Codes</h3>
-    <ul>
-        <li><code>MEQ/2026/00001</code> &mdash; First equipment created in 2026</li>
-        <li><code>MEQ/2026/00042</code> &mdash; 42nd equipment in 2026</li>
-        <li><code>MEQ/2027/00001</code> &mdash; First equipment in 2027 (counter resets)</li>
-    </ul>
-
-    <h2 id="sq-properties">Sequence Properties <a href="#sq-properties" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Sequence Code</strong></td><td><code>maintenance.equipment.code</code></td></tr>
-            <tr><td><strong>Prefix</strong></td><td><code>MEQ/%(year)s/</code></td></tr>
-            <tr><td><strong>Padding</strong></td><td>5 digits</td></tr>
-            <tr><td><strong>Company</strong></td><td>Global (not company-specific)</td></tr>
-            <tr><td><strong>No Update</strong></td><td>True (not reset on module reinstall)</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="sq-unique">Uniqueness Constraint <a href="#sq-unique" class="anchor-link">#</a></h2>
-    <p>A SQL constraint enforces that every equipment code is unique across the entire database:</p>
-    <div class="admonition admonition-warning">
-        <div class="admonition-title">&#9888; Constraint</div>
-        <p><code>UNIQUE(x_equipment_code)</code> &mdash; "Equipment code must be unique!" Attempting to assign a duplicate code will raise a database error.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('security'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Security &amp; Access</div></a>
-        <a href="#" onclick="showPage('equipment-code'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Equipment Codes</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                 PAGE: EQUIPMENT CODES                        -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-equipment-code">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Usage Guide</span><span class="separator">&#8250;</span><span>Equipment Codes</span></div>
-
-    <h1>Equipment Codes</h1>
-    <p class="lead-text">Every piece of maintenance equipment receives a unique, auto-generated code that drives QR code creation and label printing.</p>
-
-    <h2 id="ec-auto">Automatic Assignment (New Equipment) <a href="#ec-auto" class="anchor-link">#</a></h2>
-    <p>When you create a new equipment record, the module automatically assigns an equipment code using the <code>maintenance.equipment.code</code> sequence. No action required.</p>
-
-    <h2 id="ec-manual">Manual Assignment (Existing Equipment) <a href="#ec-manual" class="anchor-link">#</a></h2>
-    <p>For equipment that existed before the module was installed:</p>
-    <ol class="steps-list">
-        <li>Open the equipment record from <strong>Maintenance &gt; Equipment</strong></li>
-        <li>Locate the <strong>Equipment Code</strong> field (below Serial Number)</li>
-        <li>Click the <strong>Generate Code</strong> link button next to the empty field</li>
-        <li>The code is assigned instantly and the QR code is generated</li>
-    </ol>
-
-    <div class="screenshot-container">
-        <img src="photo5.png" alt="Generate Code button">
-        <div class="screenshot-caption">Generate Code button visible for Equipment Managers when no code exists</div>
-    </div>
-
-    <div class="screenshot-container">
-        <img src="photo6.png" alt="Generated equipment code">
-        <div class="screenshot-caption">Equipment code successfully generated and displayed</div>
-    </div>
-
-    <h2 id="ec-field">Equipment Code Field Properties <a href="#ec-field" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Field Name</strong></td><td><code>x_equipment_code</code></td></tr>
-            <tr><td><strong>Type</strong></td><td>Char (text)</td></tr>
-            <tr><td><strong>Readonly</strong></td><td>Yes (on the form view)</td></tr>
-            <tr><td><strong>Indexed</strong></td><td>Yes (for fast database lookups)</td></tr>
-            <tr><td><strong>Tracked</strong></td><td>Yes (changes logged in chatter)</td></tr>
-            <tr><td><strong>Copy</strong></td><td>No (not copied when duplicating equipment)</td></tr>
-            <tr><td><strong>Unique</strong></td><td>Yes (SQL constraint)</td></tr>
-            <tr><td><strong>Searchable</strong></td><td>Yes (added to search view)</td></tr>
-        </tbody>
-    </table>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('sequence'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Equipment Code Sequence</div></a>
-        <a href="#" onclick="showPage('qr-preview'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">QR Code Preview</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: QR CODE PREVIEW                       -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-qr-preview">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Usage Guide</span><span class="separator">&#8250;</span><span>QR Code Preview</span></div>
-
-    <h1>QR Code Preview</h1>
-    <p class="lead-text">Each equipment record with a code displays a live QR code preview in a dedicated tab on the form view.</p>
-
-    <h2 id="qp-tab">QR Code Tab <a href="#qp-tab" class="anchor-link">#</a></h2>
-    <p>Open any equipment record and navigate to the <strong>QR Code</strong> tab. The tab shows:</p>
-    <ul>
-        <li><strong>QR Payload (URL)</strong> &mdash; The full URL encoded in the QR code, displayed as a clickable link</li>
-        <li><strong>QR Code Image</strong> &mdash; A 220x220 pixel live QR code rendered from the payload</li>
-    </ul>
-
-    <h2 id="qp-payload">QR Payload Format <a href="#qp-payload" class="anchor-link">#</a></h2>
-    <p>The QR code encodes a direct deep-link to the equipment form:</p>
-    <div class="code-block">
-        <span class="field">{base_url}</span>/web#id=<span class="string">{record_id}</span>&amp;model=<span class="string">maintenance.equipment</span>&amp;view_type=<span class="string">form</span>
-    </div>
-    <p>For example: <code>https://myodoo.com/web#id=42&amp;model=maintenance.equipment&amp;view_type=form</code></p>
-
-    <h2 id="qp-computed">Computed Fields <a href="#qp-computed" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>x_qr_payload</code></td><td>Char (computed)</td><td>Full URL that the QR code encodes</td></tr>
-            <tr><td><code>x_qr_url</code></td><td>Char (computed)</td><td>URL to Odoo's barcode endpoint that generates the QR image</td></tr>
-            <tr><td><code>x_qr_image_html</code></td><td>Html (computed)</td><td>HTML <code>&lt;img&gt;</code> tag displaying the QR code</td></tr>
-        </tbody>
-    </table>
-
-    <div class="admonition admonition-info">
-        <div class="admonition-title">&#8505; When QR is Generated</div>
-        <p>QR fields are computed automatically whenever the <code>x_equipment_code</code> or <code>company_id</code> changes. If no equipment code exists, all QR fields are set to empty.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('equipment-code'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Equipment Codes</div></a>
-        <a href="#" onclick="showPage('print-wizard'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Print Wizard</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                   PAGE: PRINT WIZARD                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-print-wizard">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Usage Guide</span><span class="separator">&#8250;</span><span>Print Wizard</span></div>
-
-    <h1>Print Wizard</h1>
-    <p class="lead-text">The Print Equipment QR Labels wizard lets you configure and generate professional QR label sheets as PDF.</p>
-
-    <h2 id="pw-open">Opening the Wizard <a href="#pw-open" class="anchor-link">#</a></h2>
-    <p>You can open the wizard in two ways:</p>
-    <h3>From the Equipment Form</h3>
-    <ol class="steps-list">
-        <li>Open an equipment record</li>
-        <li>Click the <strong>Equipment QR Label</strong> button in the header</li>
-        <li>The wizard opens pre-filled with the current equipment</li>
-    </ol>
-
-    <h3>From the Equipment List (Batch)</h3>
-    <ol class="steps-list">
-        <li>Go to <strong>Maintenance &gt; Equipment</strong> list view</li>
-        <li>Select multiple equipment using checkboxes</li>
-        <li>Click the <strong>Equipment QR Label</strong> button in the list header</li>
-        <li>The wizard opens pre-filled with all selected equipment</li>
-    </ol>
-
-    <h2 id="pw-fields">Wizard Options <a href="#pw-fields" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Equipment</strong></td><td>Many2many tags</td><td>Pre-filled</td><td>Equipment records to print labels for. Add or remove as needed.</td></tr>
-            <tr><td><strong>Copies</strong></td><td>Integer</td><td>1</td><td>Number of label copies per equipment (e.g., 2 = two labels for each equipment)</td></tr>
-            <tr><td><strong>Label Layout</strong></td><td>Radio selection</td><td>2 x 7</td><td>Predefined or custom label grid layout</td></tr>
-            <tr><td><strong>Columns</strong></td><td>Integer</td><td>2</td><td>Custom column count (only visible when layout is "Custom")</td></tr>
-            <tr><td><strong>Rows</strong></td><td>Integer</td><td>7</td><td>Custom row count (only visible when layout is "Custom")</td></tr>
-            <tr><td><strong>Header Color</strong></td><td>Color picker</td><td><code>#6b4096</code></td><td>Background color of the "PROPERTY OF..." header band on each label</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="pw-print">Printing <a href="#pw-print" class="anchor-link">#</a></h2>
-    <ol class="steps-list">
-        <li>Configure the layout, copies, and color as desired</li>
-        <li>Click <strong>Print Labels</strong></li>
-        <li>A PDF file is generated and downloaded or previewed in the browser</li>
-        <li>Print the PDF on your label sheets or standard paper</li>
-    </ol>
-
-    <div class="screenshot-container">
-        <img src="photo1.png" alt="Printed QR label example">
-        <div class="screenshot-caption">Printed QR labels with purple header, QR code, equipment code, and name</div>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('qr-preview'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">QR Code Preview</div></a>
-        <a href="#" onclick="showPage('label-layouts'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Label Layouts</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: LABEL LAYOUTS                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-label-layouts">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Usage Guide</span><span class="separator">&#8250;</span><span>Label Layouts</span></div>
-
-    <h1>Label Layouts</h1>
-    <p class="lead-text">Choose from four label layout options to match your label sheets or printing requirements.</p>
-
-    <h2 id="ll-options">Available Layouts <a href="#ll-options" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Layout</th><th>Grid</th><th>Labels/Page</th><th>QR Size</th><th>Best For</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Dymo</strong></td><td>1 x 1</td><td>1</td><td>320px</td><td>Dymo label printers, single large labels</td></tr>
-            <tr><td><strong>2 x 7</strong></td><td>2 columns, 7 rows</td><td>14</td><td>280px</td><td>Standard label sheets (e.g., Avery), default choice</td></tr>
-            <tr><td><strong>4 x 7</strong></td><td>4 columns, 7 rows</td><td>28</td><td>260px</td><td>Small labels, high-density printing</td></tr>
-            <tr><td><strong>Custom</strong></td><td>User-defined</td><td>Varies</td><td>Auto</td><td>Custom label sheets, special requirements</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="ll-qr-size">QR Code Size Logic <a href="#ll-qr-size" class="anchor-link">#</a></h2>
-    <p>The QR code pixel size adapts automatically based on the layout:</p>
-    <table class="doc-table">
-        <thead><tr><th>Condition</th><th>QR Size</th></tr></thead>
-        <tbody>
-            <tr><td>1 column, 1 row (Dymo)</td><td><strong>320px</strong> (largest)</td></tr>
-            <tr><td>2 or fewer columns</td><td><strong>280px</strong> (medium)</td></tr>
-            <tr><td>More than 2 columns</td><td><strong>260px</strong> (compact)</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="ll-pagination">Pagination <a href="#ll-pagination" class="anchor-link">#</a></h2>
-    <p>Labels are automatically distributed across multiple pages. If you have 20 equipment with 2 copies each (40 labels total) and use a 2x7 layout (14 per page), the report generates 3 pages.</p>
-
-    <div class="admonition admonition-note">
-        <div class="admonition-title">&#128221; Page Breaks</div>
-        <p>Each page uses <code>page-break-after: always</code> in the PDF to ensure clean page separation. The PDF uses zero-margin A4 portrait paper format for printer-friendly output.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('print-wizard'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Print Wizard</div></a>
-        <a href="#" onclick="showPage('scanning'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Scanning QR Codes</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: SCANNING QR CODES                     -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-scanning">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Usage Guide</span><span class="separator">&#8250;</span><span>Scanning QR Codes</span></div>
-
-    <h1>Scanning QR Codes</h1>
-    <p class="lead-text">Scan printed QR labels with any mobile device to instantly access the equipment record in Odoo.</p>
-
-    <h2 id="sc-workflow">Scanning Workflow <a href="#sc-workflow" class="anchor-link">#</a></h2>
-    <ol class="steps-list">
-        <li><strong>Locate the QR label</strong> on the physical equipment</li>
-        <li><strong>Open your camera app</strong> or any QR scanner on your mobile device</li>
-        <li><strong>Point at the QR code</strong> &mdash; the device reads the encoded URL</li>
-        <li><strong>Tap the link</strong> &mdash; your browser opens directly to the equipment form in Odoo</li>
-        <li><strong>View or update</strong> the equipment details, log maintenance requests, etc.</li>
-    </ol>
-
-    <h2 id="sc-url">What the QR Code Contains <a href="#sc-url" class="anchor-link">#</a></h2>
-    <p>The QR code encodes a deep-link URL that takes you straight to the equipment form view:</p>
-    <div class="code-block"><span class="field">https://your-odoo.com</span>/web#id=<span class="string">42</span>&amp;model=<span class="string">maintenance.equipment</span>&amp;view_type=<span class="string">form</span></div>
-
-    <div class="admonition admonition-warning">
-        <div class="admonition-title">&#9888; Authentication Required</div>
-        <p>The user scanning the QR code must be logged into Odoo in their browser. If not logged in, they will be redirected to the Odoo login page first, then forwarded to the equipment record after authentication.</p>
-    </div>
-
-    <h2 id="sc-usecases">Use Cases <a href="#sc-usecases" class="anchor-link">#</a></h2>
-    <ul>
-        <li><strong>Maintenance technicians</strong> &mdash; Scan equipment labels on the shop floor to quickly view maintenance history and log new requests</li>
-        <li><strong>Inventory audits</strong> &mdash; Scan labels during physical inventory checks to verify equipment records</li>
-        <li><strong>Onboarding</strong> &mdash; New team members can scan equipment to learn about each asset</li>
-        <li><strong>Asset tracking</strong> &mdash; Track physical location by scanning labels during facility walks</li>
-    </ul>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('label-layouts'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Label Layouts</div></a>
-        <a href="#" onclick="showPage('label-anatomy'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Label Anatomy</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: LABEL ANATOMY                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-label-anatomy">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Label Design</span><span class="separator">&#8250;</span><span>Label Anatomy</span></div>
-
-    <h1>Label Anatomy</h1>
-    <p class="lead-text">Each printed QR label consists of four distinct sections designed for quick identification and scanning.</p>
-
-    <h2 id="la-structure">Label Structure <a href="#la-structure" class="anchor-link">#</a></h2>
-
-    <div style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; margin: 20px 0;">
-        <div class="label-preview">
-            <div class="lp-header">PROPERTY OF ACME Corp</div>
-            <div class="lp-qr">[QR Code]</div>
-            <div class="lp-code">MEQ/2026/00003</div>
-            <div class="lp-name">CNC Machine #7</div>
-        </div>
-        <div style="flex:1; min-width:300px;">
-            <table class="doc-table" style="margin-top:0;">
-                <thead><tr><th>Section</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><strong>1. Header Band</strong></td><td>Colored banner with "PROPERTY OF {company name}" in white uppercase text (8pt bold)</td></tr>
-                    <tr><td><strong>2. QR Code</strong></td><td>Scannable QR code (260&ndash;320px) encoding the equipment URL</td></tr>
-                    <tr><td><strong>3. Equipment Code</strong></td><td>Monospace bold text (9pt) showing the code (e.g., MEQ/2026/00003)</td></tr>
-                    <tr><td><strong>4. Equipment Name</strong></td><td>Equipment name in 8pt text, truncated with ellipsis if too long</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <h2 id="la-styling">Label Styling Details <a href="#la-styling" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Element</th><th>Style</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Cell Width</strong></td><td><code>100% / columns</code> (dynamic based on layout)</td></tr>
-            <tr><td><strong>Cell Padding</strong></td><td>4px</td></tr>
-            <tr><td><strong>Text Alignment</strong></td><td>Center</td></tr>
-            <tr><td><strong>Header Font</strong></td><td>Arial, 8pt bold, white, uppercase</td></tr>
-            <tr><td><strong>Code Font</strong></td><td>Courier New (monospace), 9pt bold</td></tr>
-            <tr><td><strong>Name Font</strong></td><td>Arial, 8pt</td></tr>
-            <tr><td><strong>Overflow</strong></td><td>Hidden with text-overflow: ellipsis</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="la-fonts">Font Handling <a href="#la-fonts" class="anchor-link">#</a></h2>
-    <p>The module includes a SCSS stylesheet (<code>report_qr_font.scss</code>) loaded in the report assets bundle:</p>
-    <ul>
-        <li><strong>Label cells:</strong> Arial, Helvetica, sans-serif</li>
-        <li><strong>Equipment code:</strong> Courier New, Courier, monospace (via <code>.qr-code-mono</code> class)</li>
-    </ul>
-
-    <div class="admonition admonition-info">
-        <div class="admonition-title">&#8505; Special Character Handling</div>
-        <p>The module includes built-in mojibake repair (<code>_repair_mojibake</code>) and HTML entity encoding (<code>_qr_display_html_entities</code>) to handle equipment names with special characters, accented letters, or corrupted UTF-8 text in PDF rendering.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('scanning'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Scanning QR Codes</div></a>
-        <a href="#" onclick="showPage('customization'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Customization</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: CUSTOMIZATION                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-customization">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Label Design</span><span class="separator">&#8250;</span><span>Customization</span></div>
-
-    <h1>Customization</h1>
-    <p class="lead-text">Customize label appearance and layout to match your company branding and printing setup.</p>
-
-    <h2 id="cu-color">Header Color <a href="#cu-color" class="anchor-link">#</a></h2>
-    <p>The header band color can be changed per print job via the color picker in the wizard:</p>
-    <table class="doc-table">
-        <thead><tr><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Header Color</strong></td><td><code>#6b4096</code> (purple)</td><td>Background color of the "PROPERTY OF..." banner on each label</td></tr>
-        </tbody>
-    </table>
-    <p>Use this to match your company brand colors. The text color on the header is always white for contrast.</p>
-
-    <h2 id="cu-layout">Custom Grid Layout <a href="#cu-layout" class="anchor-link">#</a></h2>
-    <p>Select the <strong>Custom</strong> layout option in the wizard to specify any number of columns and rows:</p>
-    <ul>
-        <li><strong>Columns:</strong> Number of labels across the page (default: 2)</li>
-        <li><strong>Rows:</strong> Number of labels down the page (default: 7)</li>
-    </ul>
-    <p>This allows you to match any custom label sheet dimensions.</p>
-
-    <h2 id="cu-copies">Multi-Copy Printing <a href="#cu-copies" class="anchor-link">#</a></h2>
-    <p>Set the <strong>Copies</strong> field to print multiple labels for the same equipment. For example:</p>
-    <ul>
-        <li><strong>Copies = 1:</strong> One label per equipment (default)</li>
-        <li><strong>Copies = 2:</strong> Two labels per equipment (one for the asset, one for the file)</li>
-        <li><strong>Copies = 3:</strong> Three labels per equipment (spare copies for damaged labels)</li>
-    </ul>
-
-    <h2 id="cu-paper">Paper Format <a href="#cu-paper" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Format</strong></td><td>A4 Portrait</td></tr>
-            <tr><td><strong>Margins</strong></td><td>All zero (0mm top, bottom, left, right)</td></tr>
-            <tr><td><strong>DPI</strong></td><td>96</td></tr>
-            <tr><td><strong>Shrinking</strong></td><td>Disabled (prevents scaling distortion)</td></tr>
-        </tbody>
-    </table>
-
-    <div class="admonition admonition-tip">
-        <div class="admonition-title">&#128161; Printing Tip</div>
-        <p>When printing the PDF, make sure to set your printer to <strong>"Actual size"</strong> (not "Fit to page") to ensure labels align correctly with your label sheets.</p>
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('label-anatomy'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Label Anatomy</div></a>
-        <a href="#" onclick="showPage('data-models'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Data Models</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                    PAGE: DATA MODELS                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-data-models">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Reference</span><span class="separator">&#8250;</span><span>Data Models</span></div>
-
-    <h1>Data Models</h1>
-    <p class="lead-text">Technical reference for all models created or extended by the module.</p>
-
-    <h2 id="dm-equipment">maintenance.equipment (Extended) <a href="#dm-equipment" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Field</th><th>Type</th><th>Properties</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>x_equipment_code</code></td><td>Char</td><td>unique, indexed, tracked, copy=False</td><td>Auto-generated equipment code (MEQ/YYYY/NNNNN)</td></tr>
-            <tr><td><code>x_qr_payload</code></td><td>Char</td><td>computed, readonly</td><td>Full URL encoded in the QR code</td></tr>
-            <tr><td><code>x_qr_url</code></td><td>Char</td><td>computed, readonly</td><td>URL to the barcode image endpoint</td></tr>
-            <tr><td><code>x_qr_image_html</code></td><td>Html</td><td>computed, readonly, sanitize=False</td><td>HTML img tag rendering the QR code</td></tr>
-            <tr><td><code>x_qr_name_display</code></td><td>Char</td><td>computed</td><td>Mojibake-repaired equipment name for display</td></tr>
-            <tr><td><code>x_qr_name_entities</code></td><td>Char</td><td>computed</td><td>HTML-entity-encoded name for safe PDF rendering</td></tr>
-        </tbody>
-    </table>
-
-    <h3>Key Methods</h3>
-    <table class="doc-table">
-        <thead><tr><th>Method</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>create(vals_list)</code></td><td>Overridden to auto-assign equipment code on creation</td></tr>
-            <tr><td><code>action_generate_equipment_code()</code></td><td>Button action for manually generating codes (manager only)</td></tr>
-            <tr><td><code>action_open_qr_print_wizard()</code></td><td>Opens the print wizard modal with selected equipment</td></tr>
-            <tr><td><code>_assign_equipment_code_if_needed()</code></td><td>Assigns next code from ir.sequence if not already set</td></tr>
-            <tr><td><code>_compute_qr_fields()</code></td><td>Computes QR payload, URL, and HTML image</td></tr>
-            <tr><td><code>_repair_mojibake(text)</code></td><td>Static: fixes UTF-8 text decoded as latin-1/cp1252</td></tr>
-            <tr><td><code>_qr_display_html_entities(text)</code></td><td>Static: converts text to HTML entities</td></tr>
-            <tr><td><code>_qr_display_code()</code></td><td>Returns equipment code or empty string for report use</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="dm-wizard">maintenance.qr.print.wizard (Transient) <a href="#dm-wizard" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>equipment_ids</code></td><td>Many2many</td><td>From context</td><td>Equipment records to print labels for</td></tr>
-            <tr><td><code>copies</code></td><td>Integer</td><td>1</td><td>Number of copies per equipment</td></tr>
-            <tr><td><code>size</code></td><td>Selection</td><td>2x7xprice</td><td>Label layout (dymo, 2x7, 4x7, custom)</td></tr>
-            <tr><td><code>custom_columns</code></td><td>Integer</td><td>2</td><td>Custom column count</td></tr>
-            <tr><td><code>custom_rows</code></td><td>Integer</td><td>7</td><td>Custom row count</td></tr>
-            <tr><td><code>header_color</code></td><td>Char</td><td>#6b4096</td><td>Label header background color</td></tr>
-            <tr><td><code>rows</code></td><td>Integer</td><td>computed</td><td>Effective row count</td></tr>
-            <tr><td><code>columns</code></td><td>Integer</td><td>computed</td><td>Effective column count</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="dm-report">Report Abstract Model <a href="#dm-report" class="anchor-link">#</a></h2>
-    <p>Model: <code>report.sdlc_maintenance_qr_code.report_maintenance_equipment_qr</code> (AbstractModel)</p>
-    <p>Method <code>_get_report_values()</code> returns:</p>
-    <table class="doc-table">
-        <thead><tr><th>Key</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>pages</code></td><td>List of pages, each page is a list of rows, each row is a list of equipment</td></tr>
-            <tr><td><code>columns</code></td><td>Number of columns per row</td></tr>
-            <tr><td><code>rows</code></td><td>Number of rows per page</td></tr>
-            <tr><td><code>qr_px</code></td><td>QR code pixel size (260, 280, or 320)</td></tr>
-            <tr><td><code>header_color</code></td><td>Hex color for the label header</td></tr>
-            <tr><td><code>company</code></td><td>Current company record</td></tr>
-        </tbody>
-    </table>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('customization'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Customization</div></a>
-        <a href="#" onclick="showPage('report-engine'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Report Engine</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                  PAGE: REPORT ENGINE                         -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-report-engine">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Reference</span><span class="separator">&#8250;</span><span>Report Engine</span></div>
-
-    <h1>Report Engine</h1>
-    <p class="lead-text">Technical details about the QWeb PDF report, paper format, and template rendering.</p>
-
-    <h2 id="re-report">Report Action <a href="#re-report" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Report ID</strong></td><td><code>action_report_maintenance_equipment_qr</code></td></tr>
-            <tr><td><strong>Model</strong></td><td><code>maintenance.qr.print.wizard</code></td></tr>
-            <tr><td><strong>Report Type</strong></td><td><code>qweb-pdf</code></td></tr>
-            <tr><td><strong>Report Name</strong></td><td><code>sdlc_maintenance_qr_code.report_maintenance_equipment_qr</code></td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="re-paper">Paper Format <a href="#re-paper" class="anchor-link">#</a></h2>
-    <table class="doc-table">
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Format</strong></td><td>A4 Portrait</td></tr>
-            <tr><td><strong>All Margins</strong></td><td>0mm</td></tr>
-            <tr><td><strong>DPI</strong></td><td>96</td></tr>
-            <tr><td><strong>Disable Shrinking</strong></td><td>True</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="re-templates">QWeb Templates <a href="#re-templates" class="anchor-link">#</a></h2>
-    <p>Two QWeb templates work together:</p>
-    <table class="doc-table">
-        <thead><tr><th>Template</th><th>Purpose</th></tr></thead>
-        <tbody>
-            <tr><td><code>report_simple_qr_label_cell</code></td><td>Renders a single label cell (header + QR + code + name)</td></tr>
-            <tr><td><code>report_maintenance_equipment_qr</code></td><td>Main report: iterates pages &gt; rows &gt; cells, calling the cell template</td></tr>
-        </tbody>
-    </table>
-
-    <h3>Rendering Flow</h3>
-    <ol class="steps-list">
-        <li><strong>Report triggered</strong> from wizard via <code>action_print()</code></li>
-        <li><strong><code>_get_report_values()</code></strong> builds pages from equipment list, copies, and grid dimensions</li>
-        <li><strong>Main template</strong> iterates through pages with page breaks between each</li>
-        <li><strong>Cell template</strong> renders each label with the QR barcode widget, header, code, and name</li>
-        <li><strong>PDF generated</strong> with zero margins for label-sheet compatibility</li>
-    </ol>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('data-models'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Data Models</div></a>
-        <a href="#" onclick="showPage('release-notes'); return false;" class="pagination-next"><div class="pagination-label">Next &raquo;</div><div class="pagination-title">Release Notes</div></a>
-    </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!--                   PAGE: RELEASE NOTES                        -->
-<!-- ============================================================ -->
-<div class="doc-page" id="page-release-notes">
-    <div class="breadcrumbs"><a href="#" onclick="showPage('intro'); return false;">Docs</a><span class="separator">&#8250;</span><span>Reference</span><span class="separator">&#8250;</span><span>Release Notes</span></div>
-
-    <h1>Release Notes</h1>
-    <p class="lead-text">Version history and changelog for the SDLC Maintenance QR Code module.</p>
-
-    <h2 id="rn-v1">Version 17.0 / 18.0 / 19.0 <a href="#rn-v1" class="anchor-link">#</a></h2>
-    <p><span class="badge badge-green">Initial Release</span></p>
-    <p>First release of the SDLC Maintenance QR Code module for Odoo 17, 18 &amp; 19 Community Edition.</p>
-
-    <h3>Features</h3>
-    <ul>
-        <li>Auto-generated unique equipment codes with yearly-resetting sequence (<code>MEQ/YYYY/NNNNN</code>)</li>
-        <li>Manual code generation button for existing equipment (Equipment Manager only)</li>
-        <li>SQL uniqueness constraint on equipment codes</li>
-        <li>QR code preview tab on equipment form with live payload URL and QR image</li>
-        <li>QR codes encode direct deep-link to equipment form for mobile scanning</li>
-        <li>Print wizard with 4 label layouts: Dymo (1x1), 2x7, 4x7, Custom</li>
-        <li>Customizable header color via color picker widget</li>
-        <li>Multi-copy printing support</li>
-        <li>Batch label printing from equipment list view (multi-select)</li>
-        <li>Zero-margin A4 portrait PDF for label sheet compatibility</li>
-        <li>Professional label design with company header, QR code, equipment code, and name</li>
-        <li>Adaptive QR size (260px, 280px, 320px) based on layout</li>
-        <li>UTF-8 mojibake repair for corrupted equipment names</li>
-        <li>HTML entity encoding for safe PDF rendering of special characters</li>
-        <li>Equipment code added to list view column and search view</li>
-        <li>Field tracking for equipment code changes</li>
-    </ul>
-
-    <h3>Technical Details</h3>
-    <table class="doc-table">
-        <thead><tr><th>Detail</th><th>Value</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Module Name</strong></td><td>sdlc_maintenance_qr_code</td></tr>
-            <tr><td><strong>Display Name</strong></td><td>SDLC Maintenance QR Code</td></tr>
-            <tr><td><strong>Version</strong></td><td>17.0.1.0.0 / 18.0.1.0.0 / 19.0.1.0.0</td></tr>
-            <tr><td><strong>Category</strong></td><td>Maintenance</td></tr>
-            <tr><td><strong>Author</strong></td><td>SDLC Corp</td></tr>
-            <tr><td><strong>License</strong></td><td>LGPL-3</td></tr>
-            <tr><td><strong>Dependencies</strong></td><td>maintenance</td></tr>
-            <tr><td><strong>Models</strong></td><td>1 extended (maintenance.equipment) + 1 transient (wizard) + 1 abstract (report)</td></tr>
-            <tr><td><strong>Views</strong></td><td>3 inherited (form, tree, search) + 1 wizard form</td></tr>
-            <tr><td><strong>Reports</strong></td><td>1 QWeb PDF report with 2 templates</td></tr>
-        </tbody>
-    </table>
-
-    <h3>File Structure</h3>
-    <div class="code-block">
-        <span class="comment">sdlc_maintenance_qr_code/</span><br>
-        ├── __init__.py<br>
-        ├── __manifest__.py<br>
-        ├── models/<br>
-        │   ├── __init__.py<br>
-        │   └── maintenance_equipment.py<br>
-        ├── wizard/<br>
-        │   ├── __init__.py<br>
-        │   └── maintenance_qr_print_wizard.py<br>
-        ├── report/<br>
-        │   ├── __init__.py<br>
-        │   ├── maintenance_qr_report.py<br>
-        │   ├── maintenance_qr_report.xml<br>
-        │   └── maintenance_qr_templates.xml<br>
-        ├── views/<br>
-        │   ├── maintenance_equipment_views.xml<br>
-        │   └── maintenance_qr_wizard_views.xml<br>
-        ├── security/<br>
-        │   └── ir.model.access.csv<br>
-        ├── data/<br>
-        │   └── sequence.xml<br>
-        └── static/<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;├── description/<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;│   ├── index.html<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;│   └── photo[1-6].png<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;└── src/scss/<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── report_qr_font.scss
-    </div>
-
-    <div class="pagination-nav">
-        <a href="#" onclick="showPage('report-engine'); return false;"><div class="pagination-label">&laquo; Previous</div><div class="pagination-title">Report Engine</div></a>
-        <div></div>
-    </div>
-</div>
-
-
-</article>
-
-<!-- TABLE OF CONTENTS -->
-<nav class="toc" id="toc">
-    <div class="toc-title">On this page</div>
-    <ul class="toc-list" id="toc-list"></ul>
-</nav>
-
-</div>
-</div>
-
-<!-- FOOTER -->
-<footer class="footer">
-    <div>Copyright &copy; 2025 SDLC Corp. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="https://sdlccorp.com" target="_blank">Website</a>
-        <a href="https://sdlccorp.com" target="_blank">Support</a>
-    </div>
-</footer>
-
-<!-- JAVASCRIPT -->
-<script>
-    function showPage(pageId) {
-        document.querySelectorAll('.doc-page').forEach(function(p) { p.classList.remove('active'); });
-        var target = document.getElementById('page-' + pageId);
-        if (target) target.classList.add('active');
-        document.querySelectorAll('.sidebar-item a').forEach(function(a) { a.classList.remove('active'); });
-        var activeLink = document.querySelector('.sidebar-item a[data-page="' + pageId + '"]');
-        if (activeLink) activeLink.classList.add('active');
-        buildTOC(pageId);
-        window.scrollTo(0, 0);
-        document.getElementById('sidebar').classList.remove('open');
-        document.querySelector('.sidebar-overlay').classList.remove('active');
+<section class="sdlc-shipstation-page">
+
+  <style>
+    .sdlc-shipstation-page{
+      --primary:#6f42c1;
+      --primary-dark:#4b267d;
+      --primary-soft:#f4edff;
+      --accent:#14b8a6;
+      --text:#1f2937;
+      --muted:#5b6472;
+      --border:#e8eaf0;
+      --bg:#ffffff;
+      --bg-soft:#f8f9fc;
+      --shadow:0 12px 30px rgba(38,50,77,.08);
+      --radius:18px;
+      font-family:Arial,Helvetica,sans-serif;
+      color:var(--text);
+      background:#fff;
+      line-height:1.65;
     }
-    function buildTOC(pageId) {
-        var page = document.getElementById('page-' + pageId);
-        var tocList = document.getElementById('toc-list');
-        tocList.innerHTML = '';
-        if (!page) return;
-        page.querySelectorAll('h2[id]').forEach(function(h) {
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.href = '#' + h.id;
-            a.textContent = h.textContent.replace(' #', '');
-            a.addEventListener('click', function(e) { e.preventDefault(); h.scrollIntoView({ behavior: 'smooth' }); });
-            li.appendChild(a);
-            tocList.appendChild(li);
-        });
-    }
-    function toggleCategory(label) { label.parentElement.classList.toggle('collapsed'); }
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.querySelector('.sidebar-overlay').classList.toggle('active');
-    }
-    window.addEventListener('scroll', function() {
-        var tocLinks = document.querySelectorAll('.toc-list li a');
-        var fromTop = window.scrollY + 80;
-        tocLinks.forEach(function(link) {
-            var section = document.querySelector(link.getAttribute('href'));
-            if (section && section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
-                tocLinks.forEach(function(l) { l.classList.remove('active'); });
-                link.classList.add('active');
-            }
-        });
-    });
-    document.addEventListener('DOMContentLoaded', function() { buildTOC('intro'); });
-</script>
 
-</body>
-</html>
+    .sdlc-shipstation-page *{
+      box-sizing:border-box;
+    }
+
+    .sdlc-container{
+      width:100%;
+      max-width:1180px;
+      margin:0 auto;
+      padding:0 20px;
+    }
+
+    .sdlc-section{
+      padding:48px 0;
+    }
+
+    .sdlc-section-title{
+      text-align:center;
+      margin:0 0 14px;
+      font-size:34px;
+      line-height:1.2;
+      color:var(--text);
+      font-weight:700;
+    }
+
+    .sdlc-section-subtitle{
+      max-width:860px;
+      margin:0 auto 34px;
+      text-align:center;
+      color:var(--muted);
+      font-size:16px;
+    }
+
+    .sdlc-badge{
+      display:inline-block;
+      padding:7px 14px;
+      border-radius:999px;
+      background:var(--primary-soft);
+      color:var(--primary);
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:14px;
+    }
+
+    .sdlc-btn{
+      display:inline-block;
+      padding:14px 24px;
+      border-radius:12px;
+      text-decoration:none !important;
+      font-weight:700;
+      font-size:15px;
+      transition:.25s ease;
+    }
+
+    .sdlc-btn-primary{
+      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      color:#fff !important;
+      box-shadow:0 10px 24px rgba(111,66,193,.24);
+    }
+
+    .sdlc-btn-primary:hover{
+      transform:translateY(-2px);
+    }
+
+    .sdlc-btn-secondary{
+      background:#fff;
+      color:var(--primary) !important;
+      border:1px solid #d9c8f2;
+    }
+
+    .sdlc-btn-secondary:hover{
+      background:var(--primary-soft);
+    }
+
+    .sdlc-grid{
+      display:grid;
+      gap:22px;
+    }
+
+    .sdlc-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .sdlc-hero{
+      padding:34px 0 30px;
+      background:
+        radial-gradient(circle at top left, rgba(111,66,193,.10), transparent 30%),
+        radial-gradient(circle at top right, rgba(20,184,166,.10), transparent 26%),
+        linear-gradient(180deg,#fcfbff 0%,#ffffff 100%);
+      border:1px solid #ede7f8;
+      border-radius:24px;
+      overflow:hidden;
+    }
+
+    .sdlc-hero-inner{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:34px;
+      align-items:center;
+    }
+
+    .sdlc-hero h1{
+      margin:0 0 14px;
+      font-size:42px;
+      line-height:1.15;
+      color:#171c28;
+      font-weight:800;
+    }
+
+    .sdlc-hero p{
+      margin:0 0 22px;
+      color:var(--muted);
+      font-size:17px;
+    }
+
+    .sdlc-hero-points{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+      margin:0 0 24px;
+      padding:0;
+      list-style:none;
+    }
+
+    .sdlc-hero-points li{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 14px;
+      font-size:14px;
+      font-weight:600;
+      color:#2b3340;
+    }
+
+    .sdlc-hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .sdlc-hero-image{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+
+    .sdlc-hero-image img,
+    .sdlc-shot img,
+    .sdlc-banner img,
+    .sdlc-app-card img{
+      display:block;
+      width:100%;
+      height:auto;
+      border-radius:14px;
+    }
+
+    .sdlc-trustbar{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:16px;
+      margin-top:24px;
+    }
+
+    .sdlc-trust-item{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      text-align:center;
+      font-size:14px;
+      font-weight:700;
+      color:#2d3440;
+    }
+
+    .sdlc-problem-grid{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .sdlc-problem-card{
+      padding:24px;
+    }
+
+    .sdlc-problem-card h3{
+      margin:0 0 10px;
+      font-size:21px;
+    }
+
+    .sdlc-problem-card p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .sdlc-feature-grid{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .sdlc-feature-card{
+      padding:24px;
+    }
+
+    .sdlc-feature-card h3{
+      margin:0 0 10px;
+      font-size:20px;
+      line-height:1.3;
+    }
+
+    .sdlc-feature-card p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .sdlc-highlight{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:26px;
+      align-items:center;
+      background:linear-gradient(180deg,#faf8ff 0%,#ffffff 100%);
+      border:1px solid #ebdef9;
+      border-radius:22px;
+      padding:28px;
+      box-shadow:var(--shadow);
+    }
+
+    .sdlc-highlight h2{
+      margin:0 0 14px;
+      font-size:32px;
+      line-height:1.2;
+    }
+
+    .sdlc-highlight p{
+      margin:0 0 14px;
+      color:var(--muted);
+    }
+
+    .sdlc-checklist{
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .sdlc-checklist li{
+      position:relative;
+      padding-left:24px;
+      margin-bottom:10px;
+      color:var(--text);
+      font-size:15px;
+    }
+
+    .sdlc-checklist li:before{
+      content:"✓";
+      position:absolute;
+      left:0;
+      top:0;
+      color:var(--accent);
+      font-weight:700;
+    }
+
+    .sdlc-process{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:18px;
+    }
+
+    .sdlc-step{
+      padding:24px 20px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .sdlc-step-number{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:var(--primary-soft);
+      color:var(--primary);
+      font-weight:800;
+      margin-bottom:14px;
+    }
+
+    .sdlc-step h3{
+      margin:0 0 10px;
+      font-size:20px;
+    }
+
+    .sdlc-step p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .sdlc-shot-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .sdlc-shot{
+      padding:18px;
+    }
+
+    .sdlc-shot h3{
+      margin:16px 0 8px;
+      font-size:20px;
+    }
+
+    .sdlc-shot p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .sdlc-shot .sdlc-placeholder{
+      background:linear-gradient(135deg,#f9f4ff,#eef8ff);
+      border:1px dashed #cdbde8;
+      border-radius:14px;
+      min-height:300px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color:#6b7280;
+      padding:24px;
+      font-size:15px;
+      font-weight:700;
+    }
+
+    .sdlc-detail-table-wrap{
+      overflow-x:auto;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .sdlc-detail-table{
+      width:100%;
+      min-width:760px;
+      border-collapse:collapse;
+    }
+
+    .sdlc-detail-table th,
+    .sdlc-detail-table td{
+      padding:16px 18px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+      font-size:15px;
+    }
+
+    .sdlc-detail-table th{
+      background:#faf8ff;
+      color:#2b3340;
+      font-size:14px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .sdlc-detail-table tr:last-child td{
+      border-bottom:none;
+    }
+
+    .sdlc-faq{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .sdlc-faq-item{
+      padding:22px;
+    }
+
+    .sdlc-faq-item h3{
+      margin:0 0 10px;
+      font-size:18px;
+      line-height:1.35;
+    }
+
+    .sdlc-faq-item p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .sdlc-apps-showcase{
+      padding:44px 0;
+      background:linear-gradient(180deg,#faf7ff 0%,#ffffff 100%);
+      border:1px solid #eadff7;
+      border-radius:22px;
+    }
+
+    .sdlc-app-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:18px;
+      margin-top:28px;
+    }
+
+    .sdlc-app-card{
+      display:block;
+      text-decoration:none !important;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      transition:.25s ease;
+      color:inherit !important;
+    }
+
+    .sdlc-app-card:hover{
+      transform:translateY(-4px);
+      border-color:#d8c5f4;
+    }
+
+    .sdlc-app-card-body{
+      padding:18px;
+    }
+
+    .sdlc-app-card h3{
+      margin:0 0 8px;
+      font-size:18px;
+      line-height:1.35;
+      color:var(--text);
+    }
+
+    .sdlc-app-card p{
+      margin:0 0 12px;
+      font-size:14px;
+      color:var(--muted);
+      min-height:66px;
+    }
+
+    .sdlc-app-card span{
+      color:var(--primary);
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .sdlc-cta{
+      background:
+        radial-gradient(circle at left top, rgba(255,255,255,.22), transparent 30%),
+        linear-gradient(135deg,var(--primary-dark),var(--primary));
+      color:#fff;
+      border-radius:24px;
+      padding:36px 28px;
+      text-align:center;
+      box-shadow:0 16px 34px rgba(75,38,125,.24);
+    }
+
+    .sdlc-cta h2{
+      margin:0 0 12px;
+      font-size:34px;
+      line-height:1.2;
+      color:#fff;
+    }
+
+    .sdlc-cta p{
+      max-width:820px;
+      margin:0 auto 22px;
+      color:rgba(255,255,255,.9);
+      font-size:16px;
+    }
+
+    .sdlc-cta .sdlc-btn-secondary{
+      background:rgba(255,255,255,.12);
+      border-color:rgba(255,255,255,.32);
+      color:#fff !important;
+    }
+
+    .sdlc-cta-actions{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .sdlc-note{
+      background:#fffdf4;
+      border:1px solid #f3e6b0;
+      border-radius:14px;
+      padding:16px 18px;
+      color:#5d5430;
+      font-size:14px;
+      margin-top:16px;
+    }
+
+    .sdlc-center{
+      text-align:center;
+    }
+
+    @media (max-width: 1080px){
+      .sdlc-hero-inner,
+      .sdlc-highlight{
+        grid-template-columns:1fr;
+      }
+
+      .sdlc-feature-grid,
+      .sdlc-problem-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .sdlc-process{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .sdlc-app-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .sdlc-trustbar{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+
+    @media (max-width: 768px){
+      .sdlc-section{
+        padding:36px 0;
+      }
+
+      .sdlc-container{
+        padding:0 14px;
+      }
+
+      .sdlc-hero{
+        padding:22px 0 24px;
+        border-radius:18px;
+      }
+
+      .sdlc-hero h1{
+        font-size:30px;
+      }
+
+      .sdlc-section-title,
+      .sdlc-highlight h2,
+      .sdlc-cta h2{
+        font-size:28px;
+      }
+
+      .sdlc-section-subtitle,
+      .sdlc-hero p{
+        font-size:15px;
+      }
+
+      .sdlc-hero-points,
+      .sdlc-feature-grid,
+      .sdlc-problem-grid,
+      .sdlc-process,
+      .sdlc-shot-grid,
+      .sdlc-faq,
+      .sdlc-app-grid,
+      .sdlc-trustbar{
+        grid-template-columns:1fr;
+      }
+
+      .sdlc-highlight{
+        padding:22px 18px;
+      }
+
+      .sdlc-card,
+      .sdlc-app-card{
+        border-radius:16px;
+      }
+
+      .sdlc-shot .sdlc-placeholder{
+        min-height:220px;
+      }
+    }
+  </style>
+
+  <!-- HERO -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <div class="sdlc-hero">
+        <div class="sdlc-container">
+          <div class="sdlc-hero-inner">
+            <div>
+              <span class="sdlc-badge">Premium Odoo Shipping Integration</span>
+              <h1>ShipStation Odoo Connector for Faster Shipping, Label Creation, Order Sync, and Tracking</h1>
+              <p>
+                Connect Odoo with ShipStation to centralize shipping operations inside your ERP. Import shipping-ready sales orders, manage carrier services, generate labels, sync tracking details, and reduce manual shipping work across your order fulfillment process.
+              </p>
+
+              <ul class="sdlc-hero-points">
+                <li>Connect ShipStation with Odoo from one place</li>
+                <li>Sync orders, customers, products, and shipping data</li>
+                <li>Generate labels and process shipments faster</li>
+                <li>Track fulfillment activity with logs and status updates</li>
+              </ul>
+
+              <div class="sdlc-hero-actions">
+                <a href="#features" class="sdlc-btn sdlc-btn-primary">Explore Features</a>
+                <a href="#screenshots" class="sdlc-btn sdlc-btn-secondary">View Product Tour</a>
+              </div>
+            </div>
+
+            <div class="sdlc-hero-image">
+              <img src="dashboard1.png" alt="ShipStation Odoo Connector dashboard overview">
+            </div>
+          </div>
+
+          <div class="sdlc-trustbar">
+            <div class="sdlc-trust-item">Centralized shipping workflow</div>
+            <div class="sdlc-trust-item">Reduced manual order processing</div>
+            <div class="sdlc-trust-item">Better shipment visibility</div>
+            <div class="sdlc-trust-item">Built for Odoo-based fulfillment teams</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUSINESS VALUE -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Why This Connector Matters</span>
+      <h2 class="sdlc-section-title">Simplify Shipping Operations Between Odoo and ShipStation</h2>
+      <p class="sdlc-section-subtitle">
+        Businesses using Odoo for sales, inventory, and warehouse operations often still handle shipping in a separate tool. This ShipStation Odoo Connector helps reduce repetitive steps by aligning your shipping workflow with the operational data already available in Odoo.
+      </p>
+
+      <div class="sdlc-grid sdlc-problem-grid">
+        <div class="sdlc-card sdlc-problem-card">
+          <h3>Reduce Manual Shipping Work</h3>
+          <p>
+            Avoid repeating the same order and shipping tasks across multiple systems. Process shipments using synchronized order data and clearer shipping actions inside your operational flow.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-problem-card">
+          <h3>Improve Fulfillment Accuracy</h3>
+          <p>
+            Work with cleaner order, customer, and shipment details so your team can reduce mistakes during packing, labeling, carrier selection, and dispatch handling.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-problem-card">
+          <h3>Get Better Shipment Visibility</h3>
+          <p>
+            Keep shipping activity easier to follow with status updates, tracking information, synced shipment records, and operational logs for day-to-day monitoring.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HIGHLIGHT -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <div class="sdlc-highlight">
+        <div>
+          <span class="sdlc-badge">Core Value</span>
+          <h2>Manage Shipping Workflows Without Breaking Your Odoo Process</h2>
+          <p>
+            This connector is designed for businesses that want to connect fulfillment operations with their existing Odoo sales, inventory, and warehouse process. Instead of treating shipping as a disconnected step, you can align it with order handling, package preparation, and shipment follow-up.
+          </p>
+          <ul class="sdlc-checklist">
+            <li>Connect one or more ShipStation accounts as your business setup requires</li>
+            <li>Work with synchronized order and customer information</li>
+            <li>Support label generation and shipment processing workflows</li>
+            <li>Track operational activity with better sync visibility</li>
+          </ul>
+        </div>
+        <div class="sdlc-banner">
+          <img src="dashboard2.png" alt="ShipStation Odoo connector process overview">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="sdlc-section" id="features">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Detailed Features</span>
+      <h2 class="sdlc-section-title">Key Features of the ShipStation Odoo Connector</h2>
+      <p class="sdlc-section-subtitle">
+        The sections below cover the functionality buyers usually expect to review on a premium Odoo Apps listing: setup flow, data movement, shipment execution, operational control, and business usability.
+      </p>
+
+      <div class="sdlc-grid sdlc-feature-grid">
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Instance Configuration</h3>
+          <p>
+            Configure your ShipStation connection from Odoo and manage integration settings from a centralized area built for operational use.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Order Synchronization</h3>
+          <p>
+            Work with shipping-related order data in a more connected way so teams can review, process, and fulfill orders with fewer disconnected steps.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Customer and Address Sync</h3>
+          <p>
+            Keep delivery-relevant customer details aligned for smoother shipping preparation and fewer address-related errors during fulfillment.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Product and SKU Mapping</h3>
+          <p>
+            Match product records and shipping-related item details so order lines are easier to process within your shipping workflow.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Shipping Rates and Labels</h3>
+          <p>
+            Support rate and label workflows through a more streamlined operational path, reducing time spent jumping between systems.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Shipment Tracking Visibility</h3>
+          <p>
+            Keep shipment follow-up easier by handling tracking-related information through a structured Odoo process.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Field Mapping Support</h3>
+          <p>
+            Extend usability by connecting relevant business fields between the two platforms where mapping is part of your module flow.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Operational Logs and Monitoring</h3>
+          <p>
+            Review sync activity, identify issues faster, and support operational troubleshooting with logs and related records.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Business-Friendly Workflow Design</h3>
+          <p>
+            The connector is positioned to help warehouse, operations, and ecommerce teams work inside a cleaner fulfillment routine.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Workflow Overview</span>
+      <h2 class="sdlc-section-title">How the Connector Fits Into a Typical Shipping Process</h2>
+      <p class="sdlc-section-subtitle">
+        Competitor listings often show process diagrams because buyers want to understand flow quickly. This section gives that same clarity in a cleaner, Odoo Apps-friendly format.
+      </p>
+
+      <div class="sdlc-process">
+        <div class="sdlc-card sdlc-step">
+          <div class="sdlc-step-number">1</div>
+          <h3>Connect</h3>
+          <p>
+            Configure the ShipStation instance inside Odoo and prepare the integration for operational use.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-step">
+          <div class="sdlc-step-number">2</div>
+          <h3>Sync Data</h3>
+          <p>
+            Align required order, customer, product, and shipping-related information for day-to-day fulfillment activity.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-step">
+          <div class="sdlc-step-number">3</div>
+          <h3>Process Shipments</h3>
+          <p>
+            Use shipping workflows such as rates, labels, shipment handling, and operational confirmation in a more streamlined way.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-step">
+          <div class="sdlc-step-number">4</div>
+          <h3>Track and Monitor</h3>
+          <p>
+            Review shipment outcomes, synced records, and logs to support fulfillment visibility and issue handling.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOTS -->
+  <section class="sdlc-section" id="screenshots">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Product Tour</span>
+      <h2 class="sdlc-section-title">Product Screens and Flow Walkthrough</h2>
+      <p class="sdlc-section-subtitle">
+        Replace the image files below with your real screenshots from <strong>static/description/</strong>. The structure is designed to mirror premium competitor listings that guide buyers through setup, operations, and proof of workflow.
+      </p>
+
+      <div class="sdlc-grid sdlc-shot-grid">
+        <div class="sdlc-card sdlc-shot">
+          <img src="instance data.png" alt="ShipStation instance configuration in Odoo">
+          <h3>1. Instance Setup and Connection</h3>
+          <p>
+            Show the screen where users configure the ShipStation account and related integration settings.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="dashboard1.png" alt="ShipStation connector dashboard in Odoo">
+          <h3>2. Dashboard and Operational Overview</h3>
+          <p>
+            Highlight important shipping metrics, totals, or operational visibility screens available in your module.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="shipstationdata order.png" alt="ShipStation order synchronization in Odoo">
+          <h3>3. Order Synchronization Flow</h3>
+          <p>
+            Show how order-related records move into the shipping workflow and how the team manages fulfillment preparation.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="field mapping listing.png" alt="ShipStation product mapping in Odoo">
+          <h3>4. Product or Field Mapping</h3>
+          <p>
+            Use mapping screenshots to show flexibility, operational control, and better data alignment between systems.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="shipping delivery order.png" alt="Shipping rates and labels in Odoo ShipStation connector">
+          <h3>5. Shipping Rates and Label Workflow</h3>
+          <p>
+            Buyers often look for this section first. Use strong screenshots here because label generation is a key conversion point.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="shipping tracking.png" alt="Shipment tracking in Odoo ShipStation connector">
+          <h3>6. Shipment and Tracking Flow</h3>
+          <p>
+            Show shipment processing, tracking details, or delivery-related sync records that help users trust the flow.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="inventory.png" alt="Inventory sync in Odoo ShipStation connector">
+          <h3>7. Inventory or Fulfillment Visibility</h3>
+          <p>
+            Add any stock, package, warehouse, or shipping-related operational screen relevant to your connector.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-shot">
+          <img src="sync logs.png" alt="Integration sync logs in Odoo ShipStation connector">
+          <h3>8. Logs, Reports, and Monitoring</h3>
+          <p>
+            This gives proof of maturity. Buyers want to see how the app helps them review activity and handle issues.
+          </p>
+        </div>
+      </div>
+
+      <div class="sdlc-note">
+        <strong>Tip:</strong> Use clear screenshot filenames and keep image widths optimized for Odoo Apps. Avoid uploading very large images. Clean, readable screenshots with small highlight boxes usually convert better than raw full-screen captures.
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAILS TABLE -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Buyer Decision Support</span>
+      <h2 class="sdlc-section-title">What Buyers Usually Compare Before Choosing a Shipping Connector</h2>
+      <p class="sdlc-section-subtitle">
+        Many competitor listings miss this section or keep it too generic. This structured comparison-style section improves clarity and helps buyers understand your app faster.
+      </p>
+
+      <div class="sdlc-detail-table-wrap">
+        <table class="sdlc-detail-table">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>What This Section Covers</th>
+              <th>Why It Matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Setup and Configuration</strong></td>
+              <td>Connection flow, instance management, core settings, and operational readiness.</td>
+              <td>Buyers want to know how difficult it will be to start using the connector.</td>
+            </tr>
+            <tr>
+              <td><strong>Shipping Workflow</strong></td>
+              <td>Order preparation, rate and label handling, shipment processing, and tracking visibility.</td>
+              <td>This is where the daily business value of the connector is judged.</td>
+            </tr>
+            <tr>
+              <td><strong>Data Alignment</strong></td>
+              <td>Product records, customer details, order information, and mapping support.</td>
+              <td>Clean data flow reduces operational mistakes and rework.</td>
+            </tr>
+            <tr>
+              <td><strong>Monitoring and Logs</strong></td>
+              <td>Sync reports, process visibility, and operational troubleshooting support.</td>
+              <td>Buyers trust apps more when they can see what happened and why.</td>
+            </tr>
+            <tr>
+              <td><strong>Business Usability</strong></td>
+              <td>Practical fit for ecommerce, warehouse, operations, and fulfillment teams.</td>
+              <td>Good apps solve business workflow problems, not just technical ones.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT'S INCLUDED / MISSING POINTS -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">Important Coverage</span>
+      <h2 class="sdlc-section-title">Sections Premium Competitor Pages Commonly Use</h2>
+      <p class="sdlc-section-subtitle">
+        Based on the style patterns you shared, strong Odoo Apps pages usually include value messaging, feature breakdown, product tour, trust-building screenshots, FAQ, support clarity, and cross-promotion of related apps. This template covers all of those blocks.
+      </p>
+
+      <div class="sdlc-grid sdlc-feature-grid">
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Value-First Hero Section</h3>
+          <p>Clear headline, business use case, and a visual preview of the app.</p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Benefits Before Technical Details</h3>
+          <p>Buyers should first understand why the app matters for operations.</p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Screenshot-Led Storytelling</h3>
+          <p>Images should explain setup, core flow, and proof of real business utility.</p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Workflow Clarity</h3>
+          <p>Short step-by-step process blocks help buyers understand faster.</p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Operational Trust Signals</h3>
+          <p>Logs, reports, and admin screens make the app look more reliable and usable.</p>
+        </div>
+
+        <div class="sdlc-card sdlc-feature-card">
+          <h3>Cross-Sell Portfolio Section</h3>
+          <p>A “See More Our Odoo Apps” block helps build brand depth and keeps users in your app portfolio.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <span class="sdlc-badge">FAQ</span>
+      <h2 class="sdlc-section-title">Frequently Asked Questions</h2>
+      <p class="sdlc-section-subtitle">
+        Keep answers clear and honest. Avoid unsupported claims. This helps both buyers and marketplace quality standards.
+      </p>
+
+      <div class="sdlc-grid sdlc-faq">
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>Is this connector suitable for businesses managing shipping from Odoo?</h3>
+          <p>
+            Yes. It is positioned for businesses that want a more connected shipping workflow between Odoo operations and ShipStation handling.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>Can this app help reduce manual shipping work?</h3>
+          <p>
+            That is one of the main business goals of this type of connector. It helps teams work with more connected shipping data and process flow.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>Can I show my workflow using screenshots on the Odoo Apps page?</h3>
+          <p>
+            Yes. In fact, strong screenshots improve conversion. Use screenshots for configuration, order flow, labels, shipment tracking, and logs.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>What sections should an Odoo shipping connector page include?</h3>
+          <p>
+            Hero, benefits, key features, workflow, screenshot tour, trust-building proof, FAQ, support section, and related apps showcase.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>Can this layout be used on the Odoo marketplace description page?</h3>
+          <p>
+            Yes. This code is written as a single responsive HTML and CSS block suitable for an Odoo Apps listing description structure.
+          </p>
+        </div>
+
+        <div class="sdlc-card sdlc-faq-item">
+          <h3>How should I improve this page further?</h3>
+          <p>
+            Replace placeholders with your real screenshots, add exact app URLs in the portfolio section, and refine the copy according to your final module features.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MORE APPS -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <div class="sdlc-apps-showcase">
+        <div class="sdlc-container">
+          <div class="sdlc-center">
+            <span class="sdlc-badge">More from SDLC Corp</span>
+            <h2 class="sdlc-section-title">Explore More Odoo Apps by SDLC Corp</h2>
+            <p class="sdlc-section-subtitle" style="margin-bottom:0;">
+              Looking for more Odoo integrations, automation tools, and business apps? Explore more solutions from SDLC Corp designed to simplify operations, reduce manual work, and improve ecommerce, shipping, sales, inventory, and business process efficiency.
+            </p>
+          </div>
+
+          <div class="sdlc-app-grid">
+            <a href="https://apps.odoo.com/apps/modules/17.0/your_app_1" class="sdlc-app-card" target="_blank" rel="noopener noreferrer">
+              <img src="icon.png" alt="Related Odoo app by SDLC Corp">
+              <div class="sdlc-app-card-body">
+                <h3>Related App Name 1</h3>
+                <p>Short one-line value proposition for this app to show what problem it solves.</p>
+                <span>View App</span>
+              </div>
+            </a>
+
+            <a href="https://apps.odoo.com/apps/modules/17.0/your_app_2" class="sdlc-app-card" target="_blank" rel="noopener noreferrer">
+              <img src="shipstation product.png" alt="Related Odoo app by SDLC Corp">
+              <div class="sdlc-app-card-body">
+                <h3>Related App Name 2</h3>
+                <p>Use a short and clear benefit line that helps users understand the use case fast.</p>
+                <span>View App</span>
+              </div>
+            </a>
+
+            <a href="https://apps.odoo.com/apps/modules/17.0/your_app_3" class="sdlc-app-card" target="_blank" rel="noopener noreferrer">
+              <img src="shipstation customer.png" alt="Related Odoo app by SDLC Corp">
+              <div class="sdlc-app-card-body">
+                <h3>Related App Name 3</h3>
+                <p>Keep the app description practical and focused on business workflow improvement.</p>
+                <span>View App</span>
+              </div>
+            </a>
+
+            <a href="https://apps.odoo.com/apps/modules/17.0/your_app_4" class="sdlc-app-card" target="_blank" rel="noopener noreferrer">
+              <img src="report.png" alt="Related Odoo app by SDLC Corp">
+              <div class="sdlc-app-card-body">
+                <h3>Related App Name 4</h3>
+                <p>Add your most relevant apps first so the section supports better internal portfolio discovery.</p>
+                <span>View App</span>
+              </div>
+            </a>
+          </div>
+
+          <div class="sdlc-center" style="margin-top:28px;">
+            <a href="https://apps.odoo.com/apps/modules/browse?search=sdlc+corp" target="_blank" rel="noopener noreferrer" class="sdlc-btn sdlc-btn-primary">
+              See More Odoo Apps
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="sdlc-section">
+    <div class="sdlc-container">
+      <div class="sdlc-cta">
+        <h2>Connect Odoo and ShipStation With a More Professional Shipping Workflow</h2>
+        <p>
+          Use this ShipStation Odoo Connector page as your premium marketplace presentation. Replace screenshots, update app links, and fine-tune the copy according to your exact module flow before publishing.
+        </p>
+        <div class="sdlc-cta-actions">
+          <a href="#screenshots" class="sdlc-btn sdlc-btn-primary">Review Screenshots Section</a>
+          <a href="https://apps.odoo.com/apps/modules/browse?search=sdlc+corp" target="_blank" rel="noopener noreferrer" class="sdlc-btn sdlc-btn-secondary">View More SDLC Corp Apps</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</section>
