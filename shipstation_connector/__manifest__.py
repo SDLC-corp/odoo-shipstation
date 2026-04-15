@@ -2,8 +2,28 @@
     "name": "ShipStation Connector",
     "version": "18.0.1.0.0",
     "summary": "ShipStation connector with instances, sync data, reports, and dashboard",
+    "description": """
+        SDLC ShipStation Connector
+        ==========================
+        Connect Odoo with ShipStation for a streamlined, bidirectional
+        shipping workflow. Sync orders, customers, products, categories,
+        and inventory between Odoo and ShipStation, process shipments
+        and labels, and monitor operations from a unified dashboard.
+
+        Features:
+        ---------
+        * Multi-instance ShipStation configuration
+        * Order, customer, product, category and inventory sync
+        * Shipment processing with label and tracking handling
+        * Field mapping for clean data alignment
+        * Sync logs, reports, and operational dashboard
+        * Scheduled cron-based sync
+    """,
     "category": "Inventory",
-    "author": "Custom",
+    "author": "SDLC Corp",
+    "website": "https://sdlccorp.com/",
+    "maintainer": "SDLC Corp",
+    "support": "sales@sdlccorp.com",
     "license": "LGPL-3",
     "depends": [
         "base",
@@ -43,6 +63,8 @@
             "shipstation_connector/static/src/xml/shipstation_dashboard_templates.xml",
         ],
     },
+    "images": ["static/description/icon.png"],
     "installable": True,
     "application": True,
+    "auto_install": False,
 }
