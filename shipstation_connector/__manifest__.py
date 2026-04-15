@@ -1,5 +1,5 @@
 {
-    "name": "ShipStation Connector",
+    "name": "Odoo ShipStation Connector",
     "version": "18.0.1.0.0",
     "summary": "ShipStation connector with instances, sync data, reports, and dashboard",
     "description": """
