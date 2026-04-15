@@ -64,8 +64,6 @@
         ],
     },
     "images": ["static/description/icon.png"],
-    "price": 50.00,
-    "currency": "USD",
     "installable": True,
     "application": True,
     "auto_install": False,
