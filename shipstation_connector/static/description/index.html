@@ -38,8 +38,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <!-- SDLC-EDITORIAL-WRAP-V1 -->
 
 <!-- ═══════════════════ MODULE CONTENT (restyled) ═══════════════════ -->
-<div style="padding:40px 20px 20px;background-color:#F5F1E8;color:#0B0B1E;font-family:Georgia,'Times New Roman',serif;line-height:1.6;">
-<div style="max-width:100%;margin:0 auto;">
+<div style="padding:0;margin:0;background-color:#F5F1E8;color:#0B0B1E;font-family:Georgia,'Times New Roman',serif;line-height:1.6;">
+<div style="width:100%;max-width:1320px;margin:0 auto;padding:0;">
 <!-- ═══════════════════ MODULE CONTENT (restyled) ═══════════════════ -->
 <div style="padding:40px 20px 20px;background-color:#F5F1E8;color:#0B0B1E;font-family:Georgia,'Times New Roman',serif'Times New Roman',serif;line-height:1.6;">
 <div style="max-width:100%;margin:0 auto;">
@@ -52,598 +52,601 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <!-- ═══════════════════ MODULE CONTENT (restyled) ═══════════════════ -->
 <div style="padding:40px 20px 20px;background-color:#F5F1E8;color:#0B0B1E;font-family:Georgia,'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif;line-height:1.6;">
 <div style="max-width:100%;margin:0 auto;">
+<!-- ═══════════════════ MODULE CONTENT (restyled) ═══════════════════ -->
+<div style="padding:40px 20px 20px;background-color:#F5F1E8;color:#0B0B1E;font-family:Georgia,'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif'Times New Roman',serif;line-height:1.6;">
+<div style="max-width:100%;margin:0 auto;">
 <section class="sdlc-shipstation-page">
 <style>
-    .sdlc-shipstation-page{
-      --primary:#6f42c1;
-      --primary-dark:#4b267d;
-      --primary-soft:#f4edff;
-      --accent:#14b8a6;
-      --text:#1f2937;
-      --muted:#5b6472;
-      --border:#e8eaf0;
-      --bg:#ffffff;
-      --bg-soft:#f8f9fc;
-      --shadow:0 12px 30px rgba(38,50,77,.08);
-      --radius:18px;
-      font-family:Arial,Helvetica,sans-serif;
-      color:var(--text);
-      background:#fff;
-      line-height:1.65;
-    }
-
-    .sdlc-shipstation-page *{
-      box-sizing:border-box;
-    }
-
-    .sdlc-container{
-      width:100%;
-      max-width:1180px;
-      margin:0 auto;
-      padding:0 20px;
-    }
-
-    .sdlc-section{
-      padding:48px 0;
-    }
-
-    .sdlc-section-title{
-      text-align:center;
-      margin:0 0 14px;
-      font-size:34px;
-      line-height:1.2;
-      color:var(--text);
-      font-weight:700;
-    }
-
-    .sdlc-section-subtitle{
-      max-width:860px;
-      margin:0 auto 34px;
-      text-align:center;
-      color:var(--muted);
-      font-size:16px;
-    }
-
-    .sdlc-badge{
-      display:inline-block;
-      padding:7px 14px;
-      border-radius:8px;
-      background:var(--primary-soft);
-      color:var(--primary);
-      font-size:13px;
-      font-weight:700;
-      margin-bottom:14px;
-    }
-
-    .sdlc-btn{
-      display:inline-block;
-      padding:14px 24px;
-      border-radius:8px;
-      text-decoration:none !important;
-      font-weight:700;
-      font-size:15px;
-      transition:.25s ease;
-    }
-
-    .sdlc-btn-primary{
-      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-      color:#fff !important;
-      box-shadow:0 10px 24px rgba(111,66,193,.24);
-    }
-
-    .sdlc-btn-primary:hover{
-      transform:translateY(-2px);
-    }
-
-    .sdlc-btn-secondary{
-      background:#fff;
-      color:var(--primary) !important;
-      border:1px solid #d9c8f2;
-    }
-
-    .sdlc-btn-secondary:hover{
-      background:var(--primary-soft);
-    }
-
-    .sdlc-grid{
-      display:grid;
-      gap:22px;
-    }
-
-    .sdlc-card{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-    }
-
-    .sdlc-hero{
-      padding:34px 0 30px;
-      background:
-        radial-gradient(circle at top left, rgba(111,66,193,.10), transparent 30%),
-        radial-gradient(circle at top right, rgba(20,184,166,.10), transparent 26%),
-        linear-gradient(180deg,#fcfbff 0%,#ffffff 100%);
-      border:1px solid #ede7f8;
-      border-radius:8px;
-      overflow:hidden;
-    }
-
-    .sdlc-hero-inner{
-      display:grid;
-      grid-template-columns:1.1fr .9fr;
-      gap:34px;
-      align-items:center;
-    }
-
-    .sdlc-hero h1{
-      margin:0 0 14px;
-      font-size:42px;
-      line-height:1.15;
-      color:#171c28;
-      font-weight:800;
-    }
-
-    .sdlc-hero p{
-      margin:0 0 22px;
-      color:var(--muted);
-      font-size:17px;
-    }
-
-    .sdlc-hero-points{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
-      margin:0 0 24px;
-      padding:0;
-      list-style:none;
-    }
-
-    .sdlc-hero-points li{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:8px;
-      padding:12px 14px;
-      font-size:14px;
-      font-weight:600;
-      color:#2b3340;
-    }
-
-    .sdlc-hero-actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-
-    .sdlc-hero-image{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:8px;
-      box-shadow:var(--shadow);
-      padding:16px;
-    }
-
-    .sdlc-hero-image img,
-    .sdlc-shot img,
-    .sdlc-banner img,
-    .sdlc-app-card img{
-      display:block;
-      width:100%;
-      height:auto;
-      border-radius:8px;
-    }
-
-    .sdlc-trustbar{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:16px;
-      margin-top:24px;
-    }
-
-    .sdlc-trust-item{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:8px;
-      padding:16px;
-      text-align:center;
-      font-size:14px;
-      font-weight:700;
-      color:#2d3440;
-    }
-
-    .sdlc-problem-grid{
-      grid-template-columns:repeat(3,minmax(0,1fr));
-    }
-
-    .sdlc-problem-card{
-      padding:24px;
-    }
-
-    .sdlc-problem-card h3{
-      margin:0 0 10px;
-      font-size:21px;
-    }
-
-    .sdlc-problem-card p{
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-    }
-
-    .sdlc-feature-grid{
-      grid-template-columns:repeat(3,minmax(0,1fr));
-    }
-
-    .sdlc-feature-card{
-      padding:24px;
-    }
-
-    .sdlc-feature-card h3{
-      margin:0 0 10px;
-      font-size:20px;
-      line-height:1.3;
-    }
-
-    .sdlc-feature-card p{
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-    }
-
-    .sdlc-highlight{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:26px;
-      align-items:center;
-      background:linear-gradient(180deg,#faf8ff 0%,#ffffff 100%);
-      border:1px solid #ebdef9;
-      border-radius:8px;
-      padding:28px;
-      box-shadow:var(--shadow);
-    }
-
-    .sdlc-highlight h2{
-      margin:0 0 14px;
-      font-size:32px;
-      line-height:1.2;
-    }
-
-    .sdlc-highlight p{
-      margin:0 0 14px;
-      color:var(--muted);
-    }
-
-    .sdlc-checklist{
-      margin:0;
-      padding:0;
-      list-style:none;
-    }
-
-    .sdlc-checklist li{
-      position:relative;
-      padding-left:24px;
-      margin-bottom:10px;
-      color:var(--text);
-      font-size:15px;
-    }
-
-    .sdlc-checklist li:before{
-      content:"✓";
-      position:absolute;
-      left:0;
-      top:0;
-      color:var(--accent);
-      font-weight:700;
-    }
-
-    .sdlc-process{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:18px;
-    }
-
-    .sdlc-step{
-      padding:24px 20px;
-      position:relative;
-      overflow:hidden;
-    }
-
-    .sdlc-step-number{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:42px;
-      height:42px;
-      border-radius:50%;
-      background:var(--primary-soft);
-      color:var(--primary);
-      font-weight:800;
-      margin-bottom:14px;
-    }
-
-    .sdlc-step h3{
-      margin:0 0 10px;
-      font-size:20px;
-    }
-
-    .sdlc-step p{
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-    }
-
-    .sdlc-shot-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-
-    .sdlc-shot{
-      padding:18px;
-    }
-
-    .sdlc-shot h3{
-      margin:16px 0 8px;
-      font-size:20px;
-    }
-
-    .sdlc-shot p{
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-    }
-
-    .sdlc-shot .sdlc-placeholder{
-      background:linear-gradient(135deg,#f9f4ff,#eef8ff);
-      border:1px dashed #cdbde8;
-      border-radius:8px;
-      min-height:300px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      color:#6b7280;
-      padding:24px;
-      font-size:15px;
-      font-weight:700;
-    }
-
-    .sdlc-detail-table-wrap{
-      overflow-x:auto;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:8px;
-      box-shadow:var(--shadow);
-    }
-
-    .sdlc-detail-table{
-      width:100%;
-      min-width:760px;
-      border-collapse:collapse;
-    }
-
-    .sdlc-detail-table th,
-    .sdlc-detail-table td{
-      padding:16px 18px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:top;
-      font-size:15px;
-    }
-
-    .sdlc-detail-table th{
-      background-color:#EFE9D8;
-      color:#2b3340;
-      font-size:14px;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-
-    .sdlc-detail-table tr:last-child td{
-      border-bottom:none;
-    }
-
-    .sdlc-faq{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-
-    .sdlc-faq-item{
-      padding:22px;
-    }
-
-    .sdlc-faq-item h3{
-      margin:0 0 10px;
-      font-size:18px;
-      line-height:1.35;
-    }
-
-    .sdlc-faq-item p{
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-    }
-
-    .sdlc-apps-showcase{
-      padding:44px 0;
-      background:linear-gradient(180deg,#faf7ff 0%,#ffffff 100%);
-      border:1px solid #eadff7;
-      border-radius:8px;
-    }
-
-    .sdlc-app-grid{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:18px;
-      margin-top:28px;
-    }
-
-    .sdlc-app-card{
-      display:block;
-      text-decoration:none !important;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:8px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      transition:.25s ease;
-      color:inherit !important;
-    }
-
-    .sdlc-app-card:hover{
-      transform:translateY(-4px);
-      border-color:#d8c5f4;
-    }
-
-    .sdlc-app-card-body{
-      padding:18px;
-    }
-
-    .sdlc-app-card h3{
-      margin:0 0 8px;
-      font-size:18px;
-      line-height:1.35;
-      color:var(--text);
-    }
-
-    .sdlc-app-card p{
-      margin:0 0 12px;
-      font-size:14px;
-      color:var(--muted);
-      min-height:66px;
-    }
-
-    .sdlc-app-card span{
-      color:var(--primary);
-      font-size:14px;
-      font-weight:700;
-    }
-
-    .sdlc-cta{
-      background:
-        radial-gradient(circle at left top, rgba(255,255,255,.22), transparent 30%),
-        linear-gradient(135deg,var(--primary-dark),var(--primary));
-      color:#fff;
-      border-radius:8px;
-      padding:36px 28px;
-      text-align:center;
-      box-shadow:0 16px 34px rgba(75,38,125,.24);
-    }
-
-    .sdlc-cta h2{
-      margin:0 0 12px;
-      font-size:34px;
-      line-height:1.2;
-      color:#fff;
-    }
-
-    .sdlc-cta p{
-      max-width:820px;
-      margin:0 auto 22px;
-      color:rgba(255,255,255,.9);
-      font-size:16px;
-    }
-
-    .sdlc-cta .sdlc-btn-secondary{
-      background:rgba(255,255,255,.12);
-      border-color:rgba(255,255,255,.32);
-      color:#fff !important;
-    }
-
-    .sdlc-cta-actions{
-      display:flex;
-      justify-content:center;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-
-    .sdlc-note{
-      background-color:#EFE9D8;
-      border:1px solid #f3e6b0;
-      border-radius:8px;
-      padding:16px 18px;
-      color:#5d5430;
-      font-size:14px;
-      margin-top:16px;
-    }
-
-    .sdlc-center{
-      text-align:center;
-    }
-
-    @media (max-width: 1080px){
-      .sdlc-hero-inner,
-      .sdlc-highlight{
-        grid-template-columns:1fr;
-      }
-
-      .sdlc-feature-grid,
-      .sdlc-problem-grid{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-
-      .sdlc-process{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-
-      .sdlc-app-grid{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-
-      .sdlc-trustbar{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-    }
-
-    @media (max-width: 768px){
-      .sdlc-section{
-        padding:36px 0;
-      }
-
-      .sdlc-container{
-        padding:0 14px;
-      }
-
-      .sdlc-hero{
-        padding:22px 0 24px;
-        border-radius:8px;
-      }
-
-      .sdlc-hero h1{
-        font-size:30px;
-      }
-
-      .sdlc-section-title,
-      .sdlc-highlight h2,
-      .sdlc-cta h2{
-        font-size:28px;
-      }
-
-      .sdlc-section-subtitle,
-      .sdlc-hero p{
-        font-size:15px;
-      }
-
-      .sdlc-hero-points,
-      .sdlc-feature-grid,
-      .sdlc-problem-grid,
-      .sdlc-process,
-      .sdlc-shot-grid,
-      .sdlc-faq,
-      .sdlc-app-grid,
-      .sdlc-trustbar{
-        grid-template-columns:1fr;
-      }
-
-      .sdlc-highlight{
-        padding:22px 18px;
-      }
-
-      .sdlc-card,
-      .sdlc-app-card{
-        border-radius:8px;
-      }
-
-      .sdlc-shot .sdlc-placeholder{
-        min-height:220px;
-      }
-    }
+  .sdlc-shipstation-page{
+  --primary:#6f42c1;
+  --primary-dark:#4b267d;
+  --primary-soft:#f4edff;
+  --accent:#14b8a6;
+  --text:#1f2937;
+  --muted:#5b6472;
+  --border:#e8eaf0;
+  --bg:#ffffff;
+  --bg-soft:#f8f9fc;
+  --shadow:0 12px 30px rgba(38,50,77,.08);
+  --radius:18px;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background:#fff;
+  line-height:1.65;
+  }
+
+  .sdlc-shipstation-page *{
+  box-sizing:border-box;
+  }
+
+  .sdlc-container{
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 20px;
+  }
+
+  .sdlc-section{
+  padding:48px 0;
+  }
+
+  .sdlc-section-title{
+  text-align:center;
+  margin:0 0 14px;
+  font-size:34px;
+  line-height:1.2;
+  color:var(--text);
+  font-weight:700;
+  }
+
+  .sdlc-section-subtitle{
+  max-width:860px;
+  margin:0 auto 34px;
+  text-align:center;
+  color:var(--muted);
+  font-size:16px;
+  }
+
+  .sdlc-badge{
+  display:inline-block;
+  padding:7px 14px;
+  border-radius:8px;
+  background:var(--primary-soft);
+  color:var(--primary);
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:14px;
+  }
+
+  .sdlc-btn{
+  display:inline-block;
+  padding:14px 24px;
+  border-radius:8px;
+  text-decoration:none !important;
+  font-weight:700;
+  font-size:15px;
+  transition:.25s ease;
+  }
+
+  .sdlc-btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff !important;
+  box-shadow:0 10px 24px rgba(111,66,193,.24);
+  }
+
+  .sdlc-btn-primary:hover{
+  transform:translateY(-2px);
+  }
+
+  .sdlc-btn-secondary{
+  background:#fff;
+  color:var(--primary) !important;
+  border:1px solid #d9c8f2;
+  }
+
+  .sdlc-btn-secondary:hover{
+  background:var(--primary-soft);
+  }
+
+  .sdlc-grid{
+  display:grid;
+  gap:22px;
+  }
+
+  .sdlc-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  }
+
+  .sdlc-hero{
+  padding:34px 0 30px;
+  background:
+  radial-gradient(circle at top left, rgba(111,66,193,.10), transparent 30%),
+  radial-gradient(circle at top right, rgba(20,184,166,.10), transparent 26%),
+  linear-gradient(180deg,#fcfbff 0%,#ffffff 100%);
+  border:1px solid #ede7f8;
+  border-radius:8px;
+  overflow:hidden;
+  }
+
+  .sdlc-hero-inner{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:34px;
+  align-items:center;
+  }
+
+  .sdlc-hero h1{
+  margin:0 0 14px;
+  font-size:42px;
+  line-height:1.15;
+  color:#171c28;
+  font-weight:800;
+  }
+
+  .sdlc-hero p{
+  margin:0 0 22px;
+  color:var(--muted);
+  font-size:17px;
+  }
+
+  .sdlc-hero-points{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin:0 0 24px;
+  padding:0;
+  list-style:none;
+  }
+
+  .sdlc-hero-points li{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  font-size:14px;
+  font-weight:600;
+  color:#2b3340;
+  }
+
+  .sdlc-hero-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  }
+
+  .sdlc-hero-image{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:var(--shadow);
+  padding:16px;
+  }
+
+  .sdlc-hero-image img,
+  .sdlc-shot img,
+  .sdlc-banner img,
+  .sdlc-app-card img{
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:8px;
+  }
+
+  .sdlc-trustbar{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+  margin-top:24px;
+  }
+
+  .sdlc-trust-item{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  text-align:center;
+  font-size:14px;
+  font-weight:700;
+  color:#2d3440;
+  }
+
+  .sdlc-problem-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .sdlc-problem-card{
+  padding:24px;
+  }
+
+  .sdlc-problem-card h3{
+  margin:0 0 10px;
+  font-size:21px;
+  }
+
+  .sdlc-problem-card p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  }
+
+  .sdlc-feature-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .sdlc-feature-card{
+  padding:24px;
+  }
+
+  .sdlc-feature-card h3{
+  margin:0 0 10px;
+  font-size:20px;
+  line-height:1.3;
+  }
+
+  .sdlc-feature-card p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  }
+
+  .sdlc-highlight{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:26px;
+  align-items:center;
+  background:linear-gradient(180deg,#faf8ff 0%,#ffffff 100%);
+  border:1px solid #ebdef9;
+  border-radius:8px;
+  padding:28px;
+  box-shadow:var(--shadow);
+  }
+
+  .sdlc-highlight h2{
+  margin:0 0 14px;
+  font-size:32px;
+  line-height:1.2;
+  }
+
+  .sdlc-highlight p{
+  margin:0 0 14px;
+  color:var(--muted);
+  }
+
+  .sdlc-checklist{
+  margin:0;
+  padding:0;
+  list-style:none;
+  }
+
+  .sdlc-checklist li{
+  position:relative;
+  padding-left:24px;
+  margin-bottom:10px;
+  color:var(--text);
+  font-size:15px;
+  }
+
+  .sdlc-checklist li:before{
+  content:"✓";
+  position:absolute;
+  left:0;
+  top:0;
+  color:var(--accent);
+  font-weight:700;
+  }
+
+  .sdlc-process{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  }
+
+  .sdlc-step{
+  padding:24px 20px;
+  position:relative;
+  overflow:hidden;
+  }
+
+  .sdlc-step-number{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:var(--primary-soft);
+  color:var(--primary);
+  font-weight:800;
+  margin-bottom:14px;
+  }
+
+  .sdlc-step h3{
+  margin:0 0 10px;
+  font-size:20px;
+  }
+
+  .sdlc-step p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  }
+
+  .sdlc-shot-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sdlc-shot{
+  padding:18px;
+  }
+
+  .sdlc-shot h3{
+  margin:16px 0 8px;
+  font-size:20px;
+  }
+
+  .sdlc-shot p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  }
+
+  .sdlc-shot .sdlc-placeholder{
+  background:linear-gradient(135deg,#f9f4ff,#eef8ff);
+  border:1px dashed #cdbde8;
+  border-radius:8px;
+  min-height:300px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:#6b7280;
+  padding:24px;
+  font-size:15px;
+  font-weight:700;
+  }
+
+  .sdlc-detail-table-wrap{
+  overflow-x:auto;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:var(--shadow);
+  }
+
+  .sdlc-detail-table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+  }
+
+  .sdlc-detail-table th,
+  .sdlc-detail-table td{
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  vertical-align:top;
+  font-size:15px;
+  }
+
+  .sdlc-detail-table th{
+  background-color:#EFE9D8;
+  color:#2b3340;
+  font-size:14px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  }
+
+  .sdlc-detail-table tr:last-child td{
+  border-bottom:none;
+  }
+
+  .sdlc-faq{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sdlc-faq-item{
+  padding:22px;
+  }
+
+  .sdlc-faq-item h3{
+  margin:0 0 10px;
+  font-size:18px;
+  line-height:1.35;
+  }
+
+  .sdlc-faq-item p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  }
+
+  .sdlc-apps-showcase{
+  padding:44px 0;
+  background:linear-gradient(180deg,#faf7ff 0%,#ffffff 100%);
+  border:1px solid #eadff7;
+  border-radius:8px;
+  }
+
+  .sdlc-app-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  margin-top:28px;
+  }
+
+  .sdlc-app-card{
+  display:block;
+  text-decoration:none !important;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  transition:.25s ease;
+  color:inherit !important;
+  }
+
+  .sdlc-app-card:hover{
+  transform:translateY(-4px);
+  border-color:#d8c5f4;
+  }
+
+  .sdlc-app-card-body{
+  padding:18px;
+  }
+
+  .sdlc-app-card h3{
+  margin:0 0 8px;
+  font-size:18px;
+  line-height:1.35;
+  color:var(--text);
+  }
+
+  .sdlc-app-card p{
+  margin:0 0 12px;
+  font-size:14px;
+  color:var(--muted);
+  min-height:66px;
+  }
+
+  .sdlc-app-card span{
+  color:var(--primary);
+  font-size:14px;
+  font-weight:700;
+  }
+
+  .sdlc-cta{
+  background:
+  radial-gradient(circle at left top, rgba(255,255,255,.22), transparent 30%),
+  linear-gradient(135deg,var(--primary-dark),var(--primary));
+  color:#fff;
+  border-radius:8px;
+  padding:36px 28px;
+  text-align:center;
+  box-shadow:0 16px 34px rgba(75,38,125,.24);
+  }
+
+  .sdlc-cta h2{
+  margin:0 0 12px;
+  font-size:34px;
+  line-height:1.2;
+  color:#fff;
+  }
+
+  .sdlc-cta p{
+  max-width:820px;
+  margin:0 auto 22px;
+  color:rgba(255,255,255,.9);
+  font-size:16px;
+  }
+
+  .sdlc-cta .sdlc-btn-secondary{
+  background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.32);
+  color:#fff !important;
+  }
+
+  .sdlc-cta-actions{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+  }
+
+  .sdlc-note{
+  background-color:#EFE9D8;
+  border:1px solid #f3e6b0;
+  border-radius:8px;
+  padding:16px 18px;
+  color:#5d5430;
+  font-size:14px;
+  margin-top:16px;
+  }
+
+  .sdlc-center{
+  text-align:center;
+  }
+
+  @media (max-width: 1080px){
+  .sdlc-hero-inner,
+  .sdlc-highlight{
+  grid-template-columns:1fr;
+  }
+
+  .sdlc-feature-grid,
+  .sdlc-problem-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sdlc-process{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sdlc-app-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sdlc-trustbar{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  }
+
+  @media (max-width: 768px){
+  .sdlc-section{
+  padding:36px 0;
+  }
+
+  .sdlc-container{
+  padding:0 14px;
+  }
+
+  .sdlc-hero{
+  padding:22px 0 24px;
+  border-radius:8px;
+  }
+
+  .sdlc-hero h1{
+  font-size:30px;
+  }
+
+  .sdlc-section-title,
+  .sdlc-highlight h2,
+  .sdlc-cta h2{
+  font-size:28px;
+  }
+
+  .sdlc-section-subtitle,
+  .sdlc-hero p{
+  font-size:15px;
+  }
+
+  .sdlc-hero-points,
+  .sdlc-feature-grid,
+  .sdlc-problem-grid,
+  .sdlc-process,
+  .sdlc-shot-grid,
+  .sdlc-faq,
+  .sdlc-app-grid,
+  .sdlc-trustbar{
+  grid-template-columns:1fr;
+  }
+
+  .sdlc-highlight{
+  padding:22px 18px;
+  }
+
+  .sdlc-card,
+  .sdlc-app-card{
+  border-radius:8px;
+  }
+
+  .sdlc-shot .sdlc-placeholder{
+  min-height:220px;
+  }
+  }
   </style>
 <!-- HERO -->
 <section class="sdlc-section">
@@ -655,8 +658,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Premium Odoo Shipping Integration</span>
 <h1>ShipStation Odoo Connector for Faster Shipping, Label Creation, Order Sync, and Tracking</h1>
 <p>
-                Connect Odoo with ShipStation to centralize shipping operations inside your ERP. Import shipping-ready sales orders, manage carrier services, generate labels, sync tracking details, and reduce manual shipping work across your order fulfillment process.
-              </p>
+  Connect Odoo with ShipStation to centralize shipping operations inside your ERP. Import shipping-ready sales orders, manage carrier services, generate labels, sync tracking details, and reduce manual shipping work across your order fulfillment process.
+  </p>
 <ul class="sdlc-hero-points">
 <li>Connect ShipStation with Odoo from one place</li>
 <li>Sync orders, customers, products, and shipping data</li>
@@ -688,26 +691,26 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Why This Connector Matters</span>
 <h2 class="sdlc-section-title">Simplify Shipping Operations Between Odoo and ShipStation</h2>
 <p class="sdlc-section-subtitle">
-        Businesses using Odoo for sales, inventory, and warehouse operations often still handle shipping in a separate tool. This ShipStation Odoo Connector helps reduce repetitive steps by aligning your shipping workflow with the operational data already available in Odoo.
-      </p>
+  Businesses using Odoo for sales, inventory, and warehouse operations often still handle shipping in a separate tool. This ShipStation Odoo Connector helps reduce repetitive steps by aligning your shipping workflow with the operational data already available in Odoo.
+  </p>
 <div class="sdlc-grid sdlc-problem-grid">
 <div class="sdlc-card sdlc-problem-card">
 <h3>Reduce Manual Shipping Work</h3>
 <p>
-            Avoid repeating the same order and shipping tasks across multiple systems. Process shipments using synchronized order data and clearer shipping actions inside your operational flow.
-          </p>
+  Avoid repeating the same order and shipping tasks across multiple systems. Process shipments using synchronized order data and clearer shipping actions inside your operational flow.
+  </p>
 </div>
 <div class="sdlc-card sdlc-problem-card">
 <h3>Improve Fulfillment Accuracy</h3>
 <p>
-            Work with cleaner order, customer, and shipment details so your team can reduce mistakes during packing, labeling, carrier selection, and dispatch handling.
-          </p>
+  Work with cleaner order, customer, and shipment details so your team can reduce mistakes during packing, labeling, carrier selection, and dispatch handling.
+  </p>
 </div>
 <div class="sdlc-card sdlc-problem-card">
 <h3>Get Better Shipment Visibility</h3>
 <p>
-            Keep shipping activity easier to follow with status updates, tracking information, synced shipment records, and operational logs for day-to-day monitoring.
-          </p>
+  Keep shipping activity easier to follow with status updates, tracking information, synced shipment records, and operational logs for day-to-day monitoring.
+  </p>
 </div>
 </div>
 </div>
@@ -720,8 +723,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Core Value</span>
 <h2>Manage Shipping Workflows Without Breaking Your Odoo Process</h2>
 <p>
-            This connector is designed for businesses that want to connect fulfillment operations with their existing Odoo sales, inventory, and warehouse process. Instead of treating shipping as a disconnected step, you can align it with order handling, package preparation, and shipment follow-up.
-          </p>
+  This connector is designed for businesses that want to connect fulfillment operations with their existing Odoo sales, inventory, and warehouse process. Instead of treating shipping as a disconnected step, you can align it with order handling, package preparation, and shipment follow-up.
+  </p>
 <ul class="sdlc-checklist">
 <li>Connect one or more ShipStation accounts as your business setup requires</li>
 <li>Work with synchronized order and customer information</li>
@@ -741,62 +744,62 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Detailed Features</span>
 <h2 class="sdlc-section-title">Key Features of the ShipStation Odoo Connector</h2>
 <p class="sdlc-section-subtitle">
-        The sections below cover the functionality buyers usually expect to review on a premium Odoo Apps listing: setup flow, data movement, shipment execution, operational control, and business usability.
-      </p>
+  The sections below cover the functionality buyers usually expect to review on a premium Odoo Apps listing: setup flow, data movement, shipment execution, operational control, and business usability.
+  </p>
 <div class="sdlc-grid sdlc-feature-grid">
 <div class="sdlc-card sdlc-feature-card">
 <h3>Instance Configuration</h3>
 <p>
-            Configure your ShipStation connection from Odoo and manage integration settings from a centralized area built for operational use.
-          </p>
+  Configure your ShipStation connection from Odoo and manage integration settings from a centralized area built for operational use.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Order Synchronization</h3>
 <p>
-            Work with shipping-related order data in a more connected way so teams can review, process, and fulfill orders with fewer disconnected steps.
-          </p>
+  Work with shipping-related order data in a more connected way so teams can review, process, and fulfill orders with fewer disconnected steps.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Customer and Address Sync</h3>
 <p>
-            Keep delivery-relevant customer details aligned for smoother shipping preparation and fewer address-related errors during fulfillment.
-          </p>
+  Keep delivery-relevant customer details aligned for smoother shipping preparation and fewer address-related errors during fulfillment.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Product and SKU Mapping</h3>
 <p>
-            Match product records and shipping-related item details so order lines are easier to process within your shipping workflow.
-          </p>
+  Match product records and shipping-related item details so order lines are easier to process within your shipping workflow.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Shipping Rates and Labels</h3>
 <p>
-            Support rate and label workflows through a more streamlined operational path, reducing time spent jumping between systems.
-          </p>
+  Support rate and label workflows through a more streamlined operational path, reducing time spent jumping between systems.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Shipment Tracking Visibility</h3>
 <p>
-            Keep shipment follow-up easier by handling tracking-related information through a structured Odoo process.
-          </p>
+  Keep shipment follow-up easier by handling tracking-related information through a structured Odoo process.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Field Mapping Support</h3>
 <p>
-            Extend usability by connecting relevant business fields between the two platforms where mapping is part of your module flow.
-          </p>
+  Extend usability by connecting relevant business fields between the two platforms where mapping is part of your module flow.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Operational Logs and Monitoring</h3>
 <p>
-            Review sync activity, identify issues faster, and support operational troubleshooting with logs and related records.
-          </p>
+  Review sync activity, identify issues faster, and support operational troubleshooting with logs and related records.
+  </p>
 </div>
 <div class="sdlc-card sdlc-feature-card">
 <h3>Business-Friendly Workflow Design</h3>
 <p>
-            The connector is positioned to help warehouse, operations, and ecommerce teams work inside a cleaner fulfillment routine.
-          </p>
+  The connector is positioned to help warehouse, operations, and ecommerce teams work inside a cleaner fulfillment routine.
+  </p>
 </div>
 </div>
 </div>
@@ -807,36 +810,36 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Workflow Overview</span>
 <h2 class="sdlc-section-title">How the Connector Fits Into a Typical Shipping Process</h2>
 <p class="sdlc-section-subtitle">
-        Competitor listings often show process diagrams because buyers want to understand flow quickly. This section gives that same clarity in a cleaner, Odoo Apps-friendly format.
-      </p>
+  Competitor listings often show process diagrams because buyers want to understand flow quickly. This section gives that same clarity in a cleaner, Odoo Apps-friendly format.
+  </p>
 <div class="sdlc-process">
 <div class="sdlc-card sdlc-step">
 <div class="sdlc-step-number">1</div>
 <h3>Connect</h3>
 <p>
-            Configure the ShipStation instance inside Odoo and prepare the integration for operational use.
-          </p>
+  Configure the ShipStation instance inside Odoo and prepare the integration for operational use.
+  </p>
 </div>
 <div class="sdlc-card sdlc-step">
 <div class="sdlc-step-number">2</div>
 <h3>Sync Data</h3>
 <p>
-            Align required order, customer, product, and shipping-related information for day-to-day fulfillment activity.
-          </p>
+  Align required order, customer, product, and shipping-related information for day-to-day fulfillment activity.
+  </p>
 </div>
 <div class="sdlc-card sdlc-step">
 <div class="sdlc-step-number">3</div>
 <h3>Process Shipments</h3>
 <p>
-            Use shipping workflows such as rates, labels, shipment handling, and operational confirmation in a more streamlined way.
-          </p>
+  Use shipping workflows such as rates, labels, shipment handling, and operational confirmation in a more streamlined way.
+  </p>
 </div>
 <div class="sdlc-card sdlc-step">
 <div class="sdlc-step-number">4</div>
 <h3>Track and Monitor</h3>
 <p>
-            Review shipment outcomes, synced records, and logs to support fulfillment visibility and issue handling.
-          </p>
+  Review shipment outcomes, synced records, and logs to support fulfillment visibility and issue handling.
+  </p>
 </div>
 </div>
 </div>
@@ -847,69 +850,69 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Product Tour</span>
 <h2 class="sdlc-section-title">Product Screens and Flow Walkthrough</h2>
 <p class="sdlc-section-subtitle">
-        Replace the image files below with your real screenshots from <strong>static/description/</strong>. The structure is designed to mirror premium competitor listings that guide buyers through setup, operations, and proof of workflow.
-      </p>
+  Replace the image files below with your real screenshots from <strong>static/description/</strong>. The structure is designed to mirror premium competitor listings that guide buyers through setup, operations, and proof of workflow.
+  </p>
 <div class="sdlc-grid sdlc-shot-grid">
 <div class="sdlc-card sdlc-shot">
 <img alt="ShipStation instance configuration in Odoo" src="instance data.png"/>
 <h3>1. Instance Setup and Connection</h3>
 <p>
-            Show the screen where users configure the ShipStation account and related integration settings.
-          </p>
+  Show the screen where users configure the ShipStation account and related integration settings.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="ShipStation connector dashboard in Odoo" src="dashboard1.png"/>
 <h3>2. Dashboard and Operational Overview</h3>
 <p>
-            Highlight important shipping metrics, totals, or operational visibility screens available in your module.
-          </p>
+  Highlight important shipping metrics, totals, or operational visibility screens available in your module.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="ShipStation order synchronization in Odoo" src="shipstationdata order.png"/>
 <h3>3. Order Synchronization Flow</h3>
 <p>
-            Show how order-related records move into the shipping workflow and how the team manages fulfillment preparation.
-          </p>
+  Show how order-related records move into the shipping workflow and how the team manages fulfillment preparation.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="ShipStation product mapping in Odoo" src="field mapping listing.png"/>
 <h3>4. Product or Field Mapping</h3>
 <p>
-            Use mapping screenshots to show flexibility, operational control, and better data alignment between systems.
-          </p>
+  Use mapping screenshots to show flexibility, operational control, and better data alignment between systems.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="Shipping rates and labels in Odoo ShipStation connector" src="shipping delivery order.png"/>
 <h3>5. Shipping Rates and Label Workflow</h3>
 <p>
-            Buyers often look for this section first. Use strong screenshots here because label generation is a key conversion point.
-          </p>
+  Buyers often look for this section first. Use strong screenshots here because label generation is a key conversion point.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="Shipment tracking in Odoo ShipStation connector" src="shipping tracking.png"/>
 <h3>6. Shipment and Tracking Flow</h3>
 <p>
-            Show shipment processing, tracking details, or delivery-related sync records that help users trust the flow.
-          </p>
+  Show shipment processing, tracking details, or delivery-related sync records that help users trust the flow.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="Inventory sync in Odoo ShipStation connector" src="inventory.png"/>
 <h3>7. Inventory or Fulfillment Visibility</h3>
 <p>
-            Add any stock, package, warehouse, or shipping-related operational screen relevant to your connector.
-          </p>
+  Add any stock, package, warehouse, or shipping-related operational screen relevant to your connector.
+  </p>
 </div>
 <div class="sdlc-card sdlc-shot">
 <img alt="Integration sync logs in Odoo ShipStation connector" src="sync logs.png"/>
 <h3>8. Logs, Reports, and Monitoring</h3>
 <p>
-            This gives proof of maturity. Buyers want to see how the app helps them review activity and handle issues.
-          </p>
+  This gives proof of maturity. Buyers want to see how the app helps them review activity and handle issues.
+  </p>
 </div>
 </div>
 <div class="sdlc-note">
 <strong>Tip:</strong> Use clear screenshot filenames and keep image widths optimized for Odoo Apps. Avoid uploading very large images. Clean, readable screenshots with small highlight boxes usually convert better than raw full-screen captures.
-      </div>
+  </div>
 </div>
 </section>
 <!-- DETAILS TABLE -->
@@ -918,8 +921,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Buyer Decision Support</span>
 <h2 class="sdlc-section-title">What Buyers Usually Compare Before Choosing a Shipping Connector</h2>
 <p class="sdlc-section-subtitle">
-        Many competitor listings miss this section or keep it too generic. This structured comparison-style section improves clarity and helps buyers understand your app faster.
-      </p>
+  Many competitor listings miss this section or keep it too generic. This structured comparison-style section improves clarity and helps buyers understand your app faster.
+  </p>
 <div class="sdlc-detail-table-wrap">
 <table class="sdlc-detail-table">
 <thead>
@@ -966,8 +969,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">Important Coverage</span>
 <h2 class="sdlc-section-title">Sections Premium Competitor Pages Commonly Use</h2>
 <p class="sdlc-section-subtitle">
-        Based on the style patterns you shared, strong Odoo Apps pages usually include value messaging, feature breakdown, product tour, trust-building screenshots, FAQ, support clarity, and cross-promotion of related apps. This template covers all of those blocks.
-      </p>
+  Based on the style patterns you shared, strong Odoo Apps pages usually include value messaging, feature breakdown, product tour, trust-building screenshots, FAQ, support clarity, and cross-promotion of related apps. This template covers all of those blocks.
+  </p>
 <div class="sdlc-grid sdlc-feature-grid">
 <div class="sdlc-card sdlc-feature-card">
 <h3>Value-First Hero Section</h3>
@@ -1002,44 +1005,44 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">FAQ</span>
 <h2 class="sdlc-section-title">Frequently Asked Questions</h2>
 <p class="sdlc-section-subtitle">
-        Keep answers clear and honest. Avoid unsupported claims. This helps both buyers and marketplace quality standards.
-      </p>
+  Keep answers clear and honest. Avoid unsupported claims. This helps both buyers and marketplace quality standards.
+  </p>
 <div class="sdlc-grid sdlc-faq">
 <div class="sdlc-card sdlc-faq-item">
 <h3>Is this connector suitable for businesses managing shipping from Odoo?</h3>
 <p>
-            Yes. It is positioned for businesses that want a more connected shipping workflow between Odoo operations and ShipStation handling.
-          </p>
+  Yes. It is positioned for businesses that want a more connected shipping workflow between Odoo operations and ShipStation handling.
+  </p>
 </div>
 <div class="sdlc-card sdlc-faq-item">
 <h3>Can this app help reduce manual shipping work?</h3>
 <p>
-            That is one of the main business goals of this type of connector. It helps teams work with more connected shipping data and process flow.
-          </p>
+  That is one of the main business goals of this type of connector. It helps teams work with more connected shipping data and process flow.
+  </p>
 </div>
 <div class="sdlc-card sdlc-faq-item">
 <h3>Can I show my workflow using screenshots on the Odoo Apps page?</h3>
 <p>
-            Yes. In fact, strong screenshots improve conversion. Use screenshots for configuration, order flow, labels, shipment tracking, and logs.
-          </p>
+  Yes. In fact, strong screenshots improve conversion. Use screenshots for configuration, order flow, labels, shipment tracking, and logs.
+  </p>
 </div>
 <div class="sdlc-card sdlc-faq-item">
 <h3>What sections should an Odoo shipping connector page include?</h3>
 <p>
-            Hero, benefits, key features, workflow, screenshot tour, trust-building proof, FAQ, support section, and related apps showcase.
-          </p>
+  Hero, benefits, key features, workflow, screenshot tour, trust-building proof, FAQ, support section, and related apps showcase.
+  </p>
 </div>
 <div class="sdlc-card sdlc-faq-item">
 <h3>Can this layout be used on the Odoo marketplace description page?</h3>
 <p>
-            Yes. This code is written as a single responsive HTML and CSS block suitable for an Odoo Apps listing description structure.
-          </p>
+  Yes. This code is written as a single responsive HTML and CSS block suitable for an Odoo Apps listing description structure.
+  </p>
 </div>
 <div class="sdlc-card sdlc-faq-item">
 <h3>How should I improve this page further?</h3>
 <p>
-            Replace placeholders with your real screenshots, add exact app URLs in the portfolio section, and refine the copy according to your final module features.
-          </p>
+  Replace placeholders with your real screenshots, add exact app URLs in the portfolio section, and refine the copy according to your final module features.
+  </p>
 </div>
 </div>
 </div>
@@ -1053,8 +1056,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <span class="sdlc-badge">More from SDLC Corp</span>
 <h2 class="sdlc-section-title">Explore More Odoo Apps by SDLC Corp</h2>
 <p class="sdlc-section-subtitle" style="margin-bottom:0;">
-              Looking for more Odoo integrations, automation tools, and business apps? Explore more solutions from SDLC Corp designed to simplify operations, reduce manual work, and improve ecommerce, shipping, sales, inventory, and business process efficiency.
-            </p>
+  Looking for more Odoo integrations, automation tools, and business apps? Explore more solutions from SDLC Corp designed to simplify operations, reduce manual work, and improve ecommerce, shipping, sales, inventory, and business process efficiency.
+  </p>
 </div>
 <div class="sdlc-app-grid">
 <a class="sdlc-app-card" href="https://apps.odoo.com/apps/modules/17.0/your_app_1" rel="noopener noreferrer" target="_blank">
@@ -1092,8 +1095,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 </div>
 <div class="sdlc-center" style="margin-top:28px;">
 <a class="sdlc-btn sdlc-btn-primary" href="https://apps.odoo.com/apps/modules/browse?search=sdlc+corp" rel="noopener noreferrer" target="_blank">
-              See More Odoo Apps
-            </a>
+  See More Odoo Apps
+  </a>
 </div>
 </div>
 </div>
@@ -1105,8 +1108,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 <div class="sdlc-cta">
 <h2>Connect Odoo and ShipStation With a More Professional Shipping Workflow</h2>
 <p>
-          Use this ShipStation Odoo Connector page as your premium marketplace presentation. Replace screenshots, update app links, and fine-tune the copy according to your exact module flow before publishing.
-        </p>
+  Use this ShipStation Odoo Connector page as your premium marketplace presentation. Replace screenshots, update app links, and fine-tune the copy according to your exact module flow before publishing.
+  </p>
 <div class="sdlc-cta-actions">
 <a class="sdlc-btn sdlc-btn-primary" href="#screenshots">Review Screenshots Section</a>
 <a class="sdlc-btn sdlc-btn-secondary" href="https://apps.odoo.com/apps/modules/browse?search=sdlc+corp" rel="noopener noreferrer" target="_blank">View More SDLC Corp Apps</a>
@@ -1115,6 +1118,8 @@ Constraints: Odoo HTML sanitizer &mdash; inline styles + tables + flat hex color
 </div>
 </section>
 </section>
+</div>
+</div>
 </div>
 </div>
 </div>
