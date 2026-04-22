@@ -24,7 +24,7 @@
     "website": "https://sdlccorp.com/",
     "maintainer": "SDLC Corp",
     "support": "sales@sdlccorp.com",
-        'price': 1,
+        'price': 10,
     'currency': 'USD',
 "license": "LGPL-3",
     "depends": [
