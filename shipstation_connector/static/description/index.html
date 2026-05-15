@@ -103,7 +103,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                 <tr>
                     <td style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-left:5px solid #F59E0B;border-radius:16px;padding:22px 24px;">
                         <p style="margin:0 0 6px;color:#F59E0B;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;">Direction 01</p>
-                        <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">Odoo → ShipStation</strong>
+                        <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">Odoo &rarr; ShipStation</strong>
                         <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Export orders, products, inventory, customers, categories, attributes, and shipment data from Odoo to ShipStation.</span>
                     </td>
                 </tr>
@@ -111,7 +111,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                 <tr>
                     <td style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-left:5px solid #06B6D4;border-radius:16px;padding:22px 24px;">
                         <p style="margin:0 0 6px;color:#0891B2;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;">Direction 02</p>
-                        <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">ShipStation → Odoo</strong>
+                        <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">ShipStation &rarr; Odoo</strong>
                         <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Import orders, customers, shipping labels, tracking numbers, shipment status, reports, and logs into Odoo.</span>
                     </td>
                 </tr>
@@ -144,38 +144,52 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
     </div>
 
     <!-- PROBLEM / SOLUTION -->
-   <div style="padding:72px 56px;background-color:#FFFFFF;">
+   <div style="padding:76px 56px;background-color:#FFFFFF;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;">
 
-    <table style="width:100%;max-width:1180px;margin:0 auto;border-collapse:separate;border-spacing:42px 0;">
+    <table style="width:100%;max-width:1180px;margin:0 auto;border-collapse:separate;border-spacing:44px 0;">
         <tr>
 
-            <td style="width:42%;vertical-align:middle;">
+            <!-- LEFT CONTENT -->
+            <td style="width:44%;vertical-align:top;padding-top:10px;">
                 <p style="margin:0 0 14px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">
                     Why Businesses Need It
                 </p>
 
-                <h2 style="margin:0 0 22px;color:#0B1220;font-family:Georgia,'Times New Roman',serif;font-size:48px;line-height:1.08;font-weight:800;letter-spacing:-1.4px;">
+                <h2 style="margin:0 0 24px;color:#0B1220;font-family:Georgia,'Times New Roman',serif;font-size:52px;line-height:1.06;font-weight:800;letter-spacing:-1.5px;">
                     Stop Managing Shipping Outside Your Odoo Workflow
                 </h2>
 
-                <p style="margin:0;color:#475569;font-size:17px;line-height:1.75;">
-                    When sales, inventory, deliveries, customers, and warehouse operations live in Odoo, disconnected shipping tools create duplicated work. This Odoo ShipStation integration keeps fulfillment data connected so teams can process orders faster and monitor shipping from one ERP workflow.
+                <p style="margin:0;color:#475569;font-size:17px;line-height:1.75;max-width:520px;">
+                    When sales, inventory, deliveries, customers, and warehouse operations live in Odoo, disconnected shipping tools create duplicated work, missing tracking visibility, and inventory gaps.
                 </p>
+
+                <div style="margin-top:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-left:5px solid #F59E0B;border-radius:16px;padding:20px 22px;">
+                    <strong style="display:block;color:#0F172A;font-size:18px;margin-bottom:6px;">
+                        This connector keeps fulfillment data connected.
+                    </strong>
+                    <span style="display:block;color:#64748B;font-size:15px;line-height:1.65;">
+                        Teams can process orders faster, sync shipment updates, and monitor shipping from one ERP workflow.
+                    </span>
+                </div>
             </td>
 
-            <td style="width:58%;vertical-align:middle;">
+            <!-- RIGHT CONTENT -->
+            <td style="width:56%;vertical-align:top;">
+
                 <table style="width:100%;border-collapse:separate;border-spacing:16px;">
                     <tr>
-                        <td style="width:50%;background-color:#F8FAFC;border:1px solid #E2E8F0;border-left:5px solid #F59E0B;border-radius:18px;padding:24px;vertical-align:top;">
+                        <td style="width:50%;background-color:#F8FAFC;border:1px solid #E2E8F0;border-top:5px solid #F59E0B;border-radius:18px;padding:24px;vertical-align:top;">
+                            <span style="display:block;color:#D97706;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:10px;">Issue 01</span>
                             <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:10px;line-height:1.25;">
                                 Manual order handling
                             </strong>
                             <span style="display:block;color:#64748B;font-size:15px;line-height:1.65;">
-                                Teams copy order and customer data between disconnected systems and shipping platforms.
+                                Teams copy order and customer data between disconnected systems and shipping tools.
                             </span>
                         </td>
 
-                        <td style="width:50%;background-color:#F8FAFC;border:1px solid #E2E8F0;border-left:5px solid #06B6D4;border-radius:18px;padding:24px;vertical-align:top;">
+                        <td style="width:50%;background-color:#F8FAFC;border:1px solid #E2E8F0;border-top:5px solid #06B6D4;border-radius:18px;padding:24px;vertical-align:top;">
+                            <span style="display:block;color:#0891B2;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:10px;">Issue 02</span>
                             <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:10px;line-height:1.25;">
                                 Missing tracking visibility
                             </strong>
@@ -186,7 +200,8 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                     </tr>
 
                     <tr>
-                        <td style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-left:5px solid #8B5CF6;border-radius:18px;padding:24px;vertical-align:top;">
+                        <td style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-top:5px solid #8B5CF6;border-radius:18px;padding:24px;vertical-align:top;">
+                            <span style="display:block;color:#7C3AED;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:10px;">Issue 03</span>
                             <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:10px;line-height:1.25;">
                                 Inventory mismatch
                             </strong>
@@ -195,16 +210,18 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                             </span>
                         </td>
 
-                        <td style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-left:5px solid #22C55E;border-radius:18px;padding:24px;vertical-align:top;">
+                        <td style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-top:5px solid #22C55E;border-radius:18px;padding:24px;vertical-align:top;">
+                            <span style="display:block;color:#16A34A;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:10px;">Issue 04</span>
                             <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:10px;line-height:1.25;">
                                 Poor sync monitoring
                             </strong>
                             <span style="display:block;color:#64748B;font-size:15px;line-height:1.65;">
-                                Businesses lack centralized visibility for synchronization issues, reports, and logs.
+                                Businesses lack centralized visibility for sync issues, reports, dashboards, and logs.
                             </span>
                         </td>
                     </tr>
                 </table>
+
             </td>
 
         </tr>
@@ -213,42 +230,46 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
 </div>
 
     <!-- BIDIRECTIONAL SYNC -->
-    <a id="sync-directions"></a>
-    <div style="padding:84px 56px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;">
-        <div style="max-width:940px;margin:0 auto 46px;text-align:center;">
-            <p style="margin:0 0 12px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Bidirectional Data Sync</p>
-            <h2 style="margin:0 0 18px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:46px;line-height:1.13;font-weight:900;letter-spacing:-1px;">Sync Data From Odoo to ShipStation and From ShipStation to Odoo</h2>
-            <p style="margin:0;color:#475569;font-size:16px;line-height:1.78;">The application supports two-way shipping and fulfillment workflows. Move the right data in the right direction based on your business process.</p>
-        </div>
-        <table style="width:100%;border-collapse:separate;border-spacing:24px;">
-            <tr>
-                <td style="width:50%;vertical-align:top;background-color:#FFFFFF;border:1px solid #E2E8F0;border-top:5px solid #F59E0B;border-radius:18px;padding:36px;box-shadow:0 10px 25px rgba(15,23,42,0.05);">
-                    <p style="margin:0 0 8px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;">Direction 01</p>
-                    <h3 style="margin:0 0 16px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1.2;font-weight:900;">Odoo → ShipStation Sync</h3>
-                    <p style="margin:0 0 22px;color:#475569;font-size:15px;line-height:1.76;">Export fulfillment-ready records from Odoo to ShipStation so shipping teams can work with current ERP data.</p>
-                    <table style="width:100%;border-collapse:collapse;">
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Export Odoo orders to ShipStation</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Sync products, categories, and attributes</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Send inventory quantities and product updates</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Share shipment-related order details</td></tr>
-                        <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">✓ Support scalable shipping workflows</td></tr>
-                    </table>
-                </td>
-                <td style="width:50%;vertical-align:top;background-color:#FFFFFF;border:1px solid #E2E8F0;border-top:5px solid #06B6D4;border-radius:18px;padding:36px;box-shadow:0 10px 25px rgba(15,23,42,0.05);">
-                    <p style="margin:0 0 8px;color:#0891B2;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;">Direction 02</p>
-                    <h3 style="margin:0 0 16px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1.2;font-weight:900;">ShipStation → Odoo Sync</h3>
-                    <p style="margin:0 0 22px;color:#475569;font-size:15px;line-height:1.76;">Bring ShipStation updates back into Odoo for better order visibility, support, and reporting.</p>
-                    <table style="width:100%;border-collapse:collapse;">
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Import ShipStation orders into Odoo</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Sync customers and shipping addresses</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Import shipment status and carrier details</td></tr>
-                        <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">✓ Pull tracking numbers and label-related details</td></tr>
-                        <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">✓ Maintain reports, logs, and operational visibility</td></tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
+  <a id="sync-directions"></a>
+<div style="padding:84px 56px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;">
+    <div style="max-width:940px;margin:0 auto 46px;text-align:center;">
+        <p style="margin:0 0 12px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Bidirectional Data Sync</p>
+        <h2 style="margin:0 0 18px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:46px;line-height:1.13;font-weight:900;letter-spacing:-1px;">Sync Data From Odoo to ShipStation and From ShipStation to Odoo</h2>
+        <p style="margin:0;color:#475569;font-size:16px;line-height:1.78;">The application supports two-way shipping and fulfillment workflows. Move the right data in the right direction based on your business process.</p>
     </div>
+
+    <table style="width:100%;border-collapse:separate;border-spacing:24px;">
+        <tr>
+            <td style="width:50%;vertical-align:top;background-color:#FFFFFF;border:1px solid #E2E8F0;border-top:5px solid #F59E0B;border-radius:18px;padding:36px;box-shadow:0 10px 25px rgba(15,23,42,0.05);">
+                <p style="margin:0 0 8px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;">Direction 01</p>
+                <h3 style="margin:0 0 16px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1.2;font-weight:900;">Odoo &rarr; ShipStation Sync</h3>
+                <p style="margin:0 0 22px;color:#475569;font-size:15px;line-height:1.76;">Export fulfillment-ready records from Odoo to ShipStation so shipping teams can work with current ERP data.</p>
+
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Export Odoo orders to ShipStation</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Sync products, categories, and attributes</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Send inventory quantities and product updates</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Share shipment-related order details</td></tr>
+                    <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">&#10003; Support scalable shipping workflows</td></tr>
+                </table>
+            </td>
+
+            <td style="width:50%;vertical-align:top;background-color:#FFFFFF;border:1px solid #E2E8F0;border-top:5px solid #06B6D4;border-radius:18px;padding:36px;box-shadow:0 10px 25px rgba(15,23,42,0.05);">
+                <p style="margin:0 0 8px;color:#0891B2;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;">Direction 02</p>
+                <h3 style="margin:0 0 16px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1.2;font-weight:900;">ShipStation &rarr; Odoo Sync</h3>
+                <p style="margin:0 0 22px;color:#475569;font-size:15px;line-height:1.76;">Bring ShipStation updates back into Odoo for better order visibility, support, and reporting.</p>
+
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Import ShipStation orders into Odoo</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Sync customers and shipping addresses</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Import shipment status and carrier details</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Pull tracking numbers and label-related details</td></tr>
+                    <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">&#10003; Maintain reports, logs, and operational visibility</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
 
     <!-- FEATURE GRID -->
     <a id="features"></a>
