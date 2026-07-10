@@ -98,9 +98,9 @@
     "website": "https://sdlccorp.com/products/odoo-shipstation-connector/",
     "maintainer": "SDLC Corp",
     "support": "sales@sdlccorp.com",
-    # 'price': 19.99,
-    # 'currency': 'USD',
-    "license": "LGPL-3",
+    'price': 19.99,
+    'currency': 'USD',
+    "license": "OPL-1",
     "depends": [
         "base",
         "web",
