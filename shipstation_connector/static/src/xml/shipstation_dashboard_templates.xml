@@ -9,67 +9,67 @@
                 <div class="o_shipstation_hero_meta">
                     <div class="o_shipstation_meta_chip">
                         <span>Last Sync</span>
-                        <strong t-esc="state.summary.last_sync || '-'"/>
+                        <strong t-out="this.state.summary.last_sync || '-'"/>
                     </div>
                     <div class="o_shipstation_meta_chip">
                         <span>24h Success Rate</span>
-                        <strong><t t-esc="state.summary.success_rate_24h"/>%</strong>
+                        <strong><t t-out="this.state.summary.success_rate_24h"/>%</strong>
                     </div>
-                    <button class="btn btn-light o_shipstation_ai_button" t-on-click="generateInsights" t-att-disabled="state.generatingInsights">
-                        <t t-esc="state.generatingInsights ? 'Generating...' : 'Generate AI Insights'"/>
+                    <button class="btn btn-light o_shipstation_ai_button" t-on-click="this.generateInsights" t-att-disabled="this.state.generatingInsights">
+                        <t t-out="this.state.generatingInsights ? 'Generating...' : 'Generate AI Insights'"/>
                     </button>
                 </div>
             </div>
 
-            <t t-if="state.loading">
+            <t t-if="this.state.loading">
                 <div class="o_shipstation_panel o_shipstation_reveal_2">
                     <div class="o_shipstation_panel_title">Loading dashboard...</div>
                 </div>
             </t>
-            <t t-elif="state.error">
+            <t t-elif="this.state.error">
                 <div class="o_shipstation_panel o_shipstation_panel_error o_shipstation_reveal_2">
                     <div class="o_shipstation_panel_title">Dashboard Error</div>
-                    <div t-esc="state.error"/>
+                    <div t-out="this.state.error"/>
                 </div>
             </t>
             <t t-else="">
                 <div class="o_shipstation_kpis o_shipstation_reveal_2">
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Instances</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.instances)"/></div>
-                        <div class="o_shipstation_kpi_hint"><t t-esc="formatNumber(state.summary.active_instances)"/> active</div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.instances)"/></div>
+                        <div class="o_shipstation_kpi_hint"><t t-out="this.formatNumber(this.state.summary.active_instances)"/> active</div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Orders</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.orders)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.orders)"/></div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Shipments</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.shipments)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.shipments)"/></div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Revenue</div>
-                        <div class="o_shipstation_kpi_value">$<t t-esc="formatMoney(state.summary.revenue)"/></div>
+                        <div class="o_shipstation_kpi_value">$<t t-out="this.formatMoney(this.state.summary.revenue)"/></div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Products</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.products)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.products)"/></div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Customers</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.customers)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.customers)"/></div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Inventory Items</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.inventory_items)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.inventory_items)"/></div>
                     </div>
                     <div class="o_shipstation_kpi o_shipstation_kpi_warn">
                         <div class="o_shipstation_kpi_label">Failed Sync (24h)</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.failed_sync_24h)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.failed_sync_24h)"/></div>
                     </div>
                     <div class="o_shipstation_kpi o_shipstation_kpi_ok">
                         <div class="o_shipstation_kpi_label">Success Sync (24h)</div>
-                        <div class="o_shipstation_kpi_value"><t t-esc="formatNumber(state.summary.success_sync_24h)"/></div>
+                        <div class="o_shipstation_kpi_value"><t t-out="this.formatNumber(this.state.summary.success_sync_24h)"/></div>
                     </div>
                 </div>
 
@@ -78,28 +78,28 @@
                         <div class="o_shipstation_panel_title">AI Insights</div>
                         <div class="o_shipstation_ai_status_line">
                             <span class="o_shipstation_health o_shipstation_health_healthy">
-                                <t t-esc="state.ai_insight.status || 'draft'"/>
+                                <t t-out="this.state.ai_insight.status || 'draft'"/>
                             </span>
-                            <span t-if="state.ai_insight.generated_at">Last generated: <t t-esc="state.ai_insight.generated_at"/></span>
+                            <span t-if="this.state.ai_insight.generated_at">Last generated: <t t-out="this.state.ai_insight.generated_at"/></span>
                         </div>
                         <div class="o_shipstation_ai_summary">
-                            <t t-esc="state.ai_insight.summary_text || 'Generate AI insights to see a shipment and sync summary.'"/>
+                            <t t-out="this.state.ai_insight.summary_text || 'Generate AI insights to see a shipment and sync summary.'"/>
                         </div>
-                        <div class="o_shipstation_failure_error" t-if="state.ai_insight.error_message" t-esc="state.ai_insight.error_message"/>
-                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.actionable_recommendations || []).length">
-                            <li t-foreach="state.ai_insight.actionable_recommendations" t-as="item" t-key="item">
-                                <t t-esc="item"/>
+                        <div class="o_shipstation_failure_error" t-if="this.state.ai_insight.error_message" t-out="this.state.ai_insight.error_message"/>
+                        <ul class="o_shipstation_failure_list" t-if="(this.state.ai_insight.actionable_recommendations || []).length">
+                            <li t-foreach="this.state.ai_insight.actionable_recommendations" t-as="item" t-key="item">
+                                <t t-out="item"/>
                             </li>
                         </ul>
                     </div>
                     <div class="o_shipstation_panel">
                         <div class="o_shipstation_panel_title">Pending Tracking</div>
-                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.pending_tracking_shipments || []).length">
-                            <li t-foreach="state.ai_insight.pending_tracking_shipments" t-as="item" t-key="item.order_number || item.order_id">
-                                <div class="o_shipstation_failure_endpoint"><strong t-esc="item.order_number || item.order_id || '-'"/></div>
+                        <ul class="o_shipstation_failure_list" t-if="(this.state.ai_insight.pending_tracking_shipments || []).length">
+                            <li t-foreach="this.state.ai_insight.pending_tracking_shipments" t-as="item" t-key="item.order_number || item.order_id">
+                                <div class="o_shipstation_failure_endpoint"><strong t-out="item.order_number || item.order_id || '-'"/></div>
                                 <div class="o_shipstation_failure_time">
-                                    <t t-esc="item.status || 'pending_tracking'"/>
-                                    <t t-if="item.ship_date"> · <t t-esc="item.ship_date"/></t>
+                                    <t t-out="item.status || 'pending_tracking'"/>
+                                    <t t-if="item.ship_date"> · <t t-out="item.ship_date"/></t>
                                 </div>
                             </li>
                         </ul>
@@ -107,13 +107,13 @@
                     </div>
                     <div class="o_shipstation_panel">
                         <div class="o_shipstation_panel_title">Low Stock Inventory</div>
-                        <ul class="o_shipstation_failure_list" t-if="(state.ai_insight.low_stock_inventory || []).length">
-                            <li t-foreach="state.ai_insight.low_stock_inventory" t-as="item" t-key="item.sku || item.name">
-                                <div class="o_shipstation_failure_endpoint"><strong t-esc="item.name || item.sku || '-'"/></div>
+                        <ul class="o_shipstation_failure_list" t-if="(this.state.ai_insight.low_stock_inventory || []).length">
+                            <li t-foreach="this.state.ai_insight.low_stock_inventory" t-as="item" t-key="item.sku || item.name">
+                                <div class="o_shipstation_failure_endpoint"><strong t-out="item.name || item.sku || '-'"/></div>
                                 <div class="o_shipstation_failure_time">
-                                    <t t-esc="item.instance_name || '-'"/> · SKU: <t t-esc="item.sku || '-'"/>
+                                    <t t-out="item.instance_name || '-'"/> · SKU: <t t-out="item.sku || '-'"/>
                                 </div>
-                                <div class="o_shipstation_failure_error">Stock: <t t-esc="item.stock_level"/></div>
+                                <div class="o_shipstation_failure_error">Stock: <t t-out="item.stock_level"/></div>
                             </li>
                         </ul>
                         <div t-else="">No low-stock inventory risks detected.</div>
@@ -140,28 +140,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-if="!state.instances.length">
+                                <t t-if="!this.state.instances.length">
                                     <tr>
                                         <td colspan="11">No ShipStation instance data found.</td>
                                     </tr>
                                 </t>
-                                <t t-foreach="state.instances" t-as="inst" t-key="inst.id">
+                                <t t-foreach="this.state.instances" t-as="inst" t-key="inst.id">
                                     <tr>
-                                        <td t-esc="inst.name"/>
-                                        <td t-esc="inst.company_name || '-'"/>
-                                        <td t-esc="formatNumber(inst.total_orders)"/>
-                                        <td t-esc="formatNumber(inst.total_shipments)"/>
-                                        <td t-esc="formatNumber(inst.total_products)"/>
-                                        <td t-esc="formatNumber(inst.total_customers)"/>
-                                        <td>$<t t-esc="formatMoney(inst.total_revenue)"/></td>
-                                        <td t-esc="formatNumber(inst.failed_24h)"/>
-                                        <td t-esc="formatNumber(inst.success_24h)"/>
+                                        <td t-out="inst.name"/>
+                                        <td t-out="inst.company_name || '-'"/>
+                                        <td t-out="this.formatNumber(inst.total_orders)"/>
+                                        <td t-out="this.formatNumber(inst.total_shipments)"/>
+                                        <td t-out="this.formatNumber(inst.total_products)"/>
+                                        <td t-out="this.formatNumber(inst.total_customers)"/>
+                                        <td>$<t t-out="this.formatMoney(inst.total_revenue)"/></td>
+                                        <td t-out="this.formatNumber(inst.failed_24h)"/>
+                                        <td t-out="this.formatNumber(inst.success_24h)"/>
                                         <td>
                                             <span t-attf-class="o_shipstation_health o_shipstation_health_#{inst.health}">
-                                                <t t-esc="inst.health"/>
+                                                <t t-out="inst.health"/>
                                             </span>
                                         </td>
-                                        <td t-esc="inst.last_sync || '-'"/>
+                                        <td t-out="inst.last_sync || '-'"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -171,21 +171,21 @@
                     <div class="o_shipstation_panel">
                         <div class="o_shipstation_panel_title">Recent Activity</div>
                         <ul class="o_shipstation_activity_list">
-                            <t t-if="!state.recent_activity.length">
+                            <t t-if="!this.state.recent_activity.length">
                                 <li>No sync activity yet.</li>
                             </t>
-                            <t t-foreach="state.recent_activity" t-as="a" t-key="a.at + a.endpoint">
+                            <t t-foreach="this.state.recent_activity" t-as="a" t-key="a.at + a.endpoint">
                                 <li>
                                     <div class="o_shipstation_activity_top">
-                                        <span class="o_shipstation_failure_time" t-esc="a.at"/>
+                                        <span class="o_shipstation_failure_time" t-out="a.at"/>
                                         <span t-attf-class="o_shipstation_status_badge o_shipstation_status_#{a.status}">
-                                            <t t-esc="a.status"/>
+                                            <t t-out="a.status"/>
                                         </span>
                                     </div>
                                     <div class="o_shipstation_failure_endpoint">
-                                        <strong t-esc="a.instance_name || '-'"/> · <t t-esc="a.method || '-'"/> <t t-esc="a.endpoint || '-'"/>
+                                        <strong t-out="a.instance_name || '-'"/> · <t t-out="a.method || '-'"/> <t t-out="a.endpoint || '-'"/>
                                     </div>
-                                    <div class="o_shipstation_failure_error" t-if="a.error" t-esc="a.error"/>
+                                    <div class="o_shipstation_failure_error" t-if="a.error" t-out="a.error"/>
                                 </li>
                             </t>
                         </ul>
@@ -194,16 +194,16 @@
                     <div class="o_shipstation_panel">
                         <div class="o_shipstation_panel_title">Low Stock Snapshot</div>
                         <ul class="o_shipstation_failure_list">
-                            <t t-if="!state.low_stock_items.length">
+                            <t t-if="!this.state.low_stock_items.length">
                                 <li>No low-stock items from synced inventory.</li>
                             </t>
-                            <t t-foreach="state.low_stock_items" t-as="s" t-key="s.instance_name + s.sku + s.name">
+                            <t t-foreach="this.state.low_stock_items" t-as="s" t-key="s.instance_name + s.sku + s.name">
                                 <li>
-                                    <div class="o_shipstation_failure_endpoint"><strong t-esc="s.name || '-'"/></div>
+                                    <div class="o_shipstation_failure_endpoint"><strong t-out="s.name || '-'"/></div>
                                     <div class="o_shipstation_failure_time">
-                                        <t t-esc="s.instance_name || '-'"/> · SKU: <t t-esc="s.sku || '-'"/>
+                                        <t t-out="s.instance_name || '-'"/> · SKU: <t t-out="s.sku || '-'"/>
                                     </div>
-                                    <div class="o_shipstation_failure_error">Stock: <t t-esc="s.stock_level"/></div>
+                                    <div class="o_shipstation_failure_error">Stock: <t t-out="s.stock_level"/></div>
                                 </li>
                             </t>
                         </ul>
@@ -212,14 +212,14 @@
                     <div class="o_shipstation_panel">
                         <div class="o_shipstation_panel_title">Recent Failed Sync Logs</div>
                         <ul class="o_shipstation_failure_list">
-                            <t t-if="!state.recent_failures.length">
+                            <t t-if="!this.state.recent_failures.length">
                                 <li>No recent failures.</li>
                             </t>
-                            <t t-foreach="state.recent_failures" t-as="f" t-key="f.at + f.endpoint + f.instance_name">
+                            <t t-foreach="this.state.recent_failures" t-as="f" t-key="f.at + f.endpoint + f.instance_name">
                                 <li>
-                                    <div class="o_shipstation_failure_time" t-esc="f.at"/>
-                                    <div class="o_shipstation_failure_endpoint"><strong t-esc="f.instance_name || '-'"/> · <t t-esc="f.endpoint || '-'"/></div>
-                                    <div class="o_shipstation_failure_error" t-esc="f.error || '-'"/>
+                                    <div class="o_shipstation_failure_time" t-out="f.at"/>
+                                    <div class="o_shipstation_failure_endpoint"><strong t-out="f.instance_name || '-'"/> · <t t-out="f.endpoint || '-'"/></div>
+                                    <div class="o_shipstation_failure_error" t-out="f.error || '-'"/>
                                 </li>
                             </t>
                         </ul>

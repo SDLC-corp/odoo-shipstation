@@ -1,5 +1,4 @@
 import ast
-import base64
 
 import requests
 
@@ -402,7 +401,7 @@ class ShipStationOrderSync(models.Model):
                         self.env["ir.attachment"].create(
                             {
                                 "name": f"ShipStation_Label_{self.shipstation_order_number or self.id}.pdf",
-                                "datas": base64.b64encode(pdf_resp.content),
+                                "raw": pdf_resp.content,
                                 "mimetype": "application/pdf",
                                 "res_model": target_model,
                                 "res_id": target_id,

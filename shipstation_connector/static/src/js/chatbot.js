@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, onWillUnmount, useState } from "@odoo/owl";
+import { Component, onWillUnmount, proxy } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { rpc } from "@web/core/network/rpc";
 import { useService } from "@web/core/utils/hooks";
@@ -8,7 +8,7 @@ import { useService } from "@web/core/utils/hooks";
 export class ShipStationSimpleChatbot extends Component {
     setup() {
         this.menuService = useService("menu");
-        this.state = useState({
+        this.state = proxy({
             isVisible: this.isShipStationApp(),
             isOpen: false,
             isLoading: false,

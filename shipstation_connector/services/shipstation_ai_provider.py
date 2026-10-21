@@ -24,7 +24,7 @@ class ShipStationAIProvider:
         self.prefix = prefix
 
     def _param(self, suffix, default=None):
-        return self.params.get_param("%s.%s" % (self.prefix, suffix), default)
+        return self.params.get_str("%s.%s" % (self.prefix, suffix), default)
 
     def get_settings(self):
         enabled = self._param("enabled", "False")

@@ -1,6 +1,6 @@
 {
     "name": "ShipStation Odoo Connector",
-    "version": "19.0.1.0.0",
+    "version": "20.0.1.0.0",
     "summary": "Connect ShipStation with Odoo for orders, shipments, labels, tracking, inventory, and reports",
     "description": """
     ShipStation Odoo Connector
@@ -111,7 +111,7 @@
     ],
     "data": [
         "security/shipstation_security.xml",
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "data/ir_cron.xml",
         "views/shipstation_instance_view.xml",
         "views/shipstation_field_mapping_views.xml",
