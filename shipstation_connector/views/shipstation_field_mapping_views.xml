@@ -3,13 +3,13 @@
         <field name="name">shipstation.field.tree</field>
         <field name="model">shipstation.field</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="model"/>
                 <field name="name"/>
                 <field name="description"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -45,6 +45,7 @@
                     <group>
                         <field name="instance_id"/>
                         <field name="model" invisible="1"/>
+                        <field name="odoo_model_name" invisible="1"/>
                         <field name="active"/>
                     </group>
                     <group>
@@ -61,12 +62,12 @@
         <field name="name">shipstation.field.mapping.tree.product</field>
         <field name="model">shipstation.field.mapping</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_field_id"/>
                 <field name="shipstation_field_key"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -74,12 +75,12 @@
         <field name="name">shipstation.field.mapping.tree.order</field>
         <field name="model">shipstation.field.mapping</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_field_id"/>
                 <field name="shipstation_field_key"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -87,12 +88,12 @@
         <field name="name">shipstation.field.mapping.tree.customer</field>
         <field name="model">shipstation.field.mapping</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_field_id"/>
                 <field name="shipstation_field_key"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -100,12 +101,12 @@
         <field name="name">shipstation.field.mapping.tree.category</field>
         <field name="model">shipstation.field.mapping</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_field_id"/>
                 <field name="shipstation_field_key"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -113,12 +114,12 @@
         <field name="name">shipstation.field.mapping.tree.attribute</field>
         <field name="model">shipstation.field.mapping</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_field_id"/>
                 <field name="shipstation_field_key"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
 </odoo>

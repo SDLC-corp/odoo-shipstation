@@ -2,12 +2,12 @@
 
 import { Component, onWillUnmount, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-import { rpc } from "@web/core/network/rpc";
 import { useService } from "@web/core/utils/hooks";
 
 export class ShipStationSimpleChatbot extends Component {
     setup() {
         this.menuService = useService("menu");
+        this.rpc = useService("rpc");
         this.state = useState({
             isVisible: this.isShipStationApp(),
             isOpen: false,
@@ -74,7 +74,7 @@ export class ShipStationSimpleChatbot extends Component {
         this.state.input = "";
         this.state.isLoading = true;
         try {
-            const response = await rpc("/shipstation/ai/chatbot/message", { message });
+            const response = await this.rpc("/shipstation/ai/chatbot/message", { message });
             this.state.messages.push({
                 role: "bot",
                 text: (response && response.reply) || "I'm here to help with ShipStation connector questions.",

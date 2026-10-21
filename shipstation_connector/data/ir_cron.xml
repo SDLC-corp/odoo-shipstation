@@ -6,6 +6,7 @@
         <field name="code">model.run_cron_sync_orders()</field>
         <field name="interval_number">10</field>
         <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
         <field name="active">True</field>
     </record>
 
@@ -16,6 +17,7 @@
         <field name="code">model.run_cron_sync_shipments()</field>
         <field name="interval_number">15</field>
         <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
         <field name="active">True</field>
     </record>
 
@@ -26,6 +28,7 @@
         <field name="code">model.run_cron_sync_products()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
         <field name="active">True</field>
     </record>
 
@@ -36,6 +39,7 @@
         <field name="code">model.run_cron_sync_customers()</field>
         <field name="interval_number">30</field>
         <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
         <field name="active">False</field>
     </record>
 
@@ -46,6 +50,7 @@
         <field name="code">model.run_cron_sync_inventory()</field>
         <field name="interval_number">60</field>
         <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
         <field name="active">False</field>
     </record>
 </odoo>

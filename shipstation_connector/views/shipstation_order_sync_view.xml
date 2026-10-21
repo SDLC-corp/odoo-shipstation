@@ -3,14 +3,14 @@
         <field name="name">shipstation.order.sync.tree</field>
         <field name="model">shipstation.order.sync</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="shipstation_order_number"/>
                 <field name="customer_name"/>
                 <field name="status"/>
                 <field name="total_amount"/>
                 <field name="order_date"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -57,14 +57,14 @@
                     </group>
                     <group string="Rates">
                         <field name="rate_ids">
-                            <list>
+                            <tree>
                                 <field name="carrier_code"/>
                                 <field name="service_code"/>
                                 <field name="shipment_cost"/>
                                 <field name="other_cost"/>
                                 <field name="tax_amount"/>
                                 <field name="delivery_days"/>
-                            </list>
+                            </tree>
                         </field>
                     </group>
                     <group>

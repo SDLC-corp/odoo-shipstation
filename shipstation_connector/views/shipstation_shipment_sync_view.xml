@@ -3,7 +3,7 @@
         <field name="name">shipstation.shipment.sync.tree</field>
         <field name="model">shipstation.shipment.sync</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <header>
                     <button name="action_open_delivery_order" type="object" string="Open Delivery" class="btn-secondary"/>
                     <button name="action_open_tracking" type="object" string="Open Tracking" class="btn-secondary"/>
@@ -13,7 +13,7 @@
                 <field name="ship_date"/>
                 <field name="status"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 

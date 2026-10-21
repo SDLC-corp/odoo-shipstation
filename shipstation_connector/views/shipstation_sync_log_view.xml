@@ -3,7 +3,7 @@
         <field name="name">shipstation.sync.log.tree</field>
         <field name="model">shipstation.sync.log</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="create_date"/>
                 <field name="instance_id"/>
                 <field name="status"/>
@@ -11,7 +11,7 @@
                 <field name="endpoint"/>
                 <field name="error_message"/>
                 <field name="retry_count"/>
-            </list>
+            </tree>
         </field>
     </record>
 

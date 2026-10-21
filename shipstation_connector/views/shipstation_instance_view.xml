@@ -76,27 +76,27 @@
                         </page>
                         <page string="Store Mapping">
                             <field name="store_mapping_ids">
-                                <list editable="bottom">
+                                <tree editable="bottom">
                                     <field name="shipstation_store_id"/>
                                     <field name="name"/>
                                     <field name="warehouse_id"/>
                                     <field name="sales_team_id"/>
                                     <field name="active"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                         <page string="Carrier Mapping">
                             <field name="carrier_mapping_ids">
-                                <list editable="bottom">
+                                <tree editable="bottom">
                                     <field name="shipstation_carrier_code"/>
                                     <field name="odoo_carrier_id"/>
                                     <field name="active"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                         <page string="Automation Rules">
                             <field name="automation_rule_ids">
-                                <list editable="bottom">
+                                <tree editable="bottom">
                                     <field name="sequence"/>
                                     <field name="name"/>
                                     <field name="country_code"/>
@@ -106,7 +106,7 @@
                                     <field name="set_warehouse_id"/>
                                     <field name="set_sales_team_id"/>
                                     <field name="active"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                     </notebook>
@@ -119,13 +119,13 @@
         <field name="name">shipstation.instance.tree</field>
         <field name="model">shipstation.instance</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="active"/>
                 <field name="store_id"/>
                 <field name="last_sync"/>
-            </list>
+            </tree>
         </field>
     </record>
 </odoo>

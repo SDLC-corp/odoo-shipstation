@@ -3,7 +3,7 @@
         <field name="name">shipstation.inventory.tree</field>
         <field name="model">shipstation.inventory</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <header>
                     <button name="action_refresh_inventory" type="object" string="Refresh Inventory" class="btn-primary"/>
                 </header>
@@ -15,7 +15,7 @@
                 <field name="stock_status"/>
                 <field name="modify_date"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 

@@ -3,14 +3,14 @@
         <field name="name">shipstation.product.sync.tree</field>
         <field name="model">shipstation.product.sync</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="sku"/>
                 <field name="name"/>
                 <field name="price"/>
                 <field name="stock_level" string="In Stock"/>
                 <field name="modify_date"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 

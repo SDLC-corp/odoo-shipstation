@@ -3,14 +3,14 @@
         <field name="name">shipstation.report.tree</field>
         <field name="model">shipstation.report</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="create_date"/>
                 <field name="instance_id"/>
                 <field name="operation"/>
                 <field name="status"/>
                 <field name="mode"/>
                 <field name="message"/>
-            </list>
+            </tree>
         </field>
     </record>
 

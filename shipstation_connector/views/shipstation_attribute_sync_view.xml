@@ -3,12 +3,12 @@
         <field name="name">shipstation.attribute.sync.tree</field>
         <field name="model">shipstation.attribute.sync</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="odoo_attribute_id"/>
                 <field name="name"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 

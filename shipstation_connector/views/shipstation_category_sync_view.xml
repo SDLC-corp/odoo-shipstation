@@ -3,13 +3,13 @@
         <field name="name">shipstation.category.sync.tree</field>
         <field name="model">shipstation.category.sync</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="instance_id"/>
                 <field name="shipstation_category_id"/>
                 <field name="odoo_category_id"/>
                 <field name="name"/>
                 <field name="synced_on"/>
-            </list>
+            </tree>
         </field>
     </record>
 
