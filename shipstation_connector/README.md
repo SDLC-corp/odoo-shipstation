@@ -1,7 +1,7 @@
 # ShipStation Connector
 
 This addon provides ShipStation instances, sync data listings, reports, cron jobs,
-and a dashboard for Odoo 18.
+and a dashboard for Odoo 19.
 
 ## Setup
 1) Install the module.
