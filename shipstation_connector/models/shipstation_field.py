@@ -38,13 +38,10 @@ class ShipStationField(models.Model):
 
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        (
-            "uniq_field_per_instance",
-            "unique(instance_id, model, name)",
-            "ShipStation field must be unique per instance and model.",
-        )
-    ]
+    _uniq_field_per_instance = models.Constraint(
+        "unique(instance_id, model, name)",
+        "ShipStation field must be unique per instance and model.",
+    )
 
     @classmethod
     def _default_field_catalog(cls):

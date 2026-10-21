@@ -385,6 +385,12 @@ class ShipStationSyncBase(models.AbstractModel):
                     "email": ship_to.get("email"),
                     "company_id": self.company_id.id,
                 })
+                # Odoo 19 no longer copies a first contact's address onto an address-less
+                # parent on create; keep giving the customer the address it had before.
+                address_fields = ("street", "street2", "city", "state_id", "zip", "country_id")
+                if not any(partner[f] for f in address_fields):
+                    partner.write({f: shipping_partner[f].id if f.endswith("_id") else shipping_partner[f]
+                                   for f in address_fields})
 
         return partner, shipping_partner
 

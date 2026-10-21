@@ -13,10 +13,7 @@ class ShipStationStoreMapping(models.Model):
     sales_team_id = fields.Many2one("crm.team", string="Sales Team")
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        (
-            "uniq_store_mapping",
-            "unique(instance_id, shipstation_store_id)",
-            "Store mapping must be unique per instance.",
-        ),
-    ]
+    _uniq_store_mapping = models.Constraint(
+        "unique(instance_id, shipstation_store_id)",
+        "Store mapping must be unique per instance.",
+    )

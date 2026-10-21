@@ -343,7 +343,7 @@ class ShipStationInstance(models.Model):
             "state": partner.state_id.code or "",
             "postalCode": partner.zip or "",
             "country": partner.country_id.code or "",
-            "phone": partner.phone or partner.mobile or "",
+            "phone": partner.phone or "",
             "email": partner.email or "",
         }
 
@@ -534,7 +534,7 @@ class ShipStationInstance(models.Model):
         payload = {
             "name": partner.name,
             "email": partner.email or "",
-            "phone": partner.phone or partner.mobile or "",
+            "phone": partner.phone or "",
         }
         payload.update(self._build_address_payload(partner))
         return self._apply_field_mappings(payload, partner, "customer")

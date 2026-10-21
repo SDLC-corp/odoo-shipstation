@@ -5,7 +5,7 @@ from ..services.chatbot_service import ShipStationSimpleChatbotService
 
 
 class ShipStationSimpleChatbotController(http.Controller):
-    @http.route("/shipstation/ai/chatbot/message", type="json", auth="user", methods=["POST"], csrf=False)
+    @http.route("/shipstation/ai/chatbot/message", type="jsonrpc", auth="user", methods=["POST"], csrf=False)
     def shipstation_ai_chatbot_message(self, message=None, **kwargs):
         payload = ShipStationSimpleChatbotService(request.env).get_reply(message)
         return {

@@ -26,13 +26,10 @@ class ShipStationAIInsight(models.Model):
     generated_at = fields.Datetime()
     error_message = fields.Text()
 
-    _sql_constraints = [
-        (
-            "shipstation_ai_insight_scope_uniq",
-            "unique(instance_id, scope, range_days)",
-            "Only one latest AI insight record is stored per scope and date range.",
-        )
-    ]
+    _shipstation_ai_insight_scope_uniq = models.Constraint(
+        "unique(instance_id, scope, range_days)",
+        "Only one latest AI insight record is stored per scope and date range.",
+    )
 
     @api.model
     def upsert_latest(self, values):
