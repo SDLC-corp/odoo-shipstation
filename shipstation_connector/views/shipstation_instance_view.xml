@@ -48,7 +48,7 @@
                         <field name="order_status"/>
                         <field name="order_sync_days_back"/>
                         <field name="inventory_update_odoo_stock"/>
-                        <field name="inventory_warehouse_id" invisible="inventory_update_odoo_stock == False"/>
+                        <field name="inventory_warehouse_id" attrs="{'invisible': [('inventory_update_odoo_stock', '=', False)]}"/>
                     </group>
                     <group string="Sync Status" col="4">
                         <field name="last_order_sync_at" readonly="1"/>

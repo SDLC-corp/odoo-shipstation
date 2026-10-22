@@ -1,33 +1,34 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
     <record id="res_config_settings_view_form_shipstation_ai" model="ir.ui.view">
         <field name="name">res.config.settings.view.form.shipstation.ai</field>
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <app string="ShipStation Connector" name="shipstation_connector_ai">
-                    <block title="AI Features">
-                        <setting string="Enable ShipStation AI" help="Enable AI insights and assistant features for the ShipStation dashboard.">
-                            <field name="shipstation_ai_enabled"/>
-                        </setting>
-                        <setting string="AI Provider">
-                            <field name="shipstation_ai_provider" placeholder="openai"/>
-                        </setting>
-                        <setting string="AI API Key">
-                            <field name="shipstation_ai_api_key" password="True"/>
-                        </setting>
-                        <setting string="AI Model">
-                            <field name="shipstation_ai_model" placeholder="gpt-4o-mini"/>
-                        </setting>
-                        <setting string="AI Max Tokens">
-                            <field name="shipstation_ai_max_tokens"/>
-                        </setting>
-                        <setting string="AI Endpoint" help="Optional override for OpenAI-compatible endpoints.">
-                            <field name="shipstation_ai_endpoint" placeholder="https://api.openai.com/v1/chat/completions"/>
-                        </setting>
-                    </block>
-                </app>
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="ShipStation Connector" string="ShipStation Connector" data-key="shipstation_connector_ai">
+                    <h2>AI Features</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"><field name="shipstation_ai_enabled"/>
+                        </div><div class="o_setting_right_pane"><label for="shipstation_ai_enabled" string="Enable ShipStation AI"/><div class="text-muted">Enable AI insights and assistant features for the ShipStation dashboard.</div></div></div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane"><span class="o_form_label">AI Provider</span><div class="content-group mt-2"><field name="shipstation_ai_provider" placeholder="openai"/>
+                        </div></div></div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane"><span class="o_form_label">AI API Key</span><div class="content-group mt-2"><field name="shipstation_ai_api_key" password="True"/>
+                        </div></div></div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane"><span class="o_form_label">AI Model</span><div class="content-group mt-2"><field name="shipstation_ai_model" placeholder="gpt-4o-mini"/>
+                        </div></div></div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane"><span class="o_form_label">AI Max Tokens</span><div class="content-group mt-2"><field name="shipstation_ai_max_tokens"/>
+                        </div></div></div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane"><span class="o_form_label">AI Endpoint</span><div class="text-muted">Optional override for OpenAI-compatible endpoints.</div><div class="content-group mt-2"><field name="shipstation_ai_endpoint" placeholder="https://api.openai.com/v1/chat/completions"/>
+                        </div></div></div>
+                    </div>
+                </div>
             </xpath>
         </field>
     </record>

@@ -21,7 +21,7 @@
         <field name="arch" type="xml">
             <form string="ShipStation Sync Log">
                 <header>
-                    <button name="action_retry_sync" type="object" string="Retry Sync" class="btn-primary" invisible="status != 'failed'"/>
+                    <button name="action_retry_sync" type="object" string="Retry Sync" class="btn-primary" attrs="{'invisible': [('status', '!=', 'failed')]}"/>
                 </header>
                 <sheet>
                     <group>

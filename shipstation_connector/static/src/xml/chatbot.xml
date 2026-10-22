@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="shipstation_connector.SimpleChatbot">
+    <t t-name="shipstation_connector.SimpleChatbot" owl="1">
         <div t-if="state.isVisible" class="ss-chatbot-root">
             <button t-if="!state.isOpen" class="ss-chatbot-toggle" t-on-click="toggleOpen" title="Open AI Assistant">
                 <span>AI</span>
