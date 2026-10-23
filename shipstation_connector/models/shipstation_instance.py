@@ -163,12 +163,16 @@ class ShipStationInstance(models.Model):
     def action_test_connection(self):
         updated_store_ids = []
         for rec in self:
-            response = requests.get(
-                "https://api.shipstation.com/v2/products",
-                headers={"api-key": str(rec.api_key or "").strip()},
-                params={"page": 1, "page_size": 1},
-                timeout=30,
-            )
+            url = "%s/v2/products" % rec._normalize_shipstation_base_url(rec.base_url)
+            try:
+                response = requests.get(
+                    url,
+                    headers={"api-key": str(rec.api_key or "").strip()},
+                    params={"page": 1, "page_size": 1},
+                    timeout=30,
+                )
+            except requests.RequestException as exc:
+                raise UserError(_("Could not connect to ShipStation at %s: %s") % (url, exc))
             if response.status_code >= 400:
                 raise UserError(
                     _("ShipStation API error %s on /v2/products: %s")
@@ -432,8 +436,11 @@ class ShipStationInstance(models.Model):
         weight = 0.0
         for item in order_data.get("items", []):
             qty = float(item.get("quantity") or 0.0)
-            wt = float(item.get("weight") or 0.0)
-            weight += qty * wt
+            wt = item.get("weight") or 0.0
+            if isinstance(wt, dict):
+                # ShipStation sends item weights as {"value": 6, "units": "ounces"}.
+                wt = wt.get("value") or 0.0
+            weight += qty * float(wt)
         country_code = (
             (order_data.get("shipTo") or {}).get("country")
             or (order_data.get("billTo") or {}).get("country")

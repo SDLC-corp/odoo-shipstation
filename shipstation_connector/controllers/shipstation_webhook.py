@@ -183,7 +183,7 @@ class ShipStationWebhookController(http.Controller):
 
     @http.route("/shipstation/webhook", type="http", auth="public", methods=["POST"], csrf=False)
     def shipstation_webhook(self, **kwargs):
-        env = request.env.sudo()
+        env = request.env(su=True)
         payload = self._parse_payload()
         events = self._extract_events(payload)
 
