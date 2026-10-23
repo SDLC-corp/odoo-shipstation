@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app string="ShipStation Connector" name="shipstation_connector_ai">
+                <app string="ShipStation Connector" name="shipstation_connector">
                     <block title="AI Features">
                         <setting string="Enable ShipStation AI" help="Enable AI insights and assistant features for the ShipStation dashboard.">
                             <field name="shipstation_ai_enabled"/>
