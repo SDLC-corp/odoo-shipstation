@@ -104,10 +104,7 @@ class ShipStationInventory(models.Model):
         return 0.0, False
 
     def _inventory_api_base_url(self, instance):
-        base_url = (instance.base_url or "").strip().rstrip("/")
-        if "api.shipstation.com" in base_url:
-            return "https://api.shipstation.com"
-        return "https://api.shipstation.com"
+        return instance._normalize_shipstation_base_url(instance.base_url)
 
     def _fetch_v2_product_payload(self, instance, sku):
         sku = str(sku or "").strip()
