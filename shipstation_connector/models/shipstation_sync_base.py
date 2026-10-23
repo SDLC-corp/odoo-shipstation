@@ -160,7 +160,7 @@ class ShipStationSyncBase(models.AbstractModel):
         if not self.api_key:
             raise UserError(_("ShipStation API key is missing."))
 
-        base_url = "https://api.shipstation.com"
+        base_url = self._normalize_shipstation_base_url(self.base_url)
         if not endpoint.startswith("/"):
             endpoint = f"/{endpoint}"
         if not endpoint.startswith("/v2/"):
@@ -220,7 +220,11 @@ class ShipStationSyncBase(models.AbstractModel):
         if not self.api_key or not self.api_secret:
             raise UserError(_("ShipStation API credentials are missing."))
 
-        url = "https://ssapi.shipstation.com/products"
+        base_url = self._normalize_shipstation_base_url(self.base_url)
+        if base_url == "https://api.shipstation.com":
+            # The legacy product listing lives on ssapi; any other base_url is used as configured.
+            base_url = "https://ssapi.shipstation.com"
+        url = f"{base_url}/products"
         retries = 1
         backoff = 1.0
         for attempt in range(retries + 1):
