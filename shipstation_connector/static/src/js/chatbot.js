@@ -1,8 +1,11 @@
 /** @odoo-module **/
 
-import { Component, onWillUnmount, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+
+// Odoo 15 web client runs Owl 1: no @odoo/owl module; hooks live in owl.hooks.
+const { Component } = owl;
+const { onWillUnmount, useState } = owl.hooks;
 
 export class ShipStationSimpleChatbot extends Component {
     setup() {
@@ -26,9 +29,10 @@ export class ShipStationSimpleChatbot extends Component {
         });
 
         this.onAppChanged = this.onAppChanged.bind(this);
-        this.env.bus.addEventListener("MENUS:APP-CHANGED", this.onAppChanged);
+        // Owl 1 EventBus: on(type, owner, callback) / off(type, owner).
+        this.env.bus.on("MENUS:APP-CHANGED", this, this.onAppChanged);
         onWillUnmount(() => {
-            this.env.bus.removeEventListener("MENUS:APP-CHANGED", this.onAppChanged);
+            this.env.bus.off("MENUS:APP-CHANGED", this);
         });
     }
 

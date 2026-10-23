@@ -1,6 +1,6 @@
 {
     "name": "ShipStation Odoo Connector",
-    "version": "16.0.1.0.0",
+    "version": "15.0.1.0.0",
     "summary": "Connect ShipStation with Odoo for orders, shipments, labels, tracking, inventory, and reports",
     "description": """
     ShipStation Odoo Connector
@@ -135,6 +135,9 @@
             "shipstation_connector/static/src/scss/chatbot.scss",
             "shipstation_connector/static/src/js/shipstation_dashboard.js",
             "shipstation_connector/static/src/js/chatbot.js",
+        ],
+        # Odoo 15 loads Owl templates from web.assets_qweb.
+        "web.assets_qweb": [
             "shipstation_connector/static/src/xml/chatbot.xml",
             "shipstation_connector/static/src/xml/shipstation_dashboard_templates.xml",
         ],

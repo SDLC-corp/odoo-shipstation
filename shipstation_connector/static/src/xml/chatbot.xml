@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="shipstation_connector.SimpleChatbot" owl="1">
+        <!-- Odoo 15 (Owl 1): keep one always-rendered root around the conditional chatbot. -->
+        <div class="o_ss_chatbot_host">
         <div t-if="state.isVisible" class="ss-chatbot-root">
             <button t-if="!state.isOpen" class="ss-chatbot-toggle" t-on-click="toggleOpen" title="Open AI Assistant">
                 <span>AI</span>
@@ -32,6 +34,7 @@
                     <button class="btn btn-primary ss-chatbot-send" t-on-click="sendMessage" t-att-disabled="state.isLoading">Send</button>
                 </div>
             </div>
+        </div>
         </div>
     </t>
 </templates>

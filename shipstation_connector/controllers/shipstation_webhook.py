@@ -4,9 +4,35 @@ from urllib.parse import parse_qs, urlparse
 
 from odoo import http
 from odoo.http import request
+from odoo.tools import date_utils
 
 
 _logger = logging.getLogger(__name__)
+
+
+def _json_response(data, status=200):
+    """Odoo 15 has no request.make_json_response (16+): same JSON body, header and status."""
+    body = json.dumps(data, ensure_ascii=False, default=date_utils.json_default)
+    response = request.make_response(body, headers=[("Content-Type", "application/json; charset=utf-8")])
+    response.status_code = status
+    return response
+
+
+# Odoo 15 turns every application/json request into a JSON-RPC request and then refuses it
+# on type="http" routes (400 before the handler runs); 16+ dispatches on the route type.
+# ShipStation posts its webhooks as application/json, so this one path keeps a plain HTTP
+# request (raw body, the controller's own JSON responses and status codes), as on 16+.
+_WEBHOOK_PATH = "/shipstation/webhook"
+if not getattr(http.Root.get_request, "_shipstation_webhook_http", False):
+    _root_get_request = http.Root.get_request
+
+    def _get_request(self, httprequest):
+        if httprequest.path == _WEBHOOK_PATH:
+            return http.HttpRequest(httprequest)
+        return _root_get_request(self, httprequest)
+
+    _get_request._shipstation_webhook_http = True
+    http.Root.get_request = _get_request
 
 
 class ShipStationWebhookController(http.Controller):
@@ -189,7 +215,7 @@ class ShipStationWebhookController(http.Controller):
 
         if not events:
             _logger.warning("ShipStation webhook received empty/invalid payload: %s", payload)
-            return request.make_json_response({"status": "ignored", "reason": "empty_payload"})
+            return _json_response({"status": "ignored", "reason": "empty_payload"})
 
         processed = 0
         failed = 0
@@ -266,7 +292,7 @@ class ShipStationWebhookController(http.Controller):
                 )
 
         status = "ok" if failed == 0 else "partial"
-        return request.make_json_response(
+        return _json_response(
             {
                 "status": status,
                 "events_received": len(events),
