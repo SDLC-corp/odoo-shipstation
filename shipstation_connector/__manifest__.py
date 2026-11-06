@@ -64,7 +64,7 @@
     * Role-based access (Reader, Manager, Admin) and multi-company isolation
     * Automated test suite (database-backed and offline)
     * Upgrade-friendly module structure
-    * Compatible with Odoo.sh and On-Premise deployments
+    * Tested on Odoo 19 Community, on-premise (Enterprise and Odoo.sh not yet verified)
 
     Business Benefits
     -----------------

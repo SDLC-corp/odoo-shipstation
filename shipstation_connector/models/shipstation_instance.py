@@ -111,6 +111,12 @@ class ShipStationInstance(models.Model):
         help="Legacy setting retained for database compatibility. Automatic Odoo stock adjustments are disabled; ShipStation quantities are read-only snapshots.",
     )
     inventory_warehouse_id = fields.Many2one("stock.warehouse", string="Inventory Warehouse")
+    allow_label_void = fields.Boolean(
+        string="Allow Void Label Requests", default=False, copy=False,
+        groups="shipstation_connector.group_shipstation_admin",
+        help="Off by default. Enables the administrator-only 'Void Label (Request Refund)' button on orders. "
+             "Voiding asks ShipStation to refund a label and cannot be undone from Odoo.",
+    )
 
     total_orders = fields.Integer(compute="_compute_totals")
     total_shipments = fields.Integer(compute="_compute_totals")
@@ -1114,6 +1120,9 @@ class ShipStationInstance(models.Model):
         removed and the shipment is escalated for an operator ("review"), because the
         delivery may now need a replacement label. An unlinked voided label needs no action.
         """
+        if not self.env.context.get("skip_order_label_bookkeeping"):
+            # A label voided in ShipStation (by us or by anyone else) frees the order for a replacement.
+            self.env["shipstation.order.sync"]._apply_void_for_shipment(self, shipment.shipstation_shipment_id)
         if shipment.link_state == "review":
             return "review"  # already escalated; waiting for an operator to acknowledge
         picking = shipment.picking_id

@@ -71,12 +71,23 @@ class ShipStationOrderSync(models.Model):
     rate_request_hash = fields.Char(readonly=True, copy=False)
     label_state = fields.Selection(
         [("none", "No Label Requested"), ("requested", "Request Sent - Outcome Unknown"),
-         ("created", "Label Created"), ("failed", "Request Rejected")],
+         ("created", "Label Created"), ("failed", "Request Rejected"),
+         ("void_requested", "Void Requested - Outcome Unknown"), ("voided", "Label Voided")],
         default="none", required=True, readonly=True, copy=False, index=True,
         help="Durable guard against buying the same label twice.",
     )
     label_requested_at = fields.Datetime(readonly=True, copy=False)
     label_requested_by_id = fields.Many2one("res.users", readonly=True, copy=False)
+    last_void_shipment_id = fields.Char(string="Voided Shipment", readonly=True, copy=False)
+    last_void_tracking_number = fields.Char(string="Voided Tracking", readonly=True, copy=False)
+    last_void_at = fields.Datetime(string="Voided At", readonly=True, copy=False)
+    last_void_by_id = fields.Many2one("res.users", string="Voided By", readonly=True, copy=False)
+    label_void_allowed = fields.Boolean(compute="_compute_label_void_allowed", compute_sudo=True)
+
+    @api.depends("instance_id.allow_label_void")
+    def _compute_label_void_allowed(self):
+        for rec in self:
+            rec.label_void_allowed = bool(rec.instance_id.allow_label_void)
 
     @api.depends("shipstation_order_number", "shipstation_order_id", "customer_name")
     def _compute_display_name(self):
@@ -503,13 +514,11 @@ class ShipStationOrderSync(models.Model):
         ))
         return best.action_apply_rate()
 
-    def _claim_label_request(self):
-        """Atomically claim the right to buy ONE label and make that claim durable.
+    def _locked_label_transition(self, check, vals):
+        """Under a NOWAIT row lock on a side cursor: run ``check(record)``, then commit ``vals``.
 
-        Runs on its own cursor, so the "request sent" marker is committed *before* money can
-        move. If anything later goes wrong (a timeout, a failed commit), the order stays in
-        "requested" and cannot be bought again until an administrator has checked ShipStation.
-        A concurrent click fails immediately instead of buying a second label.
+        The commit happens *before* any money moves, so a timeout or crash later leaves a durable
+        marker. A concurrent click fails immediately instead of acting twice.
         """
         from odoo import SUPERUSER_ID, api  # local import keeps the offline test loaders light
         self.ensure_one()
@@ -519,22 +528,67 @@ class ShipStationOrderSync(models.Model):
                 cr.execute("SELECT 1 FROM shipstation_order_sync WHERE id = %s FOR UPDATE NOWAIT", (self.id,))
                 record = api.Environment(cr, SUPERUSER_ID, {})["shipstation.order.sync"].browse(self.id)
                 record.invalidate_recordset()
-                if record.shipstation_shipment_id or record.tracking_number or record.label_url \
-                        or record.label_state == "created":
-                    raise UserError(_("A label or shipment is already recorded. Verify ShipStation and void "
-                                      "it explicitly before buying another label."))
-                if record.label_state == "requested":
-                    raise UserError(_(
-                        "A label request was already sent on %s and its outcome is unknown. Check this order "
-                        "in ShipStation first; an administrator can then use 'Reset Label Request'.",
-                        fields.Datetime.to_string(record.label_requested_at)))
-                record.write({
-                    "label_state": "requested", "label_requested_at": fields.Datetime.now(),
-                    "label_requested_by_id": self.env.user.id,
-                })
+                check(record)
+                record.write(vals)
         except psycopg2.errors.LockNotAvailable:
             raise UserError(_("Another label request for this order is in progress. Wait for it to finish."))
         self.invalidate_recordset()
+
+    def _claim_label_request(self):
+        """Atomically claim the right to buy ONE label and make that claim durable.
+
+        If anything later goes wrong (a timeout, a failed commit), the order stays in "requested"
+        and cannot be bought again until an administrator has checked ShipStation.
+        """
+        def check(record):
+            if record.shipstation_shipment_id or record.tracking_number or record.label_url \
+                    or record.label_state in ("created", "void_requested"):
+                raise UserError(self.env._("A label or shipment is already recorded. Verify ShipStation and void "
+                                           "it explicitly before buying another label."))
+            if record.label_state == "requested":
+                raise UserError(self.env._(
+                    "A label request was already sent on %s and its outcome is unknown. Check this order "
+                    "in ShipStation first; an administrator can then use 'Reset Label Request'.",
+                    fields.Datetime.to_string(record.label_requested_at)))
+
+        self._locked_label_transition(check, {
+            "label_state": "requested", "label_requested_at": fields.Datetime.now(),
+            "label_requested_by_id": self.env.user.id,
+        })
+
+    def _claim_void_request(self):
+        """Durably mark that a void request is about to be sent (only an active label can be voided)."""
+        def check(record):
+            if record.label_state != "created":
+                raise UserError(self.env._("This label is no longer active (state: %s). Reload the order and "
+                                           "check ShipStation before trying again.", record.label_state))
+        self._locked_label_transition(check, {"label_state": "void_requested"})
+
+    def _void_bookkeeping_vals(self, by_user=True):
+        """Values that free the order for a replacement label while keeping an audit trail."""
+        return {
+            "label_state": "voided",
+            "last_void_shipment_id": self.shipstation_shipment_id,
+            "last_void_tracking_number": self.tracking_number,
+            "last_void_at": fields.Datetime.now(),
+            "last_void_by_id": self.env.uid if by_user else False,
+            "shipstation_shipment_id": False, "tracking_number": False,
+            "label_url": False, "tracking_url": False,
+        }
+
+    @api.model
+    def _apply_void_for_shipment(self, instance, shipment_id):
+        """ShipStation reports a label as voided (by this connector or by someone in ShipStation)."""
+        shipment_id = str(shipment_id or "").strip()
+        if not shipment_id:
+            return self.browse()
+        orders = self.search([
+            ("instance_id", "=", instance.id), ("shipstation_shipment_id", "=", shipment_id),
+            ("label_state", "in", ("created", "void_requested")),
+        ])
+        for order in orders:
+            order.write(order._void_bookkeeping_vals(by_user=False))
+        return orders
 
     def _persist_label_state(self, vals):
         """Commit label bookkeeping on its own cursor so it survives any later failure or rollback.
@@ -707,12 +761,87 @@ class ShipStationOrderSync(models.Model):
             },
         }
 
+    def action_void_label(self):
+        """Ask ShipStation to void (refund) THIS order's label. Explicit, single order, admin only.
+
+        Disabled unless the instance enables it. Never bulk, scheduled or webhook driven: this is
+        the only code path that calls the void endpoint. The durable "void requested" marker is
+        committed first; a definite refusal restores the label, an unclear answer locks the order
+        until an administrator has checked ShipStation.
+        """
+        self.ensure_one()
+        if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
+            raise AccessError(_("Only ShipStation administrators can request a label void."))
+        self.check_access("write")
+        if self.instance_id.company_id not in self.env.companies:
+            raise AccessError(_("This ShipStation instance is outside your active companies."))
+        if not self.sudo().instance_id.allow_label_void:
+            raise UserError(_("Void requests are switched off for this connection. An administrator can "
+                              "enable 'Allow Void Label Requests' on the instance."))
+        if self.label_state != "created" or not str(self.shipstation_shipment_id or "").isdigit():
+            raise UserError(_("Only an active label bought from this order can be voided."))
+        shipment_id = str(self.shipstation_shipment_id)
+        void_vals = self._void_bookkeeping_vals()  # captured while the identifiers are still on the record
+        self._claim_void_request()
+        try:
+            response = self.instance_id._ss_request(
+                "POST", "/shipments/voidlabel", data={"shipmentId": int(shipment_id)})
+        except (UserError, AccessError) as exc:
+            if getattr(exc, "ambiguous", False):
+                raise UserError(_(
+                    "ShipStation did not give a clear answer, so the label may have been voided. Do NOT retry. "
+                    "The next shipment sync will record the void if it happened; otherwise an administrator can "
+                    "use 'Reset Label Request'. (%s)", exc)) from exc
+            self._persist_label_state({"label_state": "created"})  # refused: the label is still active
+            raise
+        approved = response.get("approved") if isinstance(response, dict) else None
+        if approved is False:
+            self._persist_label_state({"label_state": "created"})
+            raise UserError(_("ShipStation did not approve the void: %s",
+                              (response.get("message") or _("no reason given"))))
+        if approved is not True:
+            raise UserError(_("ShipStation's answer to the void request was unclear. Do NOT retry; check this "
+                              "order in ShipStation. An administrator can use 'Reset Label Request'."))
+        # One write to this row, on the side cursor (see _persist_label_state), then other rows only.
+        self._persist_label_state(void_vals)
+        problems = []
+        try:
+            with self.env.cr.savepoint():
+                self._record_void_in_mirror(shipment_id, void_vals["last_void_tracking_number"])
+        except Exception:  # noqa: BLE001
+            _logger.exception("ShipStation label %s voided but the mirror update failed", shipment_id)
+            problems.append(_("updating the shipment record"))
+        if problems:
+            return self._rate_notice(
+                _("Label voided - follow-up needed"),
+                _("The void was approved but Odoo could not finish: %s. Run a shipment sync.", ", ".join(problems)),
+                "warning")
+        return self._rate_notice(
+            _("Label voided"), _("ShipStation approved the void (refund). A replacement label can now be bought."))
+
+    def _record_void_in_mirror(self, shipment_id, tracking):
+        """Mark the shipment record voided and free the delivery (local work, other rows only)."""
+        Shipment = self.env["shipstation.shipment.sync"]
+        record = Shipment._upsert_from_payload(self.instance_id, {
+            "shipmentId": shipment_id, "orderId": self.shipstation_order_id,
+            "orderNumber": self.shipstation_order_number, "storeId": self.shipstation_store_id,
+            "trackingNumber": tracking, "voided": True,
+            "voidDate": self.instance_id._format_ss_datetime(fields.Datetime.now()),
+        })
+        self.instance_id.sudo().with_context(skip_order_label_bookkeeping=True)._reconcile_single_shipment(
+            record.sudo())
+
     def action_reset_label_request(self):
-        """Administrator confirms that ShipStation holds no label for this order, re-enabling purchase."""
+        """Administrator confirms what happened in ShipStation and re-opens the order for a new action."""
         self.ensure_one()
         if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
             raise AccessError(_("Only ShipStation administrators can reset a label request."))
         self.check_access("write")
+        if self.label_state == "void_requested":
+            self._release_label_request("created")
+            return self._rate_notice(
+                _("Void request reset"),
+                _("The label is treated as active again. If ShipStation did void it, the next shipment sync records it."))
         if self.label_state not in ("requested", "failed"):
             raise UserError(_("There is no pending label request to reset."))
         if self.shipstation_shipment_id or self.tracking_number:

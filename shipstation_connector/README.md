@@ -16,6 +16,7 @@ purchase, fulfillment preparation, return tracking, inventory comparison and an 
 | Shipments | Imported by create-date and void-date windows. Tracking is written to the matching delivery only when it is unambiguous; a different package never overwrites existing tracking. Voided labels are detected and escalated. Shipments for orders unknown to Odoo are kept as "No Matching Order". |
 | Rates | Quotes come from `POST /shipments/getrates` and expire after 30 minutes or when the address/package changes. |
 | Labels | `POST /orders/createlabelfororder` for **one order at a time** after an explicit confirmation. The PDF is stored as an attachment on the order mirror and the delivery. |
+| Void (refund) | Off by default. When an administrator enables **Allow Void Label Requests** on the instance, administrators get a confirmed, single-order **Void Label (Request Refund)** button (`POST /shipments/voidlabel`). A void made in ShipStation itself is detected by the shipment sync and frees the order the same way. After a void a replacement label can be bought; the first label's ids stay on the order as an audit trail. |
 | Inventory | Read-only comparison of ShipStation and Odoo quantities. **Odoo stock is never changed.** |
 | Returns | Manual case tracking (items validated against the order, approvals, audit trail). No return label, refund or stock move is created. |
 | Operations | Operations Home (Owl), Shipping Workbench, Visual Exception Board, fulfillment batches, webhook inbox, guided setup. |
@@ -25,11 +26,15 @@ purchase, fulfillment preparation, return tracking, inventory comparison and an 
 - Buy a label from a bulk action, scheduled job or webhook.
 - Retry a `POST` automatically (a retry could buy a second label).
 - Change Odoo stock quantities.
-- Issue a refund or return label.
+- Request a refund (void) from a bulk action, scheduled job or webhook. The void endpoint is reachable
+  from exactly one method, behind an instance switch, an administrator check and a confirmation.
+- Create a return label or refund a return.
 
 If ShipStation does not give a clear answer to a label purchase (timeout, HTTP 5xx, unreadable
-reply) the order is locked in **Request Sent - Outcome Unknown**. Check the order in ShipStation, then
-an administrator uses **Reset Label Request**. Only a definite rejection (HTTP 4xx) can be retried.
+reply) the order is locked in **Request Sent - Outcome Unknown**; the same applies to a void
+(**Void Requested - Outcome Unknown**). Check the order in ShipStation, then an administrator uses
+**Reset Label Request**. Only a definite rejection (HTTP 4xx, or `approved: false` for a void) can be
+retried. For a void, the next shipment sync also resolves the doubt if ShipStation did void the label.
 
 ## Roles
 
@@ -37,7 +42,7 @@ an administrator uses **Reset Label Request**. Only a definite rejection (HTTP 4
 |---|---|
 | ShipStation User (Read Only) | See orders, shipments, queues, exception board, assistant answers. |
 | ShipStation Manager | + get rates, buy a label, assign/recheck work, prepare batches, start return cases. |
-| ShipStation Admin | + credentials, connection tests, manual syncs, approvals, webhook secret, inbox retry, reset label request. System administrators inherit this group. |
+| ShipStation Admin | + credentials, connection tests, manual syncs, approvals, webhook secret, inbox retry, reset label request, void requests (only when enabled on the instance). System administrators inherit this group. |
 
 Manual operations run as the integration (like the scheduled jobs) after the role and company are
 checked, so an administrator does not also need Sales or Inventory rights. Every model is
@@ -114,7 +119,10 @@ it can never reach ShipStation or buy a label.
   labels use V1. V2 webhooks (signed) are not supported.
 - The numbered V1 hosts (`ssapiN.shipstation.com`) in webhook URLs are accepted on the strength of
   third-party reports; the supplied URL is never fetched, so this has no network impact.
-- Not tested on Odoo Enterprise or Odoo.sh.
+- The void request (`POST /shipments/voidlabel`, reply `approved`/`message`) follows ShipStation's
+  published documentation and is covered by mocked tests only; verify it with a sandbox label before enabling it.
+  ShipStation may keep the order's status as shipped after a void; use **Pull from ShipStation** before buying a replacement.
+- Tested on Odoo 19 Community, on-premise. Enterprise and Odoo.sh are expected to work (standard apps only) but are not verified.
 
 ## Release notes 19.0.1.1.0
 
