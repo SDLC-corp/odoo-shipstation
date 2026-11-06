@@ -141,6 +141,21 @@ class TestRuntimeIntegrity(ShipStationCommon):
         self.assertIn("action_create_label", manager)
         self.assertIn("action_pull_from_shipstation", manager)
 
+    def test_list_screens_explain_themselves_when_empty(self):
+        """A fresh install must tell the user what each empty screen is for and what to do next."""
+        for xmlid in (
+            "action_shipstation_instances", "action_shipstation_orders", "action_shipstation_shipments",
+            "action_shipstation_products", "action_shipstation_inventory", "action_shipstation_customers",
+            "action_shipstation_categories", "action_shipstation_reports", "action_shipstation_sync_logs",
+            "action_shipstation_s06_package_presets", "action_shipstation_s06_carrier_catalog",
+            "action_shipstation_s07_fulfillment_batches", "action_shipstation_s07_return_cases",
+            "action_shipstation_s08_exception_board", "action_shipstation_shipping_workbench",
+            "action_shipstation_webhook_inbox",
+        ):
+            with self.subTest(action=xmlid):
+                action = self.env.ref("shipstation_connector." + xmlid)
+                self.assertIn("o_view_nocontent", action.help or "", "missing empty-state help")
+
     def test_listing_and_docs_match_the_manifest(self):
         """The marketplace page and README must not drift from what the module declares."""
         from odoo.modules.module import Manifest

@@ -49,6 +49,10 @@
         <field name="view_id" ref="view_shipstation_s08_exception_kanban"/>
         <field name="search_view_id" ref="view_shipstation_workbench_search"/>
         <field name="context">{'search_default_open_queue': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No open exceptions</p>
+            <p>Shipments that need a person to link them to a delivery order appear here.</p>
+        </field>
     </record>
 
     <record id="view_shipstation_s08_return_search" model="ir.ui.view">

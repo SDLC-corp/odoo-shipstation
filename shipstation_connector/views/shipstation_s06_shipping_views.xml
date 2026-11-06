@@ -71,6 +71,10 @@
         <field name="name">Package Presets</field>
         <field name="res_model">shipstation.package.preset</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a package preset</p>
+            <p>Presets fill the weight and dimensions of an order before you compare shipping rates.</p>
+        </field>
     </record>
     <record id="view_shipstation_s06_carrier_catalog_list" model="ir.ui.view">
         <field name="name">shipstation.carrier.catalog.list</field>
@@ -84,6 +88,10 @@
         <field name="name">Discovered Carriers and Services</field>
         <field name="res_model">shipstation.carrier.catalog</field>
         <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No carriers discovered yet</p>
+            <p>Open a connection and use Refresh Carriers / Services (a read-only request to ShipStation).</p>
+        </field>
     </record>
     <record id="view_shipstation_s06_instance_carrier_discovery" model="ir.ui.view">
         <field name="name">shipstation.instance.s06.discovery</field>
