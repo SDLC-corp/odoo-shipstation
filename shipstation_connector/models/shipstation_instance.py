@@ -189,7 +189,7 @@ class ShipStationInstance(models.Model):
         shipments = {
             instance.id: count
             for instance, count in self.env["shipstation.shipment.sync"]._read_group(
-                [("instance_id", "in", self.ids)], ["instance_id"], ["__count"])
+                [("instance_id", "in", self.ids), ("voided", "=", False)], ["instance_id"], ["__count"])
         }
         for rec in self:
             rec.total_orders, rec.total_revenue = orders.get(rec.id, (0, 0.0))

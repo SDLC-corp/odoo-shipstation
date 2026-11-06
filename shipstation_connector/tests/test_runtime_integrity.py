@@ -129,6 +129,18 @@ class TestRuntimeIntegrity(ShipStationCommon):
                     missing.append(rel)
         self.assertFalse(missing, "Declared but missing files: %s" % missing)
 
+    def test_order_form_hides_actions_a_reader_cannot_use(self):
+        arch = self.env["shipstation.order.sync"].with_user(self.user_reader).get_view(
+            self.env.ref("shipstation_connector.view_shipstation_order_sync_form").id, "form")["arch"]
+        visible = [b.get("name") for b in etree.fromstring(arch).iter("button") if b.get("type") == "object"]
+        self.assertFalse(set(visible) & {"action_create_label", "action_push_to_shipstation", "action_get_rates",
+                                         "action_select_best_rate", "action_pull_from_shipstation"}, visible)
+        manager_arch = self.env["shipstation.order.sync"].with_user(self.user_manager).get_view(
+            self.env.ref("shipstation_connector.view_shipstation_order_sync_form").id, "form")["arch"]
+        manager = [b.get("name") for b in etree.fromstring(manager_arch).iter("button")]
+        self.assertIn("action_create_label", manager)
+        self.assertIn("action_pull_from_shipstation", manager)
+
     def test_default_cron_jobs_never_purchase_labels(self):
         """Background jobs may only read/sync; none may reference label or refund code."""
         for cron in self._module_records("ir.cron"):

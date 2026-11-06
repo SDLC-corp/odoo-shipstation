@@ -28,7 +28,7 @@
                             <div class="ss08_kanban_heading"><field name="shipstation_order_number"/></div>
                             <div class="ss08_kanban_status"><field name="link_state" widget="badge"/></div>
                             <div class="ss08_kanban_meta">
-                                <span><i class="fa fa-user" aria-hidden="true"/> <field name="review_owner_id"/></span>
+                                <span><i class="fa fa-user" role="img" title="Assigned to" aria-label="Assigned to"/> <field name="review_owner_id"/></span>
                             </div>
                             <div class="ss08_kanban_meta" t-if="record.tracking_number.raw_value">
                                 <span>Tracking: <field name="tracking_number"/></span>

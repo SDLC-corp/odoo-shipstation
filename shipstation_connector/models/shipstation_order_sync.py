@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 import psycopg2.errors
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
@@ -77,6 +77,12 @@ class ShipStationOrderSync(models.Model):
     )
     label_requested_at = fields.Datetime(readonly=True, copy=False)
     label_requested_by_id = fields.Many2one("res.users", readonly=True, copy=False)
+
+    @api.depends("shipstation_order_number", "shipstation_order_id", "customer_name")
+    def _compute_display_name(self):
+        for rec in self:
+            number = rec.shipstation_order_number or rec.shipstation_order_id or _("Order")
+            rec.display_name = "%s · %s" % (number, rec.customer_name) if rec.customer_name else number
 
     def _payload_get(self, payload, key, default=None):
         if not isinstance(payload, dict) or not key:

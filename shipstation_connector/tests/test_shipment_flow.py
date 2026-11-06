@@ -27,6 +27,26 @@ class TestShipmentSync(ShipStationCommon):
             self.assertFalse([k for k in params if k.lower().startswith("modifydate")],
                              "GET /shipments has no modifyDate filter")
 
+    def test_voided_labels_are_not_counted_as_shipments(self):
+        self.make_shipment_sync()
+        self.make_shipment_sync(shipstation_shipment_id="5002", voided=True)
+        self.assertEqual(self.instance.total_shipments, 1)
+        data = self.env["shipstation.dashboard"].with_user(self.user_admin).get_dashboard_data()
+        self.assertEqual(data["summary"]["shipments"], 1)
+        self.assertEqual(data["instances"][0]["total_shipments"], 1)
+
+    def test_records_have_readable_names_not_model_comma_id(self):
+        shipment = self.make_shipment_sync(tracking_number="1ZABC")
+        self.assertEqual(shipment.display_name, "SO-9001 · 1ZABC")
+        self.assertEqual(self.make_shipment_sync(shipstation_shipment_id=False, tracking_number="T9",
+                                                 shipstation_order_number=False,
+                                                 shipstation_order_id="55").display_name, "55 · T9")
+        order = self.make_order_sync()
+        self.assertEqual(order.display_name, "SO-9001 · Test Customer")
+        log = self.env["shipstation.sync.log"].create(
+            {"instance_id": self.instance.id, "status": "failed", "method": "GET", "endpoint": "/orders"})
+        self.assertEqual(log.display_name, "GET /orders (failed)")
+
     def test_import_derives_status_and_handles_voids(self):
         good = self.shipment_payload(5001, tracking="T-GOOD")
         bad = self.shipment_payload(5002, tracking="T-VOID", voided=True)

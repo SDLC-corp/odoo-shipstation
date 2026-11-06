@@ -32,6 +32,11 @@ class ShipStationSyncLog(models.Model):
         self.search([("status", "=", "failed"), ("create_date", "<", now - timedelta(days=90))],
                     limit=10000).unlink()
 
+    @api.depends("method", "endpoint", "status")
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = "%s %s (%s)" % (rec.method or "", rec.endpoint or _("request"), rec.status or "")
+
     def _parse_payload(self, text):
         if not text:
             return None

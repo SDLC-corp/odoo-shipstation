@@ -20,7 +20,8 @@
         <field name="arch" type="xml">
             <form string="ShipStation Order">
                 <header>
-                    <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"/>
+                    <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
                     <button name="action_push_to_shipstation" type="object" string="Push to ShipStation" class="btn-primary"
                             groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"
                             confirm="This sends the order to ShipStation (an existing order with the same key is updated). Continue?"/>
@@ -34,7 +35,8 @@
                             groups="shipstation_connector.group_shipstation_admin"
                             invisible="label_state not in ('requested', 'failed')"
                             confirm="Only reset after you have confirmed in ShipStation that NO label exists for this order. Continue?"/>
-                    <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"/>
+                    <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"
+                            invisible="not shipstation_shipment_id and not label_url"/>
                 </header>
                 <sheet>
                     <group>

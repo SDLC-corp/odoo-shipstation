@@ -288,7 +288,8 @@ class ShipStationDashboard(models.Model):
                 row["currency"] = next(iter(currencies), "") if row["revenue_available"] else ""
                 row["total_revenue"] = sum(currencies.values()) if row["revenue_available"] else None
 
-        _apply_count("shipstation_shipment_sync", "total_shipments")
+        _apply_count("shipstation_shipment_sync", "total_shipments",
+                     "COUNT(*) FILTER (WHERE voided IS NOT TRUE)")  # a voided label is not a shipment
         _apply_count("shipstation_product_sync", "total_products")
         _apply_count("shipstation_customer_sync", "total_customers")
         _apply_count("shipstation_inventory", "inventory_items")

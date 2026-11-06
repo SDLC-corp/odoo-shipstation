@@ -1,6 +1,6 @@
 from urllib.parse import urlsplit
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
 
@@ -35,6 +35,13 @@ class ShipStationShipmentSync(models.Model):
     link_message = fields.Text(copy=False)
     synced_on = fields.Datetime(default=fields.Datetime.now)
     payload = fields.Text()
+
+    @api.depends("shipstation_order_number", "shipstation_order_id", "tracking_number", "shipstation_shipment_id")
+    def _compute_display_name(self):
+        for rec in self:
+            order = rec.shipstation_order_number or rec.shipstation_order_id or _("Shipment")
+            reference = rec.tracking_number or rec.shipstation_shipment_id
+            rec.display_name = "%s · %s" % (order, reference) if reference else order
 
     def _find_existing_shipment(self, instance, shipment_id="", order_id="", order_number="", store_id="", tracking_number=""):
         """Never merge two real shipment IDs into the same package record.
