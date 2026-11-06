@@ -1132,12 +1132,33 @@ class ShipStationInstance(models.Model):
                 "link_message": _("Label voided in ShipStation. Tracking was removed from delivery %s; "
                                   "a replacement label may be needed.") % picking.display_name,
             })
+            self._relink_siblings_after_void(shipment)
             return "review"
         shipment.write({
             "picking_id": False, "link_state": "voided",
             "link_message": _("Label voided in ShipStation; it is not linked to any delivery."),
         })
         return "voided"
+
+    def _relink_siblings_after_void(self, voided):
+        """The delivery has just been freed: re-evaluate the other open shipments of the same order.
+
+        A replacement label is often bought before the void is processed, so it was parked in
+        review because the delivery still carried the old package. Local work only; no ShipStation call.
+        """
+        if not voided.shipstation_order_id:
+            return
+        siblings = self.env["shipstation.shipment.sync"].search([
+            ("instance_id", "=", self.id), ("id", "!=", voided.id), ("voided", "=", False),
+            ("shipstation_order_id", "=", voided.shipstation_order_id),
+            ("link_state", "in", ("review", "pending")),
+        ])
+        for sibling in siblings:
+            try:
+                with self.env.cr.savepoint():
+                    self._reconcile_single_shipment(sibling)
+            except Exception:  # noqa: BLE001 - recovery is best effort; the operator can still recheck
+                _logger.warning("Could not re-link shipment %s after a void", sibling.id, exc_info=True)
 
     def _process_shipment_record(self, shipment_data):
         """Atomic remote shipment import; caller must provide a DB savepoint."""

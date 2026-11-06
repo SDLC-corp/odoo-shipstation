@@ -1,5 +1,6 @@
 """Shipment import, delivery linking, partial/multi-package shipments, voided labels, recovery."""
 import re
+from unittest import mock
 
 from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import tagged
@@ -173,6 +174,35 @@ class TestDeliveryLinking(ShipStationCommon):
             shipment.with_user(self.user_reader).action_acknowledge_void()
         shipment.with_user(self.user_manager).action_acknowledge_void()
         self.assertEqual(shipment.link_state, "voided")
+
+    def test_replacement_label_is_linked_automatically_once_the_void_is_processed(self):
+        sale, picking = self._setup_order()
+        self._link(self.shipment_payload(5001, tracking="T1"))
+        # the replacement is bought before the void reaches Odoo, so it is parked for review
+        self.assertEqual(self._link(self.shipment_payload(5002, tracking="T2")), "review")
+        replacement = self.env["shipstation.shipment.sync"].search([("shipstation_shipment_id", "=", "5002")])
+        self.assertEqual(replacement.link_state, "review")
+        self._link(self.shipment_payload(5001, tracking="T1", voided=True))
+        self.assertEqual((replacement.link_state, replacement.picking_id), ("linked", picking))
+        self.assertEqual((picking.carrier_tracking_ref, picking.shipstation_shipment_id), ("T2", "5002"))
+        voided = self.env["shipstation.shipment.sync"].search([("shipstation_shipment_id", "=", "5001")])
+        self.assertEqual(voided.link_state, "review", "the void itself still needs an operator acknowledgement")
+        self.assertFalse(self.http.calls, "recovery is local only")
+
+    def test_void_recovery_leaves_other_orders_alone_and_survives_a_broken_sibling(self):
+        sale, picking = self._setup_order()
+        self._link(self.shipment_payload(5001, tracking="T1"))
+        other = self.make_shipment_sync(shipstation_shipment_id="6001", shipstation_order_id="8888",
+                                        shipstation_order_number="OTHER", link_state="review")
+        broken = self.make_shipment_sync(shipstation_shipment_id="6002", link_state="review", tracking_number=False)
+        with mock.patch.object(type(self.instance), "_reconcile_single_shipment",
+                               autospec=True, side_effect=[RuntimeError("boom")]) as reconcile:
+            result = self.instance._reconcile_voided_shipment(
+                self.env["shipstation.shipment.sync"].search([("shipstation_shipment_id", "=", "5001")]))
+        self.assertEqual(result, "review")
+        self.assertEqual(other.link_state, "review", "a different order must never be touched")
+        self.assertEqual(reconcile.call_count, 1)
+        self.assertEqual(broken.link_state, "review", "a failed re-link leaves the sibling for manual recheck")
 
     def test_unlinked_void_needs_no_action_and_cannot_be_acknowledged_when_valid(self):
         self.assertEqual(self._link(self.shipment_payload(5003, voided=True)), "voided")
