@@ -1,36 +1,69 @@
 # S13 Release-readiness assessment - shipstation_connector 19.0.1.1.0
 
-Status: **not ready for the Apps Store until blockers B1-B3 are closed.** The code base is stable,
-secure on the tested paths, and well covered by automated tests; what is missing is evidence from a
-real ShipStation account and three decisions.
+Status: **one blocker remains: no real ShipStation account has ever been used (B1).** Everything that can be
+verified without one has been, including an upgrade from the build published on the Store, behaviour at
+100k-row scale and a real-browser pass over every screen. Licensing and edition wording were decided by the owner.
 
 ## 1. What was verified, and how
 
-Maturity levels: **implemented** (code exists) - **source-tested** (offline text/contract tests) -
-**runtime-tested** (Odoo test suite on a real, upgraded PostgreSQL 18 database, HTTP mocked) -
-**browser-tested** (real browser against an isolated server, synthetic data) -
-**production-verified** (real ShipStation account). *Nothing is production-verified.*
+Maturity levels: **implemented** - **source-tested** (offline contract tests) - **runtime-tested** (Odoo test
+suite on a real, upgraded PostgreSQL 18 database, HTTP mocked) - **browser-tested** (real browser, isolated
+server, synthetic data) - **production-verified** (real ShipStation account). *Nothing is production-verified.*
 
-| Area | Implemented | Source | Runtime | Browser | Production |
-|---|:-:|:-:|:-:|:-:|:-:|
-| V1/V2 routing, auth header, retry/backoff, 429 handling | yes | yes | yes | - | no |
-| Credentials hidden from non-admins, ACLs for 6 roles, company isolation | yes | yes | yes | yes | n/a |
-| Order import (idempotent, stale-safe, draft-only) and incremental sync | yes | yes | yes | - | no |
-| Order push (idempotent `orderKey`, open-delivery only, bounded) | yes | yes | yes | - | no |
-| Shipment sync, partial shipments/backorders, multi-package | yes | yes | yes | - | no |
-| Voided labels, unmatched shipments, auto re-link of a replacement | yes | - | yes | yes | no |
-| Rates, quote freshness, presets, carrier discovery | yes | yes | yes | - | no |
-| Label purchase (single order, claim, ambiguity lock, reset) | yes | yes | yes | confirm dialog | no |
-| Bulk fulfillment preparation (never buys) | yes | yes | yes | yes | n/a |
-| Return cases (quantities, approvals, audit trail) | yes | yes | yes | yes | n/a |
-| Webhook intake, replay protection, inbox retry, purge | yes | yes | yes | inbox/retry | no |
-| Operations Home, Dashboard, Exception Board, Workbench (Owl/kanban) | yes | yes | views render | yes | n/a |
-| AI assistant (ACL + company scoped, no `sudo`) | yes | - | yes | yes | n/a |
-| Upgrade 19.0.1.0.0 -> 19.0.1.1.0 (clone of an earlier working-tree install) | - | - | yes | - | no |
+| Area | Source | Runtime | Browser | Production |
+|---|:-:|:-:|:-:|:-:|
+| V1/V2 routing, auth, retry/backoff, 429 handling, bounded waits | yes | yes | - | no |
+| Credentials hidden from non-admins, ACLs for 6 roles, company isolation | yes | yes | yes | n/a |
+| Order import / incremental sync / idempotent push | yes | yes | - | no |
+| Shipment sync, partial shipments, multi-package, unmatched, voided | yes | yes | yes | no |
+| Auto re-link of a replacement label after a void | - | yes | - | no |
+| Rates, quote freshness, presets, carrier discovery | yes | yes | - | no |
+| Label purchase (single order, durable claim, ambiguity lock, reset) | yes | yes | confirm dialog | no |
+| **Void label (admin-only, off by default, single code path)** | AST test | yes | switch, button, confirm | no |
+| Bulk fulfillment preparation (never buys) | yes | yes | yes | n/a |
+| Return cases (quantities, approvals, audit trail) | yes | yes | yes | n/a |
+| Webhook intake, replay protection, inbox retry, purge | yes | yes | inbox/retry | no |
+| Operations Home, Dashboard, Exception Board, Workbench (Owl/kanban) | yes | views render | yes | n/a |
+| Empty states on 16 list screens | - | yes | yes | n/a |
+| AI assistant (ACL + company scoped, no `sudo`) | - | yes | yes | n/a |
+| **Upgrade from the build published on the Store (09e8866f)** | - | yes | - | no |
+| **Performance at 100k mirrors/shipments, 50k sale orders** | - | measured | - | no |
 
-Evidence: offline suite **233/233**, Odoo runtime suite **127/127** (0 failed, 0 errors, 0 skipped),
-0 view warnings, 0 translation warnings, 0 JavaScript console errors in three browser sessions
-(Administrator, Manager, Reader).
+Evidence at the time of writing:
+
+- Offline suite **233/233**.
+- Odoo runtime suite **147/147** on a clean database (0 failed, 0 errors, 0 skipped; 0 view and 0 translation warnings).
+- The same suite **146/146** on the migrated copy of the published install, with its pre-existing data. (Run before the last,
+  empty-state test was added.)
+- 0 JavaScript console errors across Administrator, Manager and Reader browser sessions.
+
+### Upgrade from the published build
+
+Installed the exact published commit on a fresh Odoo 19 database, seeded it through its own code, and upgraded to this branch.
+It found two data problems that no source test could, both fixed by `migrations/19.0.1.1.0/post-migration.py`:
+
+1. Every existing connection received the **same webhook secret** (Odoo evaluates a callable default once for all existing rows).
+2. Every historical shipment became "Pending" even where the delivery already carried its tracking (3 false "awaiting delivery" items in the test; hundreds on a real database).
+
+After the fix: 3 distinct secrets, provable shipments linked, ambiguous / foreign-company / already-triaged ones left alone, legacy
+sale orders still adopted by id and store, views, ACLs, record rules and cron jobs intact. Users of webhooks must re-register the new URL
+(see README "Upgrading").
+
+### Scale (disposable clone; 100k order mirrors, 100k shipments, 50k request logs, 20k webhook items, 50k sale orders + deliveries)
+
+| Operation | Median |
+|---|---:|
+| Operations Home overview | 52 ms |
+| Legacy dashboard | 127 ms |
+| Instance totals | 53 ms |
+| Workbench queue page + count (33k rows) | 13 ms |
+| Order mirror list / search | 37 / 29 ms |
+| Order-push candidates: count (25k eligible) / first 200 | 60 / 3 ms |
+| Per-record `_find_order` / shipment lookup | 3 / 0.6 ms |
+| Webhook cron claim (`SKIP LOCKED`) | 4 ms |
+| Autovacuum purge, one run | 271 ms |
+
+The query plans use indexes on every hot path. Nothing exceeded 130 ms; the largest tables were 31-34 MB.
 
 ## 2. Defects found by real execution (all fixed, each with a regression test)
 
@@ -44,44 +77,51 @@ Evidence: offline suite **233/233**, Odoo runtime suite **127/127** (0 failed, 0
 8. Voided labels were treated as valid shipments (and counted on the dashboard).
 9. ShipStation identity fields were copied by "Duplicate" / backorder splitting.
 10. Return quantities were unchecked; no audit trail on batches/returns.
-11. Paid-label race: a later write from the request transaction would raise a serialization failure
-    *after* the label was bought (reproduced against PostgreSQL REPEATABLE READ). All writes to the claimed row now use a side cursor.
+11. Paid-label race: a later write from the request transaction would raise a serialization failure *after* the label was bought
+    (reproduced against PostgreSQL REPEATABLE READ). All writes to the claimed row now use a side cursor.
 12. Unbounded retry sleep (up to 180 s vs Odoo's 120 s limit); unbounded order push; chatbot crash on non-string input.
-13. Documentation described a disabled endpoint, a removed write-back toggle and overclaimed features; store page said LGPL-3 while the manifest is OPL-1; `requests` was undeclared.
-14. UX: records named `model,id`; buttons shown that can never work for the viewer; one accessibility warning.
+13. Documentation described a disabled endpoint and a removed write-back toggle and overclaimed features; the store page said LGPL-3
+    while the manifest is OPL-1; `requests` was undeclared; Enterprise/Odoo.sh were claimed but untested.
+14. UX: records named `model,id`; buttons shown that can never work for the viewer; an accessibility warning; no empty-state guidance.
+15. **Upgrade:** shared webhook secret across connections; all historical shipments "Pending".
 
-## 3. Blockers before release
+## 3. Decisions made by the owner
+
+- License: **OPL-1** is correct (store page aligned to the manifest).
+- Editions: the claim now reads "tested on Odoo 19 Community, on-premise; Enterprise and Odoo.sh expected, not yet verified".
+- Void Label: build it, **off by default**, administrator-only, one order at a time.
+
+## 4. Remaining blocker
 
 | # | Blocker | Why it matters | Action |
 |---|---|---|---|
-| B1 | **No real ShipStation call has ever been made.** | All behaviour is verified against mocks and ShipStation's published docs only. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges). |
-| B2 | **License statement** | Manifest says OPL-1; the store page said LGPL-3 until this release. This release aligns the page to the manifest. | Confirm OPL-1 is intended (if not, change the manifest). |
-| B3 | **Enterprise / Odoo.sh claimed, only Community tested** | The listing says "Community & Enterprise, Odoo.sh". | Smoke-test on Enterprise/Odoo.sh or drop the claim. |
-| B4 | Commits are local; not pushed | The authenticated GitHub account on this machine (`tejaskamble-18`) differs from the commit author. | Push with the intended account: `git push origin 19.0` (fast-forward, no force). |
+| B1 | **No real ShipStation call has ever been made.** | All behaviour is verified against mocks and ShipStation's published docs only. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
 
-## 4. Remaining risks (not blockers)
+## 5. Residual risks (not blockers)
 
-- Upgrade was tested from a database installed from an earlier working tree, **not** from the exact 19.0.1.0.0 build published on the Store.
-- Not measured at scale (100k+ orders). Order push, totals and the dashboard use bounded/grouped queries by design.
-- The paid-label cursor logic is exercised in test mode (cursors merged); the production semantics were
-  proven separately with a two-connection PostgreSQL probe, not through Odoo.
-- Unverified assumptions: numbered V1 webhook hosts (`ssapiN`), `GET /v2/carriers` as a key check, `voidDate` semantics of `GET /shipments`.
+- Unverified API assumptions: numbered V1 webhook hosts (`ssapiN`), `GET /v2/carriers` as a key check, `voidDate` semantics of
+  `GET /shipments`, whether ShipStation reverts an order to awaiting shipment after a void (the README tells users to Pull first).
+- The paid-label cursor logic runs in test mode (cursors merged); the production semantics were proven separately with a two-connection
+  PostgreSQL probe, not through Odoo.
+- Enterprise and Odoo.sh are untested (claim reworded accordingly).
+- Scale was measured to 100k rows per table on one machine; behaviour beyond that is extrapolated from the index plans.
+- After any upgrade, Odoo 19 browsers serve cached action definitions until revalidated; users may need a reload.
 - Inventory quantities are a read-only comparison; there is deliberately no write-back.
 
-## 5. Next batch (priorities)
+## 6. Next batch
 
-1. Run the sandbox checklist (B1) and fix whatever the real API contradicts.
-2. Explicit, admin-only **Void Label** action (refund request) with confirmation and idempotency - needs a product decision on approvals.
-3. Return cases: link to ShipStation return labels only after (1); keep manual until then.
-4. Store/store-mapping import from `/stores`; scoped manual re-sync for a single order.
-5. Load test at realistic volume; add indexes if the grouped queries show up in `pg_stat_statements`.
+1. Sandbox verification (B1); fix whatever the real API contradicts.
+2. Return cases: ShipStation return labels only after (1); keep manual until then.
+3. Store / store-mapping import from `/stores`; scoped manual re-sync for a single order.
+4. Verify on Enterprise / Odoo.sh, then restore the broader edition claim if it passes.
 
-## 6. Reproduce
+## 7. Reproduce
 
 ```
 python -B -I devtools/run_offline_tests.py
 odoo-bin -c <conf> -d <DISPOSABLE db> -u shipstation_connector --stop-after-init \
          --test-enable --test-tags /shipstation_connector
 ```
-Use a throw-away database: the suite creates records inside rolled-back transactions, but the upgrade
-step modifies the database it runs on. Never point it at a production database.
+Use a throw-away database: the upgrade step modifies the database it runs on. Never point it at production.
+To reproduce the published-build upgrade: `git checkout --detach 09e8866f`, install the module on a fresh database,
+seed it, `git checkout 19.0`, then `-u shipstation_connector`.
