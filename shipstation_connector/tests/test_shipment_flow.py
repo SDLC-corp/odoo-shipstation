@@ -29,12 +29,15 @@ class TestShipmentSync(ShipStationCommon):
                              "GET /shipments has no modifyDate filter")
 
     def test_voided_labels_are_not_counted_as_shipments(self):
+        dashboard = self.env["shipstation.dashboard"].with_user(self.user_admin)
+        base_total = dashboard.get_dashboard_data()["summary"]["shipments"]   # the database may hold other data
         self.make_shipment_sync()
         self.make_shipment_sync(shipstation_shipment_id="5002", voided=True)
         self.assertEqual(self.instance.total_shipments, 1)
-        data = self.env["shipstation.dashboard"].with_user(self.user_admin).get_dashboard_data()
-        self.assertEqual(data["summary"]["shipments"], 1)
-        self.assertEqual(data["instances"][0]["total_shipments"], 1)
+        data = dashboard.get_dashboard_data()
+        self.assertEqual(data["summary"]["shipments"], base_total + 1)
+        row = next(i for i in data["instances"] if i["id"] == self.instance.id)
+        self.assertEqual(row["total_shipments"], 1)
 
     def test_records_have_readable_names_not_model_comma_id(self):
         shipment = self.make_shipment_sync(tracking_number="1ZABC")

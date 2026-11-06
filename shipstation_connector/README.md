@@ -97,6 +97,20 @@ ways. During the one repeated hour when daylight saving ends the sync window is 
 | Webhook URL empty | `web.base.url` is not https. |
 | 429 / rate limited | ShipStation allows 40 calls per minute per key; the connector waits at most 45 s per call. |
 
+## Upgrading from 19.0.1.0.0 (the build published before this release)
+
+Upgrade a **copy** first, then production: `odoo-bin -u shipstation_connector -d <db>`. This path was
+tested on a database installed from the published build.
+
+| What happens | What you do |
+|---|---|
+| **The old `/shipstation/webhook` endpoint is disabled (404).** It accepted anonymous posts. | **Action required if you used webhooks:** open each connection > Webhook tab, copy the new callback URL and register it in ShipStation. |
+| Every connection receives its own webhook secret (a plain update would have given them all the same one). | Nothing. |
+| Shipments whose delivery already carries the same ShipStation shipment id are marked Linked. Others show as Pending. | Work the Pending ones in the Shipping Workbench (or leave them if they predate Odoo). |
+| Sale orders imported by the old version are recognised by exact ShipStation id and store; they never get duplicated. | Nothing. |
+| Manual syncs now run as the integration, and only administrators can start them. | Give people the ShipStation Manager/Admin groups they need. |
+| Request logs older than 14 days (failures 90) and processed webhooks older than 30 days are purged by Odoo's autovacuum. | Export anything you must keep before upgrading. |
+
 ## Tests
 
 ```

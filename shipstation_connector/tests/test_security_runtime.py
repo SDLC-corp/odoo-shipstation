@@ -92,7 +92,10 @@ class TestSecurityRuntime(ShipStationCommon):
         for user, own, foreign in ((self.user_manager, self.instance, self.instance_b),
                                    (self.user_manager_b, self.instance_b, self.instance)):
             Instance = self.env["shipstation.instance"].with_user(user)
-            self.assertEqual(Instance.search([]), own, user.login)
+            visible = Instance.search([])
+            self.assertIn(own, visible, user.login)
+            self.assertNotIn(foreign, visible, user.login)
+            self.assertEqual(visible.mapped("company_id"), user.company_id, "only the user's own company")
             with self.assertRaises(AccessError):
                 foreign.with_user(user).read(["name"])
         for record in (order_b, ship_b):
