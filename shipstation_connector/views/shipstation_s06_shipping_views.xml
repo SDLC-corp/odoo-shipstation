@@ -1,0 +1,109 @@
+
+<odoo>
+    <record id="view_shipstation_s06_order_shipping" model="ir.ui.view">
+        <field name="name">shipstation.order.s06.shipping.preparation</field>
+        <field name="model">shipstation.order.sync</field>
+        <field name="inherit_id" ref="view_shipstation_order_sync_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/group[field[@name='carrier_code']]" position="before">
+                <group string="Shipping Preparation (Rate Quote)">
+                    <group>
+                        <field name="package_preset_id"/>
+                        <button name="action_apply_package_preset" type="object" string="Load Package Preset"
+                                groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"
+                                class="btn-secondary"/>
+                        <field name="rate_from_postal"/>
+                        <field name="rate_to_country"/>
+                        <field name="rate_to_postal"/>
+                        <field name="rate_to_state"/>
+                        <field name="rate_to_city"/>
+                        <field name="rate_residential"/>
+                    </group>
+                    <group>
+                        <field name="rate_weight"/>
+                        <field name="rate_weight_units"/>
+                        <field name="rate_length"/>
+                        <field name="rate_width"/>
+                        <field name="rate_height"/>
+                        <field name="rate_dimension_units"/>
+                        <field name="rate_checked_at" readonly="1"/>
+                        <field name="rate_request_hash" invisible="1"/>
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//form/header/button[@name='action_get_rates']" position="attributes">
+                <attribute name="groups">shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager</attribute>
+            </xpath>
+            <xpath expr="//form/header/button[@name='action_select_best_rate']" position="attributes">
+                <attribute name="groups">shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager</attribute>
+            </xpath>
+            <xpath expr="//form/sheet/group/field[@name='rate_ids']/list" position="inside">
+                <field name="package_code" optional="show"/>
+                <field name="service_friendly_name" optional="show"/>
+                <button name="action_apply_rate" type="object" string="Select"
+                        groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_shipstation_s06_preset_list" model="ir.ui.view">
+        <field name="name">shipstation.package.preset.list</field>
+        <field name="model">shipstation.package.preset</field>
+        <field name="arch" type="xml"><list>
+            <field name="name"/><field name="instance_id"/><field name="company_id"/>
+            <field name="package_code"/><field name="weight_value"/><field name="weight_units"/>
+            <field name="active"/>
+        </list></field>
+    </record>
+    <record id="view_shipstation_s06_preset_form" model="ir.ui.view">
+        <field name="name">shipstation.package.preset.form</field>
+        <field name="model">shipstation.package.preset</field>
+        <field name="arch" type="xml"><form><sheet>
+            <group><field name="name"/><field name="instance_id"/><field name="company_id" readonly="1"/>
+                   <field name="active"/><field name="package_code"/></group>
+            <group string="Package Measurements">
+                <field name="weight_value"/><field name="weight_units"/>
+                <field name="length"/><field name="width"/><field name="height"/><field name="dimension_units"/>
+            </group>
+        </sheet></form></field>
+    </record>
+    <record id="action_shipstation_s06_package_presets" model="ir.actions.act_window">
+        <field name="name">Package Presets</field>
+        <field name="res_model">shipstation.package.preset</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="view_shipstation_s06_carrier_catalog_list" model="ir.ui.view">
+        <field name="name">shipstation.carrier.catalog.list</field>
+        <field name="model">shipstation.carrier.catalog</field>
+        <field name="arch" type="xml"><list create="0" edit="0" delete="0">
+            <field name="instance_id"/><field name="company_id"/><field name="kind"/>
+            <field name="carrier_code"/><field name="code"/><field name="name"/><field name="last_seen_at"/>
+        </list></field>
+    </record>
+    <record id="action_shipstation_s06_carrier_catalog" model="ir.actions.act_window">
+        <field name="name">Discovered Carriers and Services</field>
+        <field name="res_model">shipstation.carrier.catalog</field>
+        <field name="view_mode">list</field>
+    </record>
+    <record id="view_shipstation_s06_instance_carrier_discovery" model="ir.ui.view">
+        <field name="name">shipstation.instance.s06.discovery</field>
+        <field name="model">shipstation.instance</field>
+        <field name="inherit_id" ref="view_shipstation_instance_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="action_discover_carrier_catalog" string="Refresh Carriers / Services"
+                        groups="shipstation_connector.group_shipstation_admin" type="object" class="btn-secondary"/>
+            </xpath>
+            <xpath expr="//form/sheet/notebook" position="inside">
+                <page string="Discovered Shipping Options" groups="shipstation_connector.group_shipstation_admin">
+                    <field name="carrier_catalog_ids" readonly="1">
+                        <list create="0" edit="0" delete="0">
+                            <field name="kind"/><field name="carrier_code"/><field name="code"/><field name="name"/>
+                            <field name="last_seen_at"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

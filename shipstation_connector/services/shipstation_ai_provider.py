@@ -52,6 +52,10 @@ class ShipStationAIProvider:
                 "Unsupported AI provider '%s'." % settings["provider"]
             )
 
+        if not settings["endpoint"].lower().startswith("https://"):
+            # The bearer key is sent to this URL: never allow it over plain HTTP.
+            raise ShipStationAIProviderError("The AI endpoint must use https.")
+
         payload = {
             "model": settings["model"],
             "temperature": temperature,

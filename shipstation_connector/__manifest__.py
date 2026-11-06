@@ -33,10 +33,10 @@
     -----------------------------------
     * Export Odoo orders to ShipStation
     * Synchronize products and product updates
-    * Export inventory quantities
-    * Send shipment information to ShipStation
-    * Update fulfillment and shipping status
-    * Maintain product and stock consistency
+    * Review inventory discrepancies without automatically changing Odoo stock
+    * Support controlled shipment information exchange
+    * Update fulfillment and shipping status where configured
+    * Preserve inventory safety with read-only reconciliation
     * Support operational shipping workflows
 
     Shipping & Fulfillment Management
@@ -104,6 +104,7 @@
     "depends": [
         "base",
         "web",
+        "mail",
         "sale_management",
         "stock",
         "delivery",
@@ -112,6 +113,7 @@
     "data": [
         "security/shipstation_security.xml",
         "security/ir.model.access.csv",
+        "security/shipstation_record_rules.xml",
         "data/ir_cron.xml",
         "views/shipstation_instance_view.xml",
         "views/shipstation_field_mapping_views.xml",
@@ -127,16 +129,24 @@
         "views/shipstation_res_config_settings_view.xml",
         "views/shipstation_dashboard_action.xml",
         "views/shipstation_actions.xml",
+        "views/shipstation_workbench_views.xml",
+        "views/shipstation_s06_shipping_views.xml",
+        "views/shipstation_s07_fulfillment_returns_views.xml",
+        "views/shipstation_s08_operations_views.xml",
         "views/menu.xml",
+        "views/shipstation_webhook_inbox_views.xml",
     ],
     "assets": {
         "web.assets_backend": [
             "shipstation_connector/static/src/css/shipstation_dashboard.css",
+            "shipstation_connector/static/src/css/shipstation_operations_home.css",
             "shipstation_connector/static/src/scss/chatbot.scss",
             "shipstation_connector/static/src/js/shipstation_dashboard.js",
+            "shipstation_connector/static/src/js/shipstation_operations_home.js",
             "shipstation_connector/static/src/js/chatbot.js",
             "shipstation_connector/static/src/xml/chatbot.xml",
             "shipstation_connector/static/src/xml/shipstation_dashboard_templates.xml",
+            "shipstation_connector/static/src/xml/shipstation_operations_home.xml",
         ],
     },
     "images": ["static/description/banner.gif"],

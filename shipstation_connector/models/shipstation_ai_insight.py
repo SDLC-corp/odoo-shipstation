@@ -10,6 +10,11 @@ class ShipStationAIInsight(models.Model):
 
     name = fields.Char(required=True, default="AI Insight")
     instance_id = fields.Many2one("shipstation.instance", string="Instance", ondelete="cascade")
+    company_id = fields.Many2one(
+        "res.company", string="Company", index=True,
+        default=lambda self: self.env.company, readonly=True,
+        help="AI insight data is restricted to its generating company.",
+    )
     scope = fields.Selection(
         [("instance", "Instance"), ("all", "All Instances")],
         default="all",
@@ -36,11 +41,13 @@ class ShipStationAIInsight(models.Model):
         domain = [
             ("scope", "=", values.get("scope")),
             ("range_days", "=", values.get("range_days")),
+            ("company_id", "=", values.get("company_id") or self.env.company.id),
         ]
         if values.get("scope") == "instance":
             domain.append(("instance_id", "=", values.get("instance_id")))
         else:
             domain.append(("instance_id", "=", False))
+        values = dict(values, company_id=values.get("company_id") or self.env.company.id)
         record = self.search(domain, limit=1)
         if record:
             record.write(values)
