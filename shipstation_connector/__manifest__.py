@@ -1,6 +1,6 @@
 {
     "name": "ShipStation Odoo Connector",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Connect ShipStation with Odoo for orders, shipments, labels, tracking, inventory, and reports",
     "description": """
     ShipStation Odoo Connector
@@ -33,19 +33,19 @@
     -----------------------------------
     * Export Odoo orders to ShipStation
     * Synchronize products and product updates
-    * Review inventory discrepancies without automatically changing Odoo stock
-    * Support controlled shipment information exchange
-    * Update fulfillment and shipping status where configured
+    * Review inventory discrepancies without ever changing Odoo stock
+    * Link ShipStation shipments and tracking to the matching delivery order
     * Preserve inventory safety with read-only reconciliation
-    * Support operational shipping workflows
 
     Shipping & Fulfillment Management
     ---------------------------------
-    * Shipment processing and tracking synchronization
-    * Shipping label management support
-    * Carrier and fulfillment information handling
-    * Delivery workflow synchronization
-    * Centralized shipping operations inside Odoo
+    * Shipment import with tracking, carrier and voided-label status
+    * Shipping-rate comparison and carrier / package presets
+    * Single-order label purchase with an explicit confirmation, a durable
+      "request sent" guard and no automatic retry (never bulk or background)
+    * Shipping Workbench and Visual Exception Board for unlinked shipments
+    * Fulfillment preparation batches and manual return-case tracking
+    * Operations Home dashboard, guided setup and webhook inbox with retry
 
     Operational Features
     --------------------
@@ -61,9 +61,9 @@
     --------------------
     * Built with standard Odoo architecture
     * Odoo ORM-based implementation
-    * Easy customization and scalability
+    * Role-based access (Reader, Manager, Admin) and multi-company isolation
+    * Automated test suite (database-backed and offline)
     * Upgrade-friendly module structure
-    * Supports Odoo Community and Enterprise
     * Compatible with Odoo.sh and On-Premise deployments
 
     Business Benefits
@@ -82,6 +82,7 @@
     * Inventory
     * Delivery
     * Contacts
+    * Discuss (mail)
     * Web
 
     External Python Dependency
@@ -101,6 +102,7 @@
     'price': 19.99,
     'currency': 'USD',
     "license": "OPL-1",
+    "external_dependencies": {"python": ["requests"]},
     "depends": [
         "base",
         "web",

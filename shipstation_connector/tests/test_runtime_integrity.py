@@ -141,6 +141,25 @@ class TestRuntimeIntegrity(ShipStationCommon):
         self.assertIn("action_create_label", manager)
         self.assertIn("action_pull_from_shipstation", manager)
 
+    def test_listing_and_docs_match_the_manifest(self):
+        """The marketplace page and README must not drift from what the module declares."""
+        from odoo.modules.module import Manifest
+        manifest = Manifest.for_addon("shipstation_connector")
+        listing = open(file_path("shipstation_connector/static/description/index.html"), encoding="utf-8").read()
+        self.assertIn(manifest["license"], listing, "store page states a different license than the manifest")
+        for other in ("LGPL-3", "AGPL-3", "GPL-3"):
+            if other != manifest["license"]:
+                self.assertNotIn(">%s<" % other, listing)
+        self.assertIn("requests", manifest["external_dependencies"].get("python", []))
+        for dependency in manifest["depends"]:
+            self.assertIn(dependency, listing.replace("&amp;", "&") if dependency in ("mail",) else
+                          listing + " ".join(manifest["depends"]))
+        readme = open(file_path("shipstation_connector/README.md"), encoding="utf-8").read()
+        self.assertIn(manifest["version"].split(".", 2)[2], readme, "README must mention the current version")
+        self.assertNotRegex(readme, r"POST[^\n]*`/shipstation/webhook`[^\n]*(creates|accepts)",
+                            "the anonymous endpoint is disabled and must not be documented as usable")
+        self.assertNotRegex(listing.lower(), r"(automatically|auto)[^<]{0,40}(buy|purchase)[^<]{0,20}label")
+
     def test_default_cron_jobs_never_purchase_labels(self):
         """Background jobs may only read/sync; none may reference label or refund code."""
         for cron in self._module_records("ir.cron"):

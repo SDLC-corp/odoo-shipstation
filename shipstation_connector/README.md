@@ -1,17 +1,124 @@
-# ShipStation Connector
+# ShipStation Connector for Odoo 19
 
-This addon provides ShipStation instances, sync data listings, reports, cron jobs,
-and a dashboard for Odoo 19.
+Connects Odoo 19 with ShipStation: orders, shipments, tracking, shipping rates, guarded label
+purchase, fulfillment preparation, return tracking, inventory comparison and an operations console.
+
+- Technical name: `shipstation_connector` - version `19.0.1.1.0` - license OPL-1
+- Depends on: `base`, `web`, `mail`, `sale_management`, `stock`, `delivery`, `contacts`
+- Python: `requests`
+
+## What it does
+
+| Area | Behaviour |
+|---|---|
+| Orders in | ShipStation orders become draft quotations (never auto-confirmed). Re-importing is idempotent; older updates are ignored; confirmed orders are never rewritten. |
+| Orders out | Confirmed sales orders that still have an open outgoing delivery are sent with `orderKey` (and `orderId` once known), so sending again updates instead of duplicating. |
+| Shipments | Imported by create-date and void-date windows. Tracking is written to the matching delivery only when it is unambiguous; a different package never overwrites existing tracking. Voided labels are detected and escalated. Shipments for orders unknown to Odoo are kept as "No Matching Order". |
+| Rates | Quotes come from `POST /shipments/getrates` and expire after 30 minutes or when the address/package changes. |
+| Labels | `POST /orders/createlabelfororder` for **one order at a time** after an explicit confirmation. The PDF is stored as an attachment on the order mirror and the delivery. |
+| Inventory | Read-only comparison of ShipStation and Odoo quantities. **Odoo stock is never changed.** |
+| Returns | Manual case tracking (items validated against the order, approvals, audit trail). No return label, refund or stock move is created. |
+| Operations | Operations Home (Owl), Shipping Workbench, Visual Exception Board, fulfillment batches, webhook inbox, guided setup. |
+
+## What it never does on its own
+
+- Buy a label from a bulk action, scheduled job or webhook.
+- Retry a `POST` automatically (a retry could buy a second label).
+- Change Odoo stock quantities.
+- Issue a refund or return label.
+
+If ShipStation does not give a clear answer to a label purchase (timeout, HTTP 5xx, unreadable
+reply) the order is locked in **Request Sent - Outcome Unknown**. Check the order in ShipStation, then
+an administrator uses **Reset Label Request**. Only a definite rejection (HTTP 4xx) can be retried.
+
+## Roles
+
+| Group | Can |
+|---|---|
+| ShipStation User (Read Only) | See orders, shipments, queues, exception board, assistant answers. |
+| ShipStation Manager | + get rates, buy a label, assign/recheck work, prepare batches, start return cases. |
+| ShipStation Admin | + credentials, connection tests, manual syncs, approvals, webhook secret, inbox retry, reset label request. System administrators inherit this group. |
+
+Manual operations run as the integration (like the scheduled jobs) after the role and company are
+checked, so an administrator does not also need Sales or Inventory rights. Every model is
+company-scoped by record rules.
 
 ## Setup
-1) Install the module.
-2) Go to ShipStation > Instances.
-3) Configure API Key/Secret and optional Store ID.
-4) Use Test Connection, Sync Orders, and Sync Shipments.
 
-## Cron Jobs
-- ShipStation Sync Orders
-- ShipStation Sync Shipments
+1. **ShipStation > Instances > New.** Enter the V1 API key and secret and the numeric store id.
+   Optionally add a separate V2 key (never reuse the V1 key).
+2. **Check Setup** (local only), then **Test V1 Connection** / **Test V2 Connection** (read-only requests).
+3. Optional: select an inventory warehouse for the read-only comparison.
+4. Leave the base URL as `https://api.shipstation.com`. It must be `https://*.shipstation.com`
+   because the V2 key is sent to it.
+5. Run **Sync Orders** and **Sync Shipments**, then work the queues in **Operations Home**.
 
-## Webhook (optional)
-POST JSON payloads to `/shipstation/webhook`. The addon creates a report entry.
+### Webhooks (V1)
+
+Set the system parameter `web.base.url` to your public **https** address. The **Webhook** tab then
+shows the callback URL (it embeds a secret; **Rotate** invalidates the old one). Enable the event types
+and register the URL in ShipStation. ShipStation V1 notifications are not signed, so the secret URL is the
+authentication. Notifications are queued, de-duplicated and fetched by a cron job with retries; failed ones
+appear in **Webhook Inbox** (default filter "Needs Attention") and can be re-queued with **Retry Now**.
+The old `/shipstation/webhook` endpoint is deliberately disabled and returns 404.
+
+## Scheduled jobs
+
+| Job | Default |
+|---|---|
+| Sync Orders | every 10 min, active |
+| Sync Shipments | every 15 min, active |
+| Sync Products | daily, active |
+| Sync Customers / Inventory | inactive |
+| Process Authenticated Webhooks | every minute, active |
+
+None of them can buy a label or change stock. Each instance runs in its own savepoint, so one broken
+connection cannot stop the others. Processed webhooks are purged after 30 days, request logs after 14
+days (failures after 90).
+
+## Time zones
+
+ShipStation V1 uses Pacific time (PST/PDT) for every date and time. The connector converts both
+ways. During the one repeated hour when daylight saving ends the sync window is widened so nothing is missed.
+
+## Troubleshooting
+
+| Symptom | Likely cause / action |
+|---|---|
+| "HTTP 401" on test | Wrong key or secret; V1 and V2 keys are different. |
+| Shipment stays "Needs Review" | Several unclaimed deliveries, or the delivery already has other tracking. Open it in the Workbench. |
+| "No Matching Order" | The shipment was created outside Odoo, or the order has not been imported yet. Recheck later. |
+| "Request Sent - Outcome Unknown" | See the label rule above. |
+| Webhook URL empty | `web.base.url` is not https. |
+| 429 / rate limited | ShipStation allows 40 calls per minute per key; the connector waits at most 45 s per call. |
+
+## Tests
+
+```
+# offline source/contract tests (no Odoo needed)
+python -B -I devtools/run_offline_tests.py
+
+# database-backed tests: use a DISPOSABLE database, never a production one
+odoo-bin -c <conf> -d <disposable_db> -u shipstation_connector --stop-after-init \
+         --test-enable --test-tags /shipstation_connector
+```
+
+The database suite replaces `requests` with a router that fails on any URL a test did not mock, so
+it can never reach ShipStation or buy a label.
+
+## Known limitations
+
+- Verified against mocked HTTP and ShipStation's published documentation only; **no real authenticated
+  ShipStation account has been exercised.** Run the checklist in `devtools/` against a sandbox store first.
+- V2 is used for the connection test and optional product/inventory reads; orders, shipments, rates and
+  labels use V1. V2 webhooks (signed) are not supported.
+- The numbered V1 hosts (`ssapiN.shipstation.com`) in webhook URLs are accepted on the strength of
+  third-party reports; the supplied URL is never fetched, so this has no network impact.
+- Not tested on Odoo Enterprise or Odoo.sh.
+
+## Release notes 19.0.1.1.0
+
+Runtime-tested (Odoo test suite on an upgraded PostgreSQL 18 database, plus a browser pass). Fixes order
+push on installs without `website_sale`, manager rate refresh, Pacific-time handling, shipment listing
+parameters, assistant ACLs, hard-failing unmatched shipments, voided labels, and adds the guarded label
+purchase, webhook retry and return validation described above.
