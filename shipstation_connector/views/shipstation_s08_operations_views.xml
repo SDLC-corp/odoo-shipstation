@@ -18,8 +18,8 @@
                 <field name="tracking_number"/>
                 <field name="ship_date"/>
                 <templates>
-                    <t t-name="card">
-                        <div class="ss08_kanban_card">
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click ss08_kanban_card">
                             <div class="ss08_kanban_meta">
                                 <span><field name="instance_id"/></span>
                                 <span t-if="record.review_priority.raw_value == '2'" class="text-danger fw-bold">Urgent</span>

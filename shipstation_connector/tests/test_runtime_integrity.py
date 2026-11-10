@@ -163,6 +163,19 @@ class TestRuntimeIntegrity(ShipStationCommon):
         self.assertIn("action_create_label", manager)
         self.assertIn("action_pull_from_shipstation", manager)
 
+    def test_kanban_views_use_the_odoo_17_card_template(self):
+        # Odoo 17's web client needs a 'kanban-box' template ('card' is 18+: on 17 the view fails to
+        # load with "Missing 'kanban-box' template"), and the card opens its record only with
+        # oe_kanban_global_click. The server does not validate either, so check the arch here.
+        views = self.env["ir.ui.view"].search([("type", "=", "kanban"), ("model", "like", "shipstation.%")])
+        self.assertTrue(views)
+        for view in views:
+            with self.subTest(view=view.xml_id):
+                arch = etree.fromstring(self.env[view.model].get_view(view.id, "kanban")["arch"])
+                box = arch.xpath("//templates/t[@t-name='kanban-box']/div")
+                self.assertTrue(box, "missing kanban-box template")
+                self.assertIn("oe_kanban_global_click", box[0].get("class", "").split())
+
     def test_list_screens_explain_themselves_when_empty(self):
         """A fresh install must tell the user what each empty screen is for and what to do next."""
         for xmlid in (
