@@ -1,10 +1,18 @@
 import ast
 import base64
+import hashlib
+import json
+import logging
+import math
+from datetime import timedelta
+from urllib.parse import urlsplit
 
-import requests
+import psycopg2.errors
 
-from odoo import fields, models, _
-from odoo.exceptions import UserError
+from odoo import api, fields, models, _
+from odoo.exceptions import AccessError, UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class ShipStationOrderSync(models.Model):
@@ -36,6 +44,63 @@ class ShipStationOrderSync(models.Model):
     tracking_number = fields.Char()
     shipstation_shipment_id = fields.Char()
     rate_ids = fields.One2many("shipstation.rate", "order_id", string="Rates")
+    # S06: quote preparation is local-only until a user explicitly requests rates.
+    package_preset_id = fields.Many2one(
+        "shipstation.package.preset", ondelete="set null", string="Package Preset",
+        domain="[('instance_id', '=', instance_id), ('active', '=', True)]",
+    )
+    rate_from_postal = fields.Char(string="Origin Postal Code")
+    rate_to_country = fields.Char(string="Destination Country (ISO 2)")
+    rate_to_postal = fields.Char(string="Destination Postal Code")
+    rate_to_state = fields.Char(string="Destination State / Province")
+    rate_to_city = fields.Char(string="Destination City")
+    rate_residential = fields.Boolean(string="Residential Delivery")
+    rate_weight = fields.Float(string="Package Weight")
+    rate_weight_units = fields.Selection(
+        [("ounces", "Ounces"), ("pounds", "Pounds"), ("grams", "Grams")],
+        default="ounces", required=True,
+    )
+    rate_length = fields.Float(string="Length")
+    rate_width = fields.Float(string="Width")
+    rate_height = fields.Float(string="Height")
+    rate_dimension_units = fields.Selection(
+        [("inches", "Inches"), ("centimeters", "Centimeters")],
+        default="inches", required=True,
+    )
+    rate_checked_at = fields.Datetime(readonly=True, copy=False)
+    rate_request_hash = fields.Char(readonly=True, copy=False)
+    label_state = fields.Selection(
+        [("none", "No Label Requested"), ("requested", "Request Sent - Outcome Unknown"),
+         ("created", "Label Created"), ("failed", "Request Rejected"),
+         ("void_requested", "Void Requested - Outcome Unknown"), ("voided", "Label Voided")],
+        default="none", required=True, readonly=True, copy=False, index=True,
+        help="Durable guard against buying the same label twice.",
+    )
+    label_requested_at = fields.Datetime(readonly=True, copy=False)
+    label_requested_by_id = fields.Many2one("res.users", readonly=True, copy=False)
+    last_void_shipment_id = fields.Char(string="Voided Shipment", readonly=True, copy=False)
+    last_void_tracking_number = fields.Char(string="Voided Tracking", readonly=True, copy=False)
+    last_void_at = fields.Datetime(string="Voided At", readonly=True, copy=False)
+    last_void_by_id = fields.Many2one("res.users", string="Voided By", readonly=True, copy=False)
+    label_void_allowed = fields.Boolean(compute="_compute_label_void_allowed", compute_sudo=True)
+
+    @api.depends("instance_id.allow_label_void")
+    def _compute_label_void_allowed(self):
+        for rec in self:
+            rec.label_void_allowed = bool(rec.instance_id.allow_label_void)
+
+    @api.depends("shipstation_order_number", "shipstation_order_id", "customer_name")
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = rec._shipstation_display_label()
+
+    def _shipstation_display_label(self):
+        number = self.shipstation_order_number or self.shipstation_order_id or _("Order")
+        return "%s · %s" % (number, self.customer_name) if self.customer_name else number
+
+    def name_get(self):
+        # Odoo 16 labels records (many2one, breadcrumbs) through name_get, not display_name.
+        return [(rec.id, rec._shipstation_display_label()) for rec in self]
 
     def _payload_get(self, payload, key, default=None):
         if not isinstance(payload, dict) or not key:
@@ -205,10 +270,23 @@ class ShipStationOrderSync(models.Model):
             payload["orderDate"] = str(order_date).split(".")[0]
 
         status = str(base.get("orderStatus") or source.get("orderStatus") or "awaiting_shipment").strip().lower()
+        if self.shipstation_order_id and status in ("shipped", "cancelled"):
+            # The createorder API cannot modify shipped or cancelled orders.
+            raise UserError(_("ShipStation does not allow changing %s orders.") % status)
         allowed_status = {"awaiting_payment", "awaiting_shipment", "on_hold", "cancelled"}
         if status not in allowed_status:
             status = "awaiting_shipment"
         payload["orderStatus"] = status
+
+        # createorder is an upsert only when it can identify the order: orderKey (and orderId
+        # when known). Without them every push would create a duplicate order in ShipStation.
+        order_key = str(source.get("orderKey") or "").strip()
+        if not order_key:
+            order_key = "odoo-%s-mirror-%s" % (self.instance_id.id, self.id)
+        payload["orderKey"] = order_key
+        known_id = str(self.shipstation_order_id or source.get("orderId") or "").strip()
+        if known_id.isdigit():
+            payload["orderId"] = int(known_id)
 
         customer_email = str(base.get("customerEmail") or source.get("customerEmail") or "").strip()
         if customer_email:
@@ -218,9 +296,12 @@ class ShipStationOrderSync(models.Model):
         if customer_username:
             payload["customerUsername"] = customer_username
 
-        store_id = str(base.get("storeId") or source.get("storeId") or self.shipstation_store_id or self.instance_id.store_id or "").strip()
-        if store_id and store_id.isdigit():
-            payload["storeId"] = int(store_id)
+        if not known_id.isdigit():
+            # ShipStation takes the store at advancedOptions.storeId, and only when the order is created.
+            store_id = str(self.shipstation_store_id or self.instance_id._remote_store_id(source)
+                           or self.instance_id.store_id or "").strip()
+            if store_id.isdigit():
+                payload["advancedOptions"] = {"storeId": int(store_id)}
 
         bill_to = self._sanitize_address(source.get("billTo"))
         ship_to = self._sanitize_address(source.get("shipTo"))
@@ -245,6 +326,9 @@ class ShipStationOrderSync(models.Model):
             missing.append("orderNumber")
         if not payload.get("orderDate"):
             missing.append("orderDate")
+        for required_address in ("billTo", "shipTo"):  # both are required by the API
+            if not payload.get(required_address):
+                missing.append(required_address)
         items = payload.get("items")
         if not items or not isinstance(items, list):
             missing.append("items")
@@ -272,186 +356,542 @@ class ShipStationOrderSync(models.Model):
             return int(order_id)
         return order_id
 
-    def action_get_rates(self):
+    def _check_rate_operator(self):
         self.ensure_one()
-        if not self.instance_id:
-            raise UserError(_("Missing ShipStation instance."))
-        order_id = self._get_order_id_for_rates()
-        if not order_id:
-            raise UserError(_("ShipStation order ID is required to get rates."))
-        request = {"orderId": order_id}
-        if self.carrier_code:
-            request["carrierCode"] = self.carrier_code
-        if self.service_code:
-            request["serviceCode"] = self.service_code
-        if self.package_code:
-            request["packageCode"] = self.package_code
-        if self.confirmation:
-            request["confirmation"] = self.confirmation
+        if not self.env.su and not (
+            self.env.user.has_group("shipstation_connector.group_shipstation_manager")
+            or self.env.user.has_group("shipstation_connector.group_shipstation_admin")
+        ):
+            raise AccessError(_("ShipStation Manager access is required to prepare shipping."))
+        self.check_access_rights("write")
+        self.check_access_rule("write")
+        if self.instance_id.company_id not in self.env.companies:
+            raise AccessError(_("This ShipStation instance is outside your active companies."))
 
+    @staticmethod
+    def _rate_notice(title, message, level="success"):
+        return {"type": "ir.actions.client", "tag": "display_notification", "params": {
+            "title": title, "message": message, "type": level, "sticky": False,
+        }}
+
+    def action_apply_package_preset(self):
+        """Fill dimensions and weight from an explicitly selected, same-instance preset."""
+        self._check_rate_operator()
+        preset = self.package_preset_id
+        if not preset or not preset.active or preset.instance_id != self.instance_id:
+            raise UserError(_("Choose an active package preset for this ShipStation instance."))
+        self.write({
+            "package_code": preset.package_code,
+            "rate_weight": preset.weight_value,
+            "rate_weight_units": preset.weight_units,
+            "rate_length": preset.length,
+            "rate_width": preset.width,
+            "rate_height": preset.height,
+            "rate_dimension_units": preset.dimension_units,
+            "rate_checked_at": False,
+            "rate_request_hash": False,
+        })
+        return self._rate_notice(_("Package prepared"), _("Package values loaded. Review address and carrier, then Get Rates."))
+
+    def _build_v1_rate_request(self):
+        """Validate ShipStation V1 required fields; never infer a weight or origin."""
+        self.ensure_one()
+        carrier = (self.carrier_code or "").strip()
+        origin = (self.rate_from_postal or "").strip()
+        country = (self.rate_to_country or "").strip().upper()
+        postal = (self.rate_to_postal or "").strip()
+        if not carrier:
+            raise UserError(_("Enter a ShipStation carrier code before comparing rates."))
+        if not origin or not postal or len(country) != 2 or not country.isalpha():
+            raise UserError(_("Enter origin postal code, destination postal code and two-letter country code."))
+        weight = float(self.rate_weight or 0.0)
+        if not math.isfinite(weight) or weight <= 0:
+            raise UserError(_("Package weight must be a positive finite number."))
+        if self.rate_weight_units not in ("ounces", "pounds", "grams"):
+            raise UserError(_("Choose a supported ShipStation weight unit."))
+        vals = (self.rate_length, self.rate_width, self.rate_height)
+        if any(not math.isfinite(float(v or 0.0)) or float(v or 0.0) < 0 for v in vals):
+            raise UserError(_("Package dimensions must be finite and nonnegative."))
+        if any(vals) and not all(float(v or 0.0) > 0 for v in vals):
+            raise UserError(_("Either enter all three positive dimensions or leave them empty."))
+        request = {
+            "carrierCode": carrier,
+            "fromPostalCode": origin,
+            "toCountry": country,
+            "toPostalCode": postal,
+            "weight": {"value": weight, "units": self.rate_weight_units},
+            "residential": bool(self.rate_residential),
+        }
+        if self.rate_to_state:
+            request["toState"] = self.rate_to_state.strip()
+        if self.rate_to_city:
+            request["toCity"] = self.rate_to_city.strip()
+        if self.service_code:
+            request["serviceCode"] = self.service_code.strip()
+        if self.package_code:
+            request["packageCode"] = self.package_code.strip()
+        if self.confirmation:
+            request["confirmation"] = self.confirmation.strip()
+        if all(vals):
+            request["dimensions"] = {
+                "length": float(self.rate_length), "width": float(self.rate_width),
+                "height": float(self.rate_height), "units": self.rate_dimension_units,
+            }
+        return request
+
+    @staticmethod
+    def _rate_fingerprint(request):
+        return hashlib.sha256(json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+    def _ensure_fresh_rate_quote(self):
+        self.ensure_one()
+        if not self.rate_ids or not self.rate_checked_at or not self.rate_request_hash:
+            raise UserError(_("Retrieve new shipping rates before selecting a service."))
+        checked_at = fields.Datetime.to_datetime(self.rate_checked_at)
+        if fields.Datetime.now() - checked_at > timedelta(minutes=30):
+            raise UserError(_("These rates are over 30 minutes old. Retrieve fresh rates."))
+        if self._rate_fingerprint(self._build_v1_rate_request()) != self.rate_request_hash:
+            raise UserError(_("Shipment details changed. Retrieve fresh rates before selecting."))
+
+    def _rate_amount(self, rate, key):
+        """A non-negative, finite money amount from a ShipStation rate row (absent means 0)."""
+        try:
+            amount = float(rate.get(key) or 0.0)
+        except (ValueError, TypeError):
+            raise UserError(_("ShipStation returned a nonnumeric shipping cost."))
+        if not math.isfinite(amount) or amount < 0:
+            raise UserError(_("ShipStation returned an invalid shipping cost."))
+        return amount
+
+    def _rate_days(self, value):
+        try:
+            return max(int(value or 0), 0) or False
+        except (ValueError, TypeError):
+            return False
+
+    def action_get_rates(self):
+        """Explicitly request V1 *quotes*, never shipping labels or stock updates."""
+        self._check_rate_operator()
+        request = self._build_v1_rate_request()
         response = self.instance_id._ss_request("POST", "/shipments/getrates", data=request)
-        rates = response if isinstance(response, list) else response.get("rates", [])
-        self.rate_ids.unlink()
+        if isinstance(response, list):
+            rates = response
+        elif isinstance(response, dict) and isinstance(response.get("rates"), list):
+            rates = response["rates"]
+        else:
+            raise UserError(_("ShipStation returned an invalid shipping-rate response. Existing quotes were preserved."))
+        if len(rates) > 150:
+            raise UserError(_("Too many rates returned; narrow the carrier/service selection."))
+        prepared = []
         for rate in rates:
-            self.env["shipstation.rate"].create({
+            if not isinstance(rate, dict) or not rate.get("serviceCode"):
+                raise UserError(_("ShipStation returned an incomplete rate; previous quotes were preserved."))
+            prepared.append({
                 "order_id": self.id,
-                "carrier_code": rate.get("carrierCode"),
-                "service_code": rate.get("serviceCode"),
-                "package_code": rate.get("packageCode") or rate.get("packageType"),
-                "confirmation": rate.get("confirmation"),
+                "carrier_code": rate.get("carrierCode") or request["carrierCode"],
+                "service_code": rate["serviceCode"],
+                "package_code": rate.get("packageCode") or request.get("packageCode") or False,
+                "confirmation": rate.get("confirmation") or request.get("confirmation") or False,
                 "carrier_friendly_name": rate.get("carrierFriendlyName"),
-                "service_friendly_name": rate.get("serviceFriendlyName"),
+                "service_friendly_name": rate.get("serviceName") or rate.get("serviceFriendlyName"),
                 "package_friendly_name": rate.get("packageFriendlyName"),
-                "shipment_cost": float(rate.get("shipmentCost") or 0.0),
-                "other_cost": float(rate.get("otherCost") or 0.0),
-                "tax_amount": float(rate.get("taxAmount") or 0.0),
-                "delivery_days": int(rate.get("deliveryDays") or 0) or False,
-                "estimated_delivery_date": self.instance_id._parse_ss_datetime(
-                    rate.get("estimatedDeliveryDate")
-                ),
+                "shipment_cost": self._rate_amount(rate, "shipmentCost"),
+                "other_cost": self._rate_amount(rate, "otherCost"),
+                "tax_amount": self._rate_amount(rate, "taxAmount"),
+                "delivery_days": self._rate_days(rate.get("deliveryDays")),
+                "estimated_delivery_date": self.instance_id._parse_ss_datetime(rate.get("estimatedDeliveryDate")),
                 "payload": str(rate),
             })
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Rates Updated"),
-                "message": _("ShipStation rates retrieved."),
-                "type": "success",
-                "sticky": False,
-            },
-        }
+        # All validation is complete before replacing existing rate rows. Quotes are disposable
+        # cache entries and the operator role was verified above, so Managers (who cannot delete
+        # arbitrary rates through the ACL) may still refresh them.
+        self.rate_ids.sudo().unlink()
+        if prepared:
+            self.env["shipstation.rate"].create(prepared)
+        self.write({"rate_checked_at": fields.Datetime.now(),
+                    "rate_request_hash": self._rate_fingerprint(request)})
+        return self._rate_notice(
+            _("Rates refreshed"),
+            _("Received %s shipping quotes. No label has been purchased.") % len(prepared),
+            "success" if prepared else "warning",
+        )
 
     def action_select_best_rate(self):
+        self._check_rate_operator()
+        self._ensure_fresh_rate_quote()
+        best = min(self.rate_ids, key=lambda r: (
+            float(r.shipment_cost or 0.0) + float(r.other_cost or 0.0) + float(r.tax_amount or 0.0),
+            r.id,
+        ))
+        return best.action_apply_rate()
+
+    def _locked_label_transition(self, check, vals):
+        """Under a NOWAIT row lock on a side cursor: run ``check(record)``, then commit ``vals``.
+
+        The commit happens *before* any money moves, so a timeout or crash later leaves a durable
+        marker. A concurrent click fails immediately instead of acting twice.
+        """
+        from odoo import SUPERUSER_ID, api  # local import keeps the offline test loaders light
         self.ensure_one()
-        if not self.rate_ids:
-            raise UserError(_("No rates found. Click Get Rates first."))
-        best = sorted(
-            self.rate_ids,
-            key=lambda r: (r.shipment_cost or 0.0) + (r.other_cost or 0.0) + (r.tax_amount or 0.0),
-        )[0]
-        self.write(
-            {
-                "carrier_code": best.carrier_code,
-                "service_code": best.service_code,
-                "package_code": best.package_code,
-                "confirmation": best.confirmation,
-            }
-        )
+        try:
+            with self.env.registry.cursor() as cr:
+                cr.execute("SET LOCAL lock_timeout = '3s'")
+                cr.execute("SELECT 1 FROM shipstation_order_sync WHERE id = %s FOR UPDATE NOWAIT", (self.id,))
+                record = api.Environment(cr, SUPERUSER_ID, {})["shipstation.order.sync"].browse(self.id)
+                record.invalidate_recordset()
+                check(record)
+                record.write(vals)
+                # Odoo 16 flushes on commit only through environments still referenced in the
+                # transaction's weak set: flush explicitly so the claim can never be dropped.
+                record.env.flush_all()
+        except psycopg2.errors.LockNotAvailable:
+            raise UserError(_("Another label request for this order is in progress. Wait for it to finish."))
+        self.invalidate_recordset()
+
+    def _claim_label_request(self):
+        """Atomically claim the right to buy ONE label and make that claim durable.
+
+        If anything later goes wrong (a timeout, a failed commit), the order stays in "requested"
+        and cannot be bought again until an administrator has checked ShipStation.
+        """
+        def check(record):
+            if record.shipstation_shipment_id or record.tracking_number or record.label_url \
+                    or record.label_state in ("created", "void_requested"):
+                raise UserError(_("A label or shipment is already recorded. Verify ShipStation and void "
+                                           "it explicitly before buying another label."))
+            if record.label_state == "requested":
+                raise UserError(_(
+                    "A label request was already sent on %s and its outcome is unknown. Check this order "
+                    "in ShipStation first; an administrator can then use 'Reset Label Request'.",
+                    fields.Datetime.to_string(record.label_requested_at)))
+
+        self._locked_label_transition(check, {
+            "label_state": "requested", "label_requested_at": fields.Datetime.now(),
+            "label_requested_by_id": self.env.user.id,
+        })
+
+    def _claim_void_request(self):
+        """Durably mark that a void request is about to be sent (only an active label can be voided)."""
+        def check(record):
+            if record.label_state != "created":
+                raise UserError(_("This label is no longer active (state: %s). Reload the order and "
+                                           "check ShipStation before trying again.", record.label_state))
+        self._locked_label_transition(check, {"label_state": "void_requested"})
+
+    def _void_bookkeeping_vals(self, by_user=True):
+        """Values that free the order for a replacement label while keeping an audit trail."""
         return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Best Rate Selected"),
-                "message": _("Cheapest rate has been applied to the order."),
-                "type": "success",
-                "sticky": False,
-            },
+            "label_state": "voided",
+            "last_void_shipment_id": self.shipstation_shipment_id,
+            "last_void_tracking_number": self.tracking_number,
+            "last_void_at": fields.Datetime.now(),
+            "last_void_by_id": self.env.uid if by_user else False,
+            "shipstation_shipment_id": False, "tracking_number": False,
+            "label_url": False, "tracking_url": False,
         }
+
+    @api.model
+    def _apply_void_for_shipment(self, instance, shipment_id):
+        """ShipStation reports a label as voided (by this connector or by someone in ShipStation)."""
+        shipment_id = str(shipment_id or "").strip()
+        if not shipment_id:
+            return self.browse()
+        orders = self.search([
+            ("instance_id", "=", instance.id), ("shipstation_shipment_id", "=", shipment_id),
+            ("label_state", "in", ("created", "void_requested")),
+        ])
+        for order in orders:
+            order.write(order._void_bookkeeping_vals(by_user=False))
+        return orders
+
+    def _persist_label_state(self, vals):
+        """Commit label bookkeeping on its own cursor so it survives any later failure or rollback.
+
+        After the claim has been committed on a separate connection, the request's own transaction
+        (REPEATABLE READ, snapshot taken earlier) must never UPDATE this row again: PostgreSQL would
+        raise a serialization failure and Odoo would retry the whole request - after the label was
+        already bought. So *every* write to the row goes through here.
+        """
+        from odoo import SUPERUSER_ID, api
+        with self.env.registry.cursor() as cr:
+            # Keep a reference to the environment and flush explicitly: on Odoo 16 a commit only
+            # flushes environments that are still alive, so an inline temporary env lost the write.
+            side_env = api.Environment(cr, SUPERUSER_ID, {})
+            side_env["shipstation.order.sync"].browse(self.id).write(vals)
+            side_env.flush_all()
+        self.invalidate_recordset()
+
+    def _release_label_request(self, state):
+        """Durably record the final state of a claimed label request."""
+        self._persist_label_state({"label_state": state})
+
+    def _label_request_body(self, order_id):
+        """Body for ``POST /orders/createlabelfororder`` (confirmation, shipDate, testLabel are required)."""
+        self.ensure_one()
+        now = fields.Datetime.now()
+        # ShipStation rejects ship dates in the past.
+        ship_day = max(self.ship_date or now, now)
+        body = {
+            "orderId": order_id,
+            "carrierCode": self.carrier_code,
+            "serviceCode": self.service_code,
+            "packageCode": self.package_code,
+            "confirmation": (self.confirmation or "none").strip() or "none",
+            "shipDate": self.instance_id._format_ss_date(ship_day),
+            "testLabel": False,
+        }
+        weight = float(self.rate_weight or 0.0)
+        if weight > 0 and self.rate_weight_units in ("ounces", "pounds", "grams"):
+            body["weight"] = {"value": weight, "units": self.rate_weight_units}
+        dims = (self.rate_length, self.rate_width, self.rate_height)
+        if all(float(v or 0.0) > 0 for v in dims):
+            body["dimensions"] = {
+                "length": float(self.rate_length), "width": float(self.rate_width),
+                "height": float(self.rate_height), "units": self.rate_dimension_units,
+            }
+        return body
+
+    def _attach_label_pdf(self, label_data, tracking=False):
+        """Store the base64 PDF returned by ShipStation on this record and on the delivery."""
+        try:
+            raw = base64.b64decode(label_data, validate=True)
+        except (ValueError, TypeError):
+            _logger.warning("ShipStation returned unreadable label data for order sync %s", self.id)
+            return self.env["ir.attachment"]
+        if not raw.startswith(b"%PDF"):
+            _logger.warning("ShipStation label for order sync %s is not a PDF", self.id)
+            return self.env["ir.attachment"]
+        name = "ShipStation_Label_%s_%s.pdf" % (self.shipstation_order_number or self.id, tracking or "label")
+        # The operator is authorised to buy this label; storing the PDF must not depend on them
+        # also holding Sales/Inventory rights, so the lookup and attachments use sudo.
+        record = self.sudo()
+        Attachment = self.env["ir.attachment"].sudo()
+        attachment = Attachment.create({
+            "name": name, "datas": label_data, "mimetype": "application/pdf",
+            "res_model": self._name, "res_id": self.id,
+        })
+        order = record.instance_id._find_order(
+            self.shipstation_order_id, self.shipstation_order_number, self.shipstation_store_id)
+        pickings = order.picking_ids.filtered(
+            lambda p: p.state != "cancel" and p.picking_type_code == "outgoing") if order else []
+        if len(pickings) == 1:
+            Attachment.create({
+                "name": name, "datas": label_data, "mimetype": "application/pdf",
+                "res_model": "stock.picking", "res_id": pickings.id,
+            })
+        return attachment
 
     def action_create_label(self):
+        """Buy ONE label for ONE order. Always an explicit, confirmed, single-record click.
+
+        Safeguards: Manager role, company check, a durable "request sent" claim taken before
+        the API call (no double purchase on double-click, timeout or crash), no automatic retry
+        of the POST, and ``testLabel`` is never set implicitly. Bulk actions and cron jobs never
+        call this method.
+        """
         self.ensure_one()
+        # A hidden button is not a security boundary: block direct RPC calls.
+        self._check_rate_operator()
         if not self.instance_id:
             raise UserError(_("Missing ShipStation instance."))
+        if self.shipstation_shipment_id or self.tracking_number or self.label_url:
+            raise UserError(_("A label or shipment is already recorded. Verify ShipStation and void it explicitly before buying another label."))
         order_id = self._get_order_id_for_rates()
-        if not order_id:
-            raise UserError(_("ShipStation order ID is required to create a label."))
-        carrier_code = self.carrier_code
-        service_code = self.service_code
-        package_code = self.package_code
-        if not (carrier_code and service_code and package_code):
+        if not order_id or not str(order_id).isdigit():
+            raise UserError(_("A numeric ShipStation order ID is required to create a label."))
+        if not (self.carrier_code and self.service_code and self.package_code):
             raise UserError(_("Set carrier, service, and package before creating a label."))
+        if (self.status or "").lower() != "awaiting_shipment":
+            raise UserError(_("Only orders awaiting shipment can receive a label (current status: %s).", self.status or "unknown"))
 
-        request = {
-            "orderId": order_id,
-            "carrierCode": carrier_code,
-            "serviceCode": service_code,
-            "packageCode": package_code,
-        }
-        if self.confirmation:
-            request["confirmation"] = self.confirmation
-        ship_date = self.ship_date or fields.Datetime.now()
-        request["shipDate"] = self.instance_id._format_ss_datetime(ship_date)
-
-        response = self.instance_id._ss_request("POST", "/shipments/createlabel", data=request)
-        self.shipstation_shipment_id = str(response.get("shipmentId") or "") or False
-        self.tracking_number = response.get("trackingNumber") or False
-        self.tracking_url = response.get("trackingUrl") or False
-        self.label_url = response.get("labelDownload") or False
-        self.payload = str(response) if response else self.payload
-
-        # Download and attach label PDF to related delivery order when available.
-        if self.label_url:
+        body = self._label_request_body(int(order_id))
+        self._claim_label_request()
+        try:
+            response = self.instance_id._ss_request("POST", "/orders/createlabelfororder", data=body)
+        except (UserError, AccessError) as exc:
+            # ShipStationAPIError.ambiguous: the answer was lost or unclear (timeout, 5xx, bad body),
+            # so ShipStation may have acted. Everything else is a definitive refusal.
+            if getattr(exc, "ambiguous", False):
+                raise UserError(_(
+                    "ShipStation did not give a clear answer, so a label may have been bought. Do NOT retry. "
+                    "Check this order in ShipStation; if no label exists an administrator can use "
+                    "'Reset Label Request'. (%s)", exc)) from exc
+            self._release_label_request("failed")  # nothing was bought
+            raise
+        shipment_id = str((response or {}).get("shipmentId") or "").strip() if isinstance(response, dict) else ""
+        tracking = (response or {}).get("trackingNumber") if isinstance(response, dict) else False
+        if not shipment_id and not tracking:
+            raise UserError(_(
+                "ShipStation accepted the request but returned no shipment. A label may exist: check this "
+                "order in ShipStation before trying again."))
+        # 1. The purchase itself is recorded durably FIRST, on its own cursor, in ONE write. Nothing
+        #    below (attachments, mirror rows, a failing commit) can lose the fact that money was spent,
+        #    and nothing below may write this row again (see _persist_label_state).
+        stored = {k: v for k, v in response.items() if k not in ("labelData", "formData")}
+        self._persist_label_state({
+            "shipstation_shipment_id": shipment_id or False,
+            "tracking_number": tracking or False,
+            "label_state": "created",
+            "payload": str(stored),
+            "ship_date": fields.Datetime.now(),
+        })
+        # 2. Conveniences touching OTHER rows. Each is isolated: a failure is reported, never allowed
+        #    to undo step 1.
+        problems = []
+        label_data = response.get("labelData")
+        for description, step in (
+            (_("attaching the label PDF"), lambda: label_data and self._attach_label_pdf(label_data, tracking)),
+            (_("recording the shipment"), lambda: shipment_id and
+                self.env["shipstation.shipment.sync"]._upsert_from_payload(self.instance_id, {
+                    "shipmentId": shipment_id,
+                    "orderId": self.shipstation_order_id,
+                    "orderNumber": self.shipstation_order_number,
+                    "storeId": self.shipstation_store_id,
+                    "carrierCode": self.carrier_code,
+                    "trackingNumber": tracking,
+                    "serviceCode": self.service_code,
+                    "shipDate": self.instance_id._format_ss_datetime(fields.Datetime.now()),
+                    "shipmentStatus": "label_created",
+                })),
+        ):
             try:
-                pdf_resp = requests.get(self.label_url, timeout=30)
-                if pdf_resp.status_code < 400 and pdf_resp.content:
-                    order = self.instance_id._find_order(
-                        self.shipstation_order_id,
-                        self.shipstation_order_number,
-                        self.shipstation_store_id,
-                    )
-                    target_model = "sale.order"
-                    target_id = order.id if order else False
-                    picking = order.picking_ids.filtered(
-                        lambda p: p.state != "cancel" and p.picking_type_code == "outgoing"
-                    )[:1] if order else False
-                    if picking:
-                        target_model = "stock.picking"
-                        target_id = picking.id
-                    if target_id:
-                        self.env["ir.attachment"].create(
-                            {
-                                "name": f"ShipStation_Label_{self.shipstation_order_number or self.id}.pdf",
-                                "datas": base64.b64encode(pdf_resp.content),
-                                "mimetype": "application/pdf",
-                                "res_model": target_model,
-                                "res_id": target_id,
-                            }
-                        )
-            except Exception:
-                # Do not fail label creation if attachment download/storage fails.
-                pass
+                with self.env.cr.savepoint():
+                    step()
+            except Exception:  # noqa: BLE001
+                _logger.exception("ShipStation label bought for order sync %s but %s failed", self.id, description)
+                problems.append(description)
 
-        if self.shipstation_shipment_id:
-            self.env["shipstation.shipment.sync"]._upsert_from_payload(self.instance_id, {
-                "shipmentId": self.shipstation_shipment_id,
-                "orderId": self.shipstation_order_id,
-                "orderNumber": self.shipstation_order_number,
-                "storeId": self.shipstation_store_id,
-                "carrierCode": carrier_code,
-                "trackingNumber": self.tracking_number,
-                "serviceCode": service_code,
-                "shipDate": self.instance_id._format_ss_datetime(ship_date),
-                "shipmentStatus": "label_created",
-            })
-
+        if problems:
+            return self._rate_notice(
+                _("Label bought - follow-up needed"),
+                _("The label was created (tracking %(tracking)s) but Odoo could not finish: %(problems)s. "
+                  "The purchase is recorded; run a shipment sync to complete the rest.",
+                  tracking=tracking or "pending", problems=", ".join(problems)),
+                "warning")
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("Label Created"),
-                "message": _("Shipment label created in ShipStation."),
+                "message": _("Shipment label created in ShipStation (tracking %s).", tracking or "pending"),
                 "type": "success",
                 "sticky": False,
             },
         }
 
+    def action_void_label(self):
+        """Ask ShipStation to void (refund) THIS order's label. Explicit, single order, admin only.
+
+        Disabled unless the instance enables it. Never bulk, scheduled or webhook driven: this is
+        the only code path that calls the void endpoint. The durable "void requested" marker is
+        committed first; a definite refusal restores the label, an unclear answer locks the order
+        until an administrator has checked ShipStation.
+        """
+        self.ensure_one()
+        if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
+            raise AccessError(_("Only ShipStation administrators can request a label void."))
+        self.check_access_rights("write")
+        self.check_access_rule("write")
+        if self.instance_id.company_id not in self.env.companies:
+            raise AccessError(_("This ShipStation instance is outside your active companies."))
+        if not self.sudo().instance_id.allow_label_void:
+            raise UserError(_("Void requests are switched off for this connection. An administrator can "
+                              "enable 'Allow Void Label Requests' on the instance."))
+        if self.label_state != "created" or not str(self.shipstation_shipment_id or "").isdigit():
+            raise UserError(_("Only an active label bought from this order can be voided."))
+        shipment_id = str(self.shipstation_shipment_id)
+        void_vals = self._void_bookkeeping_vals()  # captured while the identifiers are still on the record
+        self._claim_void_request()
+        try:
+            response = self.instance_id._ss_request(
+                "POST", "/shipments/voidlabel", data={"shipmentId": int(shipment_id)})
+        except (UserError, AccessError) as exc:
+            if getattr(exc, "ambiguous", False):
+                raise UserError(_(
+                    "ShipStation did not give a clear answer, so the label may have been voided. Do NOT retry. "
+                    "The next shipment sync will record the void if it happened; otherwise an administrator can "
+                    "use 'Reset Label Request'. (%s)", exc)) from exc
+            self._persist_label_state({"label_state": "created"})  # refused: the label is still active
+            raise
+        approved = response.get("approved") if isinstance(response, dict) else None
+        if approved is False:
+            self._persist_label_state({"label_state": "created"})
+            raise UserError(_("ShipStation did not approve the void: %s",
+                              (response.get("message") or _("no reason given"))))
+        if approved is not True:
+            raise UserError(_("ShipStation's answer to the void request was unclear. Do NOT retry; check this "
+                              "order in ShipStation. An administrator can use 'Reset Label Request'."))
+        # One write to this row, on the side cursor (see _persist_label_state), then other rows only.
+        self._persist_label_state(void_vals)
+        problems = []
+        try:
+            with self.env.cr.savepoint():
+                self._record_void_in_mirror(shipment_id, void_vals["last_void_tracking_number"])
+        except Exception:  # noqa: BLE001
+            _logger.exception("ShipStation label %s voided but the mirror update failed", shipment_id)
+            problems.append(_("updating the shipment record"))
+        if problems:
+            return self._rate_notice(
+                _("Label voided - follow-up needed"),
+                _("The void was approved but Odoo could not finish: %s. Run a shipment sync.", ", ".join(problems)),
+                "warning")
+        return self._rate_notice(
+            _("Label voided"), _("ShipStation approved the void (refund). A replacement label can now be bought."))
+
+    def _record_void_in_mirror(self, shipment_id, tracking):
+        """Mark the shipment record voided and free the delivery (local work, other rows only)."""
+        Shipment = self.env["shipstation.shipment.sync"]
+        record = Shipment._upsert_from_payload(self.instance_id, {
+            "shipmentId": shipment_id, "orderId": self.shipstation_order_id,
+            "orderNumber": self.shipstation_order_number, "storeId": self.shipstation_store_id,
+            "trackingNumber": tracking, "voided": True,
+            "voidDate": self.instance_id._format_ss_datetime(fields.Datetime.now()),
+        })
+        self.instance_id.sudo().with_context(skip_order_label_bookkeeping=True)._reconcile_single_shipment(
+            record.sudo())
+
+    def action_reset_label_request(self):
+        """Administrator confirms what happened in ShipStation and re-opens the order for a new action."""
+        self.ensure_one()
+        if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
+            raise AccessError(_("Only ShipStation administrators can reset a label request."))
+        self.check_access_rights("write")
+        self.check_access_rule("write")
+        if self.label_state == "void_requested":
+            self._release_label_request("created")
+            return self._rate_notice(
+                _("Void request reset"),
+                _("The label is treated as active again. If ShipStation did void it, the next shipment sync records it."))
+        if self.label_state not in ("requested", "failed"):
+            raise UserError(_("There is no pending label request to reset."))
+        if self.shipstation_shipment_id or self.tracking_number:
+            raise UserError(_("A shipment is already recorded for this order; it cannot be reset."))
+        self._release_label_request("none")
+        return self._rate_notice(_("Label request reset"), _("A label can be requested again for this order."))
+
     def action_open_label(self):
         self.ensure_one()
-        if not self.label_url:
-            raise UserError(_("No label download URL available."))
-        return {
-            "type": "ir.actions.act_url",
-            "url": self.label_url,
-            "target": "new",
-        }
+        attachment = self.env["ir.attachment"].search([
+            ("res_model", "=", self._name), ("res_id", "=", self.id),
+            ("mimetype", "=", "application/pdf"),
+        ], order="id desc", limit=1)
+        if attachment:
+            return {"type": "ir.actions.act_url", "url": "/web/content/%d?download=true" % attachment.id,
+                    "target": "new"}
+        url = str(self.label_url or "").strip()
+        if not url:
+            raise UserError(_("No label is available for this order."))
+        if urlsplit(url).scheme != "https":
+            raise UserError(_("Only secure (https) label links can be opened."))
+        return {"type": "ir.actions.act_url", "url": url, "target": "new"}
 
     def action_push_to_shipstation(self):
         self.ensure_one()
+        self._check_rate_operator()
         if not self.instance_id:
             raise UserError(_("Missing ShipStation instance."))
         payload = self._prepare_createorder_payload()
-        # ShipStation uses createorder for both create and update semantics.
+        # ShipStation uses createorder for both create and update semantics (keyed by orderKey).
         response = self.instance_id._ss_request("POST", "/orders/createorder", data=payload)
         order_id = response.get("orderId") or response.get("order_id")
         order_number = response.get("orderNumber")
@@ -474,6 +914,7 @@ class ShipStationOrderSync(models.Model):
 
     def action_pull_from_shipstation(self):
         self.ensure_one()
+        self._check_rate_operator()
         if not self.instance_id:
             raise UserError(_("Missing ShipStation instance."))
 
@@ -481,7 +922,8 @@ class ShipStationOrderSync(models.Model):
         params = {}
         order_id = str(self.shipstation_order_id or payload.get("orderId") or "").strip()
         order_number = str(self.shipstation_order_number or payload.get("orderNumber") or "").strip()
-        store_id = str(self.shipstation_store_id or payload.get("storeId") or self.instance_id.store_id or "").strip()
+        store_id = str(self.shipstation_store_id or self.instance_id._remote_store_id(payload)
+                       or self.instance_id.store_id or "").strip()
 
         if order_id and order_id.isdigit():
             params["orderId"] = int(order_id)
@@ -530,23 +972,30 @@ class ShipStationOrderSync(models.Model):
 
     def _upsert_from_payload(self, instance, order_data):
         overrides = self._extract_listing_overrides_from_mapping(instance, order_data)
-        order_id = str(order_data.get("orderId") or "")
+        order_id = str(order_data.get("orderId") or "").strip()
+        if not order_id:
+            raise UserError(_("ShipStation order ID required to upsert the sync mirror."))
         order_number = order_data.get("orderNumber") or ""
-        store_id = str(order_data.get("storeId") or "")
+        store_id = instance._attributed_store_id(order_data)
         existing = self.search(
             [
                 ("shipstation_order_id", "=", order_id),
                 ("instance_id", "=", instance.id),
             ],
-            limit=1,
+            limit=2,
         )
+        if len(existing) > 1:
+            raise UserError(_("Duplicate order-sync mirrors: reconcile records before importing."))
         previous_status = str(existing.status or "").strip().lower() if existing else ""
         order_number_val = overrides.get("shipstation_order_number", order_number)
         total_amount_val = overrides.get("total_amount", order_data.get("orderTotal"))
         order_date_val = overrides.get("order_date", order_data.get("orderDate"))
         status_val = overrides.get("status", order_data.get("orderStatus"))
         normalized_status = str(status_val or "").strip().lower()
-        customer_name_val = overrides.get("customer_name", order_data.get("customerName") or order_data.get("customerUsername"))
+        # The V1 Order model has no customerName: the buyer's name is billTo.name (or shipTo.name).
+        customer_name_val = overrides.get("customer_name", (
+            order_data.get("customerName") or (order_data.get("billTo") or {}).get("name")
+            or (order_data.get("shipTo") or {}).get("name") or order_data.get("customerUsername")))
         customer_email_val = overrides.get("customer_email", order_data.get("customerEmail"))
         vals = {
             "instance_id": instance.id,
@@ -557,7 +1006,8 @@ class ShipStationOrderSync(models.Model):
             "customer_name": str(customer_name_val).strip() if customer_name_val not in (None, "") else False,
             "customer_email": str(customer_email_val).strip() if customer_email_val not in (None, "") else False,
             "total_amount": self._to_float(total_amount_val, 0.0),
-            "currency": order_data.get("currencyCode"),
+            # V1 orders state no currency; amounts are in the store's currency, configured on the connection.
+            "currency": order_data.get("currencyCode") or instance._order_currency_code() or False,
             "order_date": instance._parse_ss_datetime(order_date_val),
             "last_modified_date": instance._parse_ss_datetime(order_data.get("modifyDate")),
             "synced_on": fields.Datetime.now(),

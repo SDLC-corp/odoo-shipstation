@@ -1,13 +1,34 @@
 <odoo>
-    <menuitem id="menu_shipstation_root" name="ShipStation" sequence="10"/>
+    <menuitem id="menu_shipstation_root" groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly" name="ShipStation" sequence="10"/>
 
-    <menuitem id="menu_shipstation_dashboard"
+    <menuitem id="menu_shipstation_s08_operations_home"
+              name="Operations Home"
+              parent="menu_shipstation_root"
+              action="action_shipstation_s08_operations_home"
+              groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly"
+              sequence="3"/>
+
+    <menuitem id="menu_shipstation_dashboard" groups="group_shipstation_admin"
               name="Dashboard"
               parent="menu_shipstation_root"
               action="action_shipstation_dashboard"
               sequence="5"/>
 
-    <menuitem id="menu_shipstation_instances"
+    <menuitem id="menu_shipstation_workbench"
+              name="Shipping Workbench"
+              parent="menu_shipstation_root"
+              action="action_shipstation_shipping_workbench"
+              groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly"
+              sequence="7"/>
+
+    <menuitem id="menu_shipstation_s08_exception_board"
+              name="Visual Exception Board"
+              parent="menu_shipstation_root"
+              action="action_shipstation_s08_exception_board"
+              groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly"
+              sequence="8"/>
+
+    <menuitem id="menu_shipstation_instances" groups="group_shipstation_admin"
               name="Instances"
               parent="menu_shipstation_root"
               action="action_shipstation_instances"
@@ -60,6 +81,20 @@
               parent="menu_shipstation_root"
               sequence="27"/>
 
+    <menuitem id="menu_shipstation_s06_package_presets" name="Package Presets"
+              parent="menu_shipstation_shipping" action="action_shipstation_s06_package_presets"
+              groups="group_shipstation_admin,group_shipstation_manager" sequence="5"/>
+    <menuitem id="menu_shipstation_s06_carriers" name="Carrier Catalog"
+              parent="menu_shipstation_shipping" action="action_shipstation_s06_carrier_catalog"
+              groups="group_shipstation_admin,group_shipstation_manager" sequence="7"/>
+
+    <menuitem id="menu_shipstation_s07_fulfillment_batches" name="Fulfillment Batches"
+              parent="menu_shipstation_shipping" action="action_shipstation_s07_fulfillment_batches"
+              groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly" sequence="8"/>
+    <menuitem id="menu_shipstation_s07_return_cases" name="Return Cases (Manual)"
+              parent="menu_shipstation_shipping" action="action_shipstation_s07_return_cases"
+              groups="group_shipstation_admin,group_shipstation_manager,group_shipstation_user_readonly" sequence="9"/>
+
     <menuitem id="menu_shipstation_delivery_orders"
               name="Delivery Orders"
               parent="menu_shipstation_shipping"
@@ -78,13 +113,13 @@
               action="action_shipstation_reports"
               sequence="30"/>
 
-    <menuitem id="menu_shipstation_sync_logs"
+    <menuitem id="menu_shipstation_sync_logs" groups="group_shipstation_admin,group_shipstation_manager"
               name="Sync Logs"
               parent="menu_shipstation_root"
               action="action_shipstation_sync_logs"
               sequence="35"/>
 
-    <menuitem id="menu_shipstation_config"
+    <menuitem id="menu_shipstation_config" groups="group_shipstation_admin"
               name="Configuration"
               parent="menu_shipstation_root"
               sequence="40"/>

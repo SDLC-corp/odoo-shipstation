@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shipstation_connector.OperationsHome" owl="1">
+        <div class="o_ss08_root">
+            <div class="ss08_shell">
+                <header class="ss08_hero">
+                    <div class="ss08_hero_main">
+                        <span class="ss08_eyebrow">SHIPSTATION / OPERATIONS</span>
+                        <h1>Shipping command center</h1>
+                        <p>Monitor exceptions, prepare orders, and coordinate returns in one place.</p>
+                    </div>
+                    <div class="ss08_hero_actions">
+                        <label for="ss08_instance_select">ShipStation connection</label>
+                        <select id="ss08_instance_select" class="ss08_select"
+                                aria-label="Filter by ShipStation connection"
+                                t-on-change="onInstanceChange" t-att-disabled="state.loading">
+                            <option value="" t-att-selected="!state.selectedInstanceId">All connections</option>
+                            <t t-if="state.data">
+                                <t t-foreach="state.data.instances" t-as="instance" t-key="instance.id">
+                                    <option t-att-value="instance.id"
+                                            t-att-selected="state.selectedInstanceId === instance.id">
+                                        <t t-esc="instance.name"/>
+                                    </option>
+                                </t>
+                            </t>
+                        </select>
+                        <button class="ss08_refresh" type="button" t-on-click="refresh"
+                                t-att-disabled="state.loading" aria-label="Refresh shipping overview">
+                            <i class="fa fa-refresh" aria-hidden="true"/>
+                            <t t-if="state.loading"> Loading…</t><t t-else=""> Refresh</t>
+                        </button>
+                    </div>
+                </header>
+                <div class="ss08_context_line" t-if="state.data">
+                    <span class="ss08_dot" aria-hidden="true"/>
+                    <span t-esc="state.data.company_name"/>
+                    <span class="ss08_context_separator" aria-hidden="true">·</span>
+                    <span>Company-scoped, read-only overview</span>
+                    <span t-if="state.refreshedAt" class="ss08_refresh_time">Updated <t t-esc="state.refreshedAt"/></span>
+                </div>
+                <div t-if="state.error" class="ss08_error" role="alert">
+                    <i class="fa fa-exclamation-circle" aria-hidden="true"/>
+                    <span t-esc="state.error"/>
+                    <button type="button" t-on-click="refresh">Retry</button>
+                </div>
+                <div t-if="state.loading &amp;&amp; !state.data" class="ss08_loading" role="status">
+                    <i class="fa fa-spinner fa-spin" aria-hidden="true"/> Loading the shipping overview…
+                </div>
+                <t t-if="state.data">
+                    <section class="ss08_section" aria-label="Shipping health">
+                        <div class="ss08_section_header">
+                            <div><span class="ss08_kicker">AT A GLANCE</span><h2>What needs your attention</h2></div>
+                            <span class="ss08_subtle">Select a card to open its records</span>
+                        </div>
+                        <div class="ss08_stats">
+                            <button type="button" class="ss08_stat ss08_stat_alert" t-on-click="() => this.openQueue('review')">
+                                <span class="ss08_stat_icon"><i class="fa fa-exclamation-triangle" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.needs_review"/>
+                                <span class="ss08_stat_label">Need review</span>
+                                <span class="ss08_stat_hint">Unresolved delivery links</span>
+                            </button>
+                            <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('pending')">
+                                <span class="ss08_stat_icon"><i class="fa fa-clock-o" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.pending_links"/>
+                                <span class="ss08_stat_label">Awaiting delivery</span>
+                                <span class="ss08_stat_hint">Link still pending</span>
+                            </button>
+                            <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('mine')">
+                                <span class="ss08_stat_icon"><i class="fa fa-user-circle-o" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.my_queue"/>
+                                <span class="ss08_stat_label">Assigned to me</span>
+                                <span class="ss08_stat_hint">My open investigations</span>
+                            </button>
+                            <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('batches')">
+                                <span class="ss08_stat_icon"><i class="fa fa-cubes" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.active_batches"/>
+                                <span class="ss08_stat_label">Active batches</span>
+                                <span class="ss08_stat_hint">Preparation in progress</span>
+                            </button>
+                            <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('returns')">
+                                <span class="ss08_stat_icon"><i class="fa fa-undo" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.returns_review"/>
+                                <span class="ss08_stat_label">Returns for review</span>
+                                <span class="ss08_stat_hint">Manual approval queue</span>
+                            </button>
+                            <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('orders')">
+                                <span class="ss08_stat_icon"><i class="fa fa-shopping-bag" aria-hidden="true"/></span>
+                                <strong t-esc="state.data.metrics.synced_orders"/>
+                                <span class="ss08_stat_label">Synced orders</span>
+                                <span class="ss08_stat_hint">Across selected connections</span>
+                            </button>
+                        </div>
+                    </section>
+                    <section class="ss08_section" aria-label="Active shipping work">
+                        <div class="ss08_section_header">
+                            <div><span class="ss08_kicker">ACTIVE WORK</span><h2>Open shipping queues</h2></div>
+                            <button class="ss08_text_button" type="button" t-on-click="() => this.openQueue('unassigned')">
+                                <t t-esc="state.data.metrics.unassigned"/> unassigned <i class="fa fa-arrow-right" aria-hidden="true"/>
+                            </button>
+                        </div>
+                        <div class="ss08_panels">
+                            <div class="ss08_panel ss08_panel_wide">
+                                <div class="ss08_panel_head">
+                                    <div><h3>Shipment exceptions</h3><p>Needs review or waiting for an Odoo delivery</p></div>
+                                    <button type="button" t-on-click="() => this.openQueue('review')">Open queue <i class="fa fa-arrow-right" aria-hidden="true"/></button>
+                                </div>
+                                <t t-if="state.data.shipments.length">
+                                    <div class="ss08_exception_list">
+                                        <t t-foreach="state.data.shipments" t-as="shipment" t-key="shipment.id">
+                                            <button type="button" class="ss08_exception" t-on-click="() => this.openRecord('shipment', shipment.id)">
+                                                <span t-att-class="'ss08_severity ss08_severity_' + shipment.priority" aria-hidden="true"/>
+                                                <span class="ss08_exception_main">
+                                                    <strong t-esc="shipment.order_number"/>
+                                                    <small><t t-esc="shipment.instance"/> · <t t-esc="shipment.owner"/></small>
+                                                </span>
+                                                <span t-att-class="'ss08_state ss08_state_' + shipment.link_state">
+                                                    <t t-if="shipment.link_state === 'review'">Needs review</t>
+                                                    <t t-else="">Pending</t>
+                                                </span>
+                                                <i class="fa fa-chevron-right ss08_chevron" aria-hidden="true"/>
+                                            </button>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="ss08_empty"><i class="fa fa-check-circle" aria-hidden="true"/><strong>No open exceptions found</strong><span>There are no unresolved shipment links for this selection.</span></div>
+                                </t>
+                            </div>
+                            <div class="ss08_panel">
+                                <div class="ss08_panel_head">
+                                    <div><h3>Fulfillment batches</h3><p>Local shipping readiness</p></div>
+                                    <button type="button" t-on-click="() => this.openQueue('batches')">View all</button>
+                                </div>
+                                <t t-if="state.data.batches.length">
+                                    <t t-foreach="state.data.batches" t-as="batch" t-key="batch.id">
+                                        <button type="button" class="ss08_simple_row" t-on-click="() => this.openRecord('batch', batch.id)">
+                                            <span><strong t-esc="batch.name"/><small t-esc="batch.operator"/></span>
+                                            <span class="ss08_state ss08_state_neutral" t-esc="batch.state"/>
+                                        </button>
+                                    </t>
+                                </t>
+                                <t t-else=""><div class="ss08_empty ss08_empty_compact">No active batches</div></t>
+                            </div>
+                            <div class="ss08_panel">
+                                <div class="ss08_panel_head">
+                                    <div><h3>Return cases</h3><p>Manual return coordination</p></div>
+                                    <button type="button" t-on-click="() => this.openQueue('all_returns')">View all</button>
+                                </div>
+                                <t t-if="state.data.returns.length">
+                                    <t t-foreach="state.data.returns" t-as="caseItem" t-key="caseItem.id">
+                                        <button type="button" class="ss08_simple_row" t-on-click="() => this.openRecord('returns', caseItem.id)">
+                                            <span><strong t-esc="caseItem.name"/><small t-esc="caseItem.reason"/></span>
+                                            <span class="ss08_state ss08_state_neutral" t-esc="caseItem.state"/>
+                                        </button>
+                                    </t>
+                                </t>
+                                <t t-else=""><div class="ss08_empty ss08_empty_compact">No open return cases</div></t>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="ss08_shortcuts" aria-label="Shortcuts">
+                        <div><span class="ss08_kicker">SHORTCUTS</span><h2>Move work forward</h2></div>
+                        <div class="ss08_shortcuts_grid">
+                            <button type="button" t-on-click="() => this.openQueue('unassigned')"><i class="fa fa-inbox" aria-hidden="true"/> Unassigned exceptions</button>
+                            <button type="button" t-on-click="() => this.openQueue('linked')"><i class="fa fa-check-circle" aria-hidden="true"/> Linked shipments</button>
+                            <button t-if="state.data.can_admin" type="button" t-on-click="() => this.openQueue('connections')"><i class="fa fa-cog" aria-hidden="true"/> Connection setup</button>
+                            <button t-if="state.data.can_manage" type="button" t-on-click="() => this.openQueue('carriers')"><i class="fa fa-truck" aria-hidden="true"/> Carriers &amp; services</button>
+                            <button t-if="state.data.can_manage" type="button" t-on-click="() => this.openQueue('presets')"><i class="fa fa-cube" aria-hidden="true"/> Package presets</button>
+                            <button t-if="state.data.can_manage" type="button" t-on-click="() => this.openQueue('logs')"><i class="fa fa-exclamation-circle" aria-hidden="true"/> Failed syncs: <t t-esc="state.data.metrics.failed_syncs"/></button>
+                        </div>
+                        <p class="ss08_disclaimer">This view is read-only. Creating labels, shipping orders, refunds, or stock adjustments requires separate authorized actions.</p>
+                    </section>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

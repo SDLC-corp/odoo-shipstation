@@ -20,12 +20,27 @@
         <field name="arch" type="xml">
             <form string="ShipStation Order">
                 <header>
-                    <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"/>
-                    <button name="action_push_to_shipstation" type="object" string="Push to ShipStation" class="btn-primary"/>
+                    <button name="action_pull_from_shipstation" type="object" string="Pull from ShipStation" class="btn-secondary"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+                    <button name="action_push_to_shipstation" type="object" string="Push to ShipStation" class="btn-primary"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"
+                            confirm="This sends the order to ShipStation (an existing order with the same key is updated). Continue?"/>
                     <button name="action_get_rates" type="object" string="Get Rates" class="btn-secondary"/>
                     <button name="action_select_best_rate" type="object" string="Select Best Rate" class="btn-secondary"/>
-                    <button name="action_create_label" type="object" string="Create Label" class="btn-secondary"/>
-                    <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"/>
+                    <button name="action_create_label" type="object" string="Buy Shipping Label" class="btn-primary"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"
+                            attrs="{'invisible': ['|', '|', ('label_state', 'in', ('requested', 'created', 'void_requested')), ('shipstation_shipment_id', '!=', False), ('tracking_number', '!=', False)]}"
+                            confirm="This BUYS a real shipping label for this order and charges your ShipStation account. It cannot be undone from Odoo. Continue?"/>
+                    <button name="action_void_label" type="object" string="Void Label (Request Refund)" class="btn-secondary"
+                            groups="shipstation_connector.group_shipstation_admin"
+                            attrs="{'invisible': ['|', ('label_state', '!=', 'created'), ('label_void_allowed', '=', False)]}"
+                            confirm="This asks ShipStation to VOID this order's label and refund it. It cannot be undone from Odoo, and buying a replacement label costs again. Continue?"/>
+                    <button name="action_reset_label_request" type="object" string="Reset Label Request" class="btn-secondary"
+                            groups="shipstation_connector.group_shipstation_admin"
+                            attrs="{'invisible': [('label_state', 'not in', ('requested', 'failed', 'void_requested'))]}"
+                            confirm="Only reset after you have confirmed in ShipStation what happened to this order's label. Continue?"/>
+                    <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"
+                            attrs="{'invisible': [('shipstation_shipment_id', '=', False), ('label_url', '=', False)]}"/>
                 </header>
                 <sheet>
                     <group>
@@ -54,6 +69,14 @@
                         <field name="tracking_url"/>
                         <field name="label_url"/>
                         <field name="shipstation_shipment_id"/>
+                        <field name="label_state"/>
+                        <field name="label_requested_at"/>
+                        <field name="label_requested_by_id"/>
+                        <field name="label_void_allowed" invisible="1"/>
+                        <field name="last_void_at" attrs="{'invisible': [('last_void_at', '=', False)]}"/>
+                        <field name="last_void_by_id" attrs="{'invisible': [('last_void_at', '=', False)]}"/>
+                        <field name="last_void_shipment_id" attrs="{'invisible': [('last_void_at', '=', False)]}"/>
+                        <field name="last_void_tracking_number" attrs="{'invisible': [('last_void_at', '=', False)]}"/>
                     </group>
                     <group string="Rates">
                         <field name="rate_ids">
