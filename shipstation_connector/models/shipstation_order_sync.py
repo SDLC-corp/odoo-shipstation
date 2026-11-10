@@ -30,7 +30,7 @@ class ShipStationOrderSync(models.Model):
     customer_email = fields.Char()
     total_amount = fields.Float()
     currency = fields.Char()
-    order_date = fields.Datetime()
+    order_date = fields.Datetime(index=True)  # default list order: an unindexed sort scanned the whole table
     last_modified_date = fields.Datetime()
     synced_on = fields.Datetime(default=fields.Datetime.now)
     payload = fields.Text()
@@ -210,7 +210,8 @@ class ShipStationOrderSync(models.Model):
             if price < 0:
                 price = 0.0
             clean = {
-                "quantity": qty,
+                # the real API rejects 1.0: whole numbers only
+                "quantity": self.instance_id._ss_item_quantity(qty, sku or name),
                 "unitPrice": price,
             }
             if sku:
@@ -674,6 +675,21 @@ class ShipStationOrderSync(models.Model):
             })
         return attachment
 
+    def _check_label_ship_from(self):
+        """Read-only pre-flight before the paid request: ShipStation needs a Ship From location.
+
+        Found against the real API: without one, ``createlabelfororder`` answers HTTP 500 "No warehouse has been
+        selected". A 500 is (correctly) treated as "a label may have been bought", which would lock the order
+        although nothing could have been bought. Checking first turns that into a plain, actionable message.
+        """
+        warehouses = self.instance_id._ss_request("GET", "/warehouses")
+        if not isinstance(warehouses, list):
+            raise UserError(_("ShipStation returned an unexpected Ship From location list; no label was requested."))
+        if not warehouses:
+            raise UserError(_("This ShipStation account has no Ship From location, so ShipStation cannot create labels. "
+                              "Add one in ShipStation (Settings > Shipping > Ship From Locations), then try again. "
+                              "No label was requested."))
+
     def action_create_label(self):
         """Buy ONE label for ONE order. Always an explicit, confirmed, single-record click.
 
@@ -696,6 +712,9 @@ class ShipStationOrderSync(models.Model):
             raise UserError(_("Set carrier, service, and package before creating a label."))
         if (self.status or "").lower() != "awaiting_shipment":
             raise UserError(_("Only orders awaiting shipment can receive a label (current status: %s).", self.status or "unknown"))
+        if self.label_state not in ("requested", "created", "void_requested"):
+            # skipped for a locked/bought order: the claim below refuses it without any request
+            self._check_label_ship_from()
 
         body = self._label_request_body(int(order_id))
         self._claim_label_request()

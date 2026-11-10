@@ -10,7 +10,6 @@ class ShipStationSyncLog(models.Model):
     _name = "shipstation.sync.log"
     _description = "ShipStation Sync Log"
     _order = "create_date desc"
-
     instance_id = fields.Many2one("shipstation.instance", required=True, ondelete="cascade", index=True)
     operation = fields.Selection([("push", "Push"), ("pull", "Pull"), ("request", "Request")], default="request", required=True)
     model_name = fields.Char(string="Model")
@@ -22,6 +21,14 @@ class ShipStationSyncLog(models.Model):
     error_message = fields.Text()
     retry_count = fields.Integer(default=0)
     last_retry_at = fields.Datetime()
+
+    def init(self):
+        # list order, dashboard 24 h window and autovacuum purge all filter or sort on create_date
+        # (Odoo 17 has no models.Index; the name is the one index=True would give the column)
+        self.env.cr.execute(
+            "CREATE INDEX IF NOT EXISTS shipstation_sync_log__create_date_index "
+            "ON shipstation_sync_log (create_date)"
+        )
 
     @api.autovacuum
     def _gc_old_requests(self):

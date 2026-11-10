@@ -393,6 +393,29 @@ class ShipStationSyncBase(models.AbstractModel):
         remote = self._remote_store_id(data)
         return not (configured and remote and remote != configured)
 
+    def _ss_item_quantity(self, qty, label=""):
+        """ShipStation order items take a whole-number quantity (the real API rejects ``1.0``)."""
+        qty = float(qty or 0.0)
+        whole = round(qty)
+        if qty <= 0 or abs(qty - whole) > 1e-6:
+            raise UserError(_("ShipStation needs a positive whole quantity for every item; %(line)s has %(qty)s.")
+                            % {"line": label or _("a line"), "qty": qty})
+        return int(whole)
+
+    def _ss_item_weight(self, product):
+        """Per-unit item weight as ShipStation's Weight object, or None when the product has no weight.
+
+        Odoo stores ``weight`` in kilograms, or in pounds when ``product.weight_in_lbs`` is set; the real API
+        rejects a bare number (it requires ``{"value": ..., "units": "pounds"|"ounces"|"grams"}``).
+        """
+        weight = float(product.weight or 0.0)
+        if weight <= 0:
+            return None
+        uom = product.product_tmpl_id._get_weight_uom_id_from_ir_config_parameter()
+        if uom == self.env.ref("uom.product_uom_lb", raise_if_not_found=False):
+            return {"value": round(weight, 4), "units": "pounds"}
+        return {"value": round(weight * 1000.0, 2), "units": "grams"}
+
     def _order_currency_code(self):
         """Currency of this store's order amounts: ShipStation V1 orders carry none."""
         return (self.order_currency_id or self.company_id.currency_id).name or ""
