@@ -47,6 +47,15 @@ class FakeInstance(instance_mod.ShipStationInstance,base.ShipStationSyncBase):
     def ensure_one(self): pass
     def sudo(self): return self   # manual actions run as the integration after the admin check
 
+
+def with_store_helpers(ns):
+    """Give a stub instance the REAL store helpers (the production implementation, not a re-statement)."""
+    from types import MethodType
+    ns._remote_store_id = base.ShipStationSyncBase._remote_store_id
+    ns._attributed_store_id = MethodType(base.ShipStationSyncBase._attributed_store_id, ns)
+    ns._remote_store_matches = MethodType(base.ShipStationSyncBase._remote_store_matches, ns)
+    return ns
+
 class ShipmentSourceChecks(unittest.TestCase):
     def test_all_python_and_xml_parse(self):
         for file in MODULE.rglob('*.py'):ast.parse(file.read_text(encoding='utf-8'))
@@ -84,7 +93,7 @@ class IdentityTests(unittest.TestCase):
         self.rec=shipment_mod.ShipStationShipmentSync()
         self.rec.search=Mock(return_value=Rows([]))
         self.rec.browse=Mock(return_value=Rows([]))
-        self.instance=SimpleNamespace(id=27,store_id='88')
+        self.instance=with_store_helpers(SimpleNamespace(id=27,store_id='88'))
 
     def test_existing_package_id_wins(self):
         existing=SimpleNamespace(shipstation_store_id='88')
@@ -123,23 +132,24 @@ class IdentityTests(unittest.TestCase):
         rec.browse=Mock(return_value=Rows([]))
         rec._upsert_from_payload=Mock(return_value=Rows([]))
         rec._upsert_placeholder_for_order=Mock(return_value=Rows([]))
-        inst=SimpleNamespace(store_id='88',_ss_request=Mock(return_value={'shipments':[
+        inst=with_store_helpers(SimpleNamespace(store_id='88',_ss_request=Mock(return_value={'shipments':[
             {'orderId':'o1','orderNumber':'SO1','storeId':'99','shipmentId':'wrong'},
-            {'orderId':'o1','orderNumber':'SO1','storeId':'88','shipmentId':'right'}
-        ]}))
-        # Calling the upsert is sufficient to show store filtering occurs
-        # before any local mutation.
-        rec.sync_for_order(inst,{'orderId':'o1','orderNumber':'SO1','storeId':'88'})
-        self.assertEqual(rec._upsert_from_payload.call_count,1)
-        self.assertEqual(rec._upsert_from_payload.call_args.args[1]['shipmentId'],'right')
+            {'orderId':'o1','orderNumber':'SO1','shipmentId':'right'},      # real shipments name no store at all
+            {'orderId':'o1','orderNumber':'SO1','storeId':'88','shipmentId':'right-too'},
+        ]})))
+        # A shipment that NAMES another store is skipped before any local mutation; one that names none
+        # was already scoped by the storeId filter of the request, so it is kept.
+        rec.sync_for_order(inst,{'orderId':'o1','orderNumber':'SO1','advancedOptions':{'storeId':88}})
+        self.assertEqual([c.args[1]['shipmentId'] for c in rec._upsert_from_payload.call_args_list],['right','right-too'])
+        self.assertEqual(inst._ss_request.call_args.kwargs['params']['storeId'],88)   # numeric filter, as the API expects
 
     def test_sync_for_order_rejects_invalid_shipment_row(self):
         rec=shipment_mod.ShipStationShipmentSync()
         rec.browse=Mock(return_value=Rows([]))
         rec._upsert_from_payload=Mock()
-        inst=SimpleNamespace(store_id='88',_ss_request=Mock(return_value={'shipments':['broken']}))
+        inst=with_store_helpers(SimpleNamespace(store_id='88',_ss_request=Mock(return_value={'shipments':['broken']})))
         with self.assertRaises(base.UserError):
-            rec.sync_for_order(inst,{'orderId':'o1','orderNumber':'SO1','storeId':'88'})
+            rec.sync_for_order(inst,{'orderId':'o1','orderNumber':'SO1','advancedOptions':{'storeId':88}})
         rec._upsert_from_payload.assert_not_called()
 
     def test_payload_without_remote_shipment_or_tracking_rejected(self):

@@ -93,13 +93,24 @@ class SourceChecks(unittest.TestCase):
         s=(MODULE/'models/shipstation_order_sync.py').read_text().split('    def action_create_label(self):',1)[1].split('    def action_open_label(',1)[0]
         self.assertLess(s.index('if self.shipstation_shipment_id or self.tracking_number or self.label_url:'),s.index('_ss_request("POST"'))
 
+
+def with_store_helpers(ns):
+    """Give a stub instance the REAL store helpers (the production implementation, not a re-statement)."""
+    from types import MethodType
+    ns._remote_store_id = base.ShipStationSyncBase._remote_store_id
+    ns._attributed_store_id = MethodType(base.ShipStationSyncBase._attributed_store_id, ns)
+    ns._remote_store_matches = MethodType(base.ShipStationSyncBase._remote_store_matches, ns)
+    return ns
+
 class IdentityChecks(unittest.TestCase):
     def setUp(self):
         self.i=FakeInstance();self.i.env=Mock()
         self.sale=Mock()
         self.sale.with_company.return_value=self.sale
         self.sale.browse.return_value=FakeRecordset([])
-        self.i.env={'sale.order':self.sale}
+        self.instances=Mock()
+        self.instances.sudo.return_value.with_context.return_value.search_count.return_value=2   # several connections
+        self.i.env={'sale.order':self.sale,'shipstation.instance':self.instances}
 
     def test_scoped_lookup_uses_instance_and_company(self):
         self.sale.search.side_effect=[FakeRecordset([SimpleNamespace(shipstation_store_id='88')])]
@@ -122,7 +133,16 @@ class IdentityChecks(unittest.TestCase):
         self.assertTrue(self.i._find_order('120','SO120','88'))
         domain=self.sale.search.call_args.args[0]
         self.assertIn(('shipstation_instance_id','=',False),domain)
-        self.assertIn(('shipstation_store_id','=','88'),domain)
+        self.assertIn(('shipstation_store_id','in',['88']),domain)   # several connections: a blank store is ambiguous
+
+    def test_blank_store_legacy_order_adopted_only_when_company_has_one_connection(self):
+        # The published build recorded a blank store because real orders carry none at the top level.
+        self.instances.sudo.return_value.with_context.return_value.search_count.return_value=1
+        self.sale.search.side_effect=[FakeRecordset([]),FakeRecordset([SimpleNamespace()])]
+        self.assertTrue(self.i._find_order('120','SO120','88'))
+        domain=self.sale.search.call_args.args[0]
+        self.assertIn(('shipstation_store_id','in',['88',False]),domain)
+        self.assertIn(('company_id','=',3),domain)
 
     def test_number_lookup_never_uses_other_store(self):
         self.sale.search.side_effect=[FakeRecordset([]),FakeRecordset([]),FakeRecordset([])]
@@ -307,7 +327,7 @@ class CrossCompanyReferenceChecks(unittest.TestCase):
         rec.search=Mock(return_value=[SimpleNamespace(),SimpleNamespace()])
         rec.write=Mock()
         with self.assertRaises(base.UserError):
-            rec._upsert_from_payload(SimpleNamespace(id=27),{'orderId':120,'orderNumber':'SO120'})
+            rec._upsert_from_payload(with_store_helpers(SimpleNamespace(id=27,store_id='88')),{'orderId':120,'orderNumber':'SO120'})
         rec.write.assert_not_called()
 
     def test_repeat_label_purchase_blocked(self):

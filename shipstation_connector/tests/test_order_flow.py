@@ -165,7 +165,8 @@ class TestOrderPush(ShipStationCommon):
         body = pushes[0]["json"]
         self.assertEqual(body["orderKey"], "odoo-%s-%s" % (self.instance.id, open_order.name))
         self.assertEqual(body["orderStatus"], "awaiting_shipment")
-        self.assertEqual(body["storeId"], 111)
+        self.assertNotIn("storeId", body, "ShipStation ignores a top-level storeId on an order")
+        self.assertEqual(body["advancedOptions"]["storeId"], 111)
         self.assertNotIn("orderId", body)
         self.assertEqual(open_order.shipstation_order_id, "4242")
         self.assertEqual(open_order.shipstation_push_state, "success")

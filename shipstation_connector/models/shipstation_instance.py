@@ -581,11 +581,13 @@ class ShipStationInstance(models.Model):
             "shipTo": self._build_address_payload(order.partner_shipping_id),
             "items": [],
         }
-        if self.store_id and str(self.store_id).isdigit():
-            payload["storeId"] = int(self.store_id)
         if order.shipstation_order_id and str(order.shipstation_order_id).isdigit():
             # Per the ShipStation docs, including orderId when updating prevents duplicates.
             payload["orderId"] = int(order.shipstation_order_id)
+        elif self.store_id and str(self.store_id).isdigit():
+            # The store is assigned through advancedOptions.storeId, and only when the order is created
+            # (a top-level storeId is ignored and the order lands in the account's first manual store).
+            payload["advancedOptions"] = {"storeId": int(self.store_id)}
 
         # Delivery charges are sent as shippingAmount, never also as an item.
         for line in order.order_line.filtered(lambda l: not l.display_type and not l.is_delivery):
@@ -873,12 +875,11 @@ class ShipStationInstance(models.Model):
             raise UserError(_("Invalid ShipStation order payload."))
         order_id = str(order_data.get("orderId") or "").strip()
         order_number = str(order_data.get("orderNumber") or "").strip()
-        store_id = str(order_data.get("storeId") or "").strip()
         if not order_id or not order_number:
             raise UserError(_("ShipStation order ID and number are required; refusing ambiguous import."))
-        configured_store = str(self.store_id or "").strip()
-        if configured_store and store_id != configured_store:
+        if not self._remote_store_matches(order_data):
             raise UserError(_("Order store does not match this ShipStation instance."))
+        store_id = self._attributed_store_id(order_data)
 
         # PostgreSQL transaction-level advisory lock; released on transaction end.
         identity = f"shipstation:order:{self.id}:{order_id}".encode("utf-8")
@@ -1176,10 +1177,9 @@ class ShipStationInstance(models.Model):
             raise UserError(_("Invalid ShipStation shipment payload."))
         shipment_id = str(shipment_data.get("shipmentId") or "").strip()
         order_id = str(shipment_data.get("orderId") or "").strip()
-        store_id = str(shipment_data.get("storeId") or "").strip()
         if not order_id or not (shipment_id or str(shipment_data.get("trackingNumber") or "").strip()):
             raise UserError(_("Shipment order ID and shipment/tracking identity are required."))
-        if self.store_id and store_id != str(self.store_id):
+        if not self._remote_store_matches(shipment_data):
             raise UserError(_("Shipment store does not match this instance."))
         identity = ("shipstation:shipment:%s:%s" % (self.id, shipment_id or
                     (order_id + ":" + str(shipment_data.get("trackingNumber"))))).encode("utf-8")

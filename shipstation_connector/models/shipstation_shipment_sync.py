@@ -55,8 +55,9 @@ class ShipStationShipmentSync(models.Model):
         order_number = str(order_number or "").strip()
         store_id = str(store_id or "").strip()
         tracking_number = str(tracking_number or "").strip()
-        if instance.store_id and store_id != str(instance.store_id):
-            raise UserError(_("Shipment store is missing or belongs to another ShipStation instance."))
+        if instance.store_id and store_id and store_id != str(instance.store_id):
+            raise UserError(_("Shipment belongs to another ShipStation store."))
+        store_id = store_id or str(instance.store_id or "").strip()  # shipments name no store: the filter did
         root = [("instance_id", "=", instance.id)]
         if shipment_id:
             matches = self.search(root + [("shipstation_shipment_id", "=", shipment_id)], limit=2)
@@ -68,7 +69,10 @@ class ShipStationShipmentSync(models.Model):
                 return matches
         if not order_id and not (order_number and store_id):
             return self.browse()
-        scoped = root + [("shipstation_store_id", "=", store_id or False)]
+        # The instance already pins the store. Rows written by the published build have a blank store
+        # (shipments name none), so a blank store is accepted besides the configured one: such a pending
+        # placeholder is adopted (and its store repaired) instead of being orphaned next to the real shipment.
+        scoped = root + [("shipstation_store_id", "in", [store_id, False] if store_id else [False])]
         scoped.append(("shipstation_order_id", "=", order_id) if order_id else ("shipstation_order_number", "=", order_number))
         # Without a remote shipment ID, matching an identical tracking number is safe.
         if not shipment_id and tracking_number:
@@ -92,7 +96,7 @@ class ShipStationShipmentSync(models.Model):
         shipment_id = str(shipment_data.get("shipmentId") or "").strip()
         order_id = str(shipment_data.get("orderId") or "")
         order_number = shipment_data.get("orderNumber") or ""
-        store_id = str(shipment_data.get("storeId") or "")
+        store_id = instance._attributed_store_id(shipment_data)
         tracking_number = shipment_data.get("trackingNumber")
         voided = shipment_data.get("voided") is True
         if not shipment_id and not str(tracking_number or "").strip():
@@ -131,7 +135,7 @@ class ShipStationShipmentSync(models.Model):
     def _upsert_placeholder_for_order(self, instance, order_data):
         order_id = str(order_data.get("orderId") or "")
         order_number = str(order_data.get("orderNumber") or "")
-        store_id = str(order_data.get("storeId") or "")
+        store_id = instance._attributed_store_id(order_data)
         existing = self._find_existing_shipment(
             instance,
             order_id=order_id,
@@ -163,7 +167,7 @@ class ShipStationShipmentSync(models.Model):
     def sync_for_order(self, instance, order_data, create_placeholder=True):
         order_id = str(order_data.get("orderId") or "").strip()
         order_number = str(order_data.get("orderNumber") or "").strip()
-        store_id = str(order_data.get("storeId") or instance.store_id or "").strip()
+        store_id = instance._attributed_store_id(order_data)
         params = {}
         if order_id.isdigit():
             params["orderId"] = int(order_id)
@@ -182,8 +186,8 @@ class ShipStationShipmentSync(models.Model):
                 raise UserError(_("Invalid shipment row from ShipStation."))
             shipment_order_id = str(shipment.get("orderId") or "").strip()
             shipment_order_number = str(shipment.get("orderNumber") or "").strip()
-            shipment_store_id = str(shipment.get("storeId") or "").strip()
-            if store_id and shipment_store_id != store_id:
+            shipment_store_id = instance._remote_store_id(shipment)
+            if store_id and shipment_store_id and shipment_store_id != store_id:
                 continue
             if order_id and shipment_order_id and shipment_order_id != order_id:
                 continue

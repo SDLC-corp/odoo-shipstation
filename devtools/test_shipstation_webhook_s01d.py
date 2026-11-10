@@ -290,18 +290,26 @@ class WorkerContract(unittest.TestCase):
         self.record.event_type = "ORDER_NOTIFY"
         self.record.resource_url = "https://ssapi.shipstation.com/orders?storeId=123"
         self.record.payload_store_id = "123"
+        # Documented V1 shape: an order names its store only at advancedOptions.storeId (or not at all).
         self.record.instance_id._ss_request.return_value = {
-            "orders": [{"orderId": 1, "storeId": 123}, {"orderId": 2, "storeId": 999}],
+            "orders": [{"orderId": 1, "advancedOptions": {"storeId": 123}},
+                       {"orderId": 2, "advancedOptions": {"storeId": 999}},
+                       {"orderId": 3, "advancedOptions": None}],
             "pages": 1,
         }
+
+        def matches(item):      # the production rule (ShipStationSyncBase._remote_store_matches)
+            named = str(item.get("storeId") or (item.get("advancedOptions") or {}).get("storeId") or "")
+            return not named or named == "123"
+        self.record.instance_id._remote_store_matches.side_effect = matches
 
     def test_worker_fetches_pinned_endpoint_only_and_filters_store(self):
         self.inbox_model._process_v1_notification(self.record)
         self.record.instance_id._ss_request.assert_called_once_with(
             "GET", "/orders", params={"storeId": "123", "page": 1, "pageSize": 100})
         service = self.record.env["shipstation.order.sync"]
-        service._upsert_from_payload.assert_called_once()
-        self.assertEqual(service._upsert_from_payload.call_args.args[1]["orderId"], 1)
+        self.assertEqual([c.args[1]["orderId"] for c in service._upsert_from_payload.call_args_list], [1, 3],
+                         "an order naming another store is skipped; one naming none was scoped by the request filter")
 
     def test_worker_rejects_disabled_order_notifications(self):
         self.record.instance_id.webhook_order_create = False

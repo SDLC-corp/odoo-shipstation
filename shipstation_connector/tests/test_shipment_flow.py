@@ -74,7 +74,7 @@ class TestShipmentSync(ShipStationCommon):
             [("shipstation_shipment_id", "=", "5001")]), 1)
 
     def test_failures_hold_the_checkpoint(self):
-        self.http.add("GET", "/shipments", {"shipments": [self.shipment_payload(5001, store_id=999)]})
+        self.http.add("GET", "/shipments", {"shipments": [self.shipment_payload(5001, order_id=None)]})   # no order id
         result = self.instance._sync_shipments(mode="cron")
         self.assertEqual(result["failed"], 1)
         self.assertFalse(result["checkpoint_advanced"])
@@ -236,7 +236,7 @@ class TestDeliveryLinking(ShipStationCommon):
 
     def test_tracking_for_a_different_company_delivery_is_never_written(self):
         sale, picking = self._setup_order()
-        foreign = self.shipment_payload(5001, store_id=222)
+        foreign = self.shipment_payload(5001, storeId=222)   # a payload that NAMES another store is refused
         with self.assertRaises(UserError):
             self._link(foreign)
         self.assertFalse(picking.carrier_tracking_ref)

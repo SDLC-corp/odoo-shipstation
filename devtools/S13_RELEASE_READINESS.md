@@ -4,6 +4,14 @@ Status: **one blocker remains: no real ShipStation account has ever been used (B
 verified without one has been, including an upgrade from the build published on the Store, behaviour at
 100k-row scale and a real-browser pass over every screen. Licensing and edition wording were decided by the owner.
 
+> **Correction (store-id contract).** The hardening commit `c47789c5` (S01-S12), and therefore every later commit up to
+> `8cc619d6`, contained a critical defect, found afterwards by re-reading ShipStation's API reference: it required every
+> order and shipment to carry a top-level `storeId` equal to the connection's store. ShipStation's orders carry no top-level
+> `storeId` (only `advancedOptions.storeId`) and its shipments carry no store at all, so **every connection with a store id
+> would have imported nothing**. The test fixtures encoded the same wrong assumption, so the suite was green. Fixed in the
+> following commit (defect 16). The build published on the Store (`09e8866f`) predates the check; do not publish any of
+> `c47789c5` ... `8cc619d6`.
+
 ## 1. What was verified, and how
 
 Maturity levels: **implemented** - **source-tested** (offline contract tests) - **runtime-tested** (Odoo test
@@ -31,10 +39,9 @@ server, synthetic data) - **production-verified** (real ShipStation account). *N
 
 Evidence at the time of writing:
 
-- Offline suite **233/233**.
-- Odoo runtime suite **147/147** on a clean database (0 failed, 0 errors, 0 skipped; 0 view and 0 translation warnings).
-- The same suite **146/146** on the migrated copy of the published install, with its pre-existing data. (Run before the last,
-  empty-state test was added.)
+- Offline suite **234/234**.
+- Odoo runtime suite **165/165** on a clean database (0 failed, 0 errors, 0 skipped; 0 view and 0 translation warnings).
+- The same suite **165/165** on a database installed from the published build and upgraded to this branch (pre-existing data kept).
 - 0 JavaScript console errors across Administrator, Manager and Reader browser sessions.
 
 ### Upgrade from the published build
@@ -84,6 +91,18 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
     while the manifest is OPL-1; `requests` was undeclared; Enterprise/Odoo.sh were claimed but untested.
 14. UX: records named `model,id`; buttons shown that can never work for the viewer; an accessibility warning; no empty-state guidance.
 15. **Upgrade:** shared webhook secret across connections; all historical shipments "Pending".
+16. **Store-id contract (critical; the rejection was introduced by `c47789c5`, the published build only had the push half).** Orders and
+    shipments were rejected unless they carried a top-level `storeId`; ShipStation sends none (orders: `advancedOptions.storeId`;
+    shipments: no store). Orders were pushed with a top-level `storeId` (already in the published build), which ShipStation
+    ignores, and the buyer name was read from a `customerName` field that V1 orders do not have. The published build imported
+    orders but recorded a blank store on them, which is why upgraded databases carry blank-store rows. Now: the store is read from `advancedOptions.storeId` when
+    present, a payload that names *no* store is trusted to the request's `storeId` filter, one that names a *different* store is
+    rejected, pushes set `advancedOptions.storeId` on creation only, and the name falls back to `billTo.name`. Rows the published
+    build wrote with a blank store are adopted (orders: when the company has a single connection; pending shipment placeholders:
+    always, as the instance already pins the store). **How it was proven:** 16 new tests (`tests/test_store_contract.py`) use the
+    documented payload shapes; against the previous code 11 of them fail (e.g. order sync `0 processed / 1 failed`, shipment sync
+    `0 linked / 1 failed`, webhook items dropped, push sends a top-level `storeId`); with the fix all pass. The shared fixtures were
+    changed to the documented shapes and a test guards them against drifting back.
 
 ## 3. Decisions made by the owner
 
@@ -99,6 +118,9 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 
 ## 5. Residual risks (not blockers)
 
+- Payload shapes follow ShipStation's published reference, **not observed live**. The store contract (defect 16) is the clearest
+  example of why B1 matters: confirm on a sandbox store that orders import with `advancedOptions.storeId`, shipments sync under the
+  `storeId` filter, and a pushed order lands in the intended store.
 - Unverified API assumptions: numbered V1 webhook hosts (`ssapiN`), `GET /v2/carriers` as a key check, `voidDate` semantics of
   `GET /shipments`, whether ShipStation reverts an order to awaiting shipment after a void (the README tells users to Pull first).
 - The paid-label cursor logic runs in test mode (cursors merged); the production semantics were proven separately with a two-connection

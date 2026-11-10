@@ -94,8 +94,9 @@ class ShipStationWebhookInbox(models.Model):
             for item in items:
                 if not isinstance(item, dict):
                     raise ValueError("Malformed ShipStation collection item")
-                item_store = str(item.get("storeId") or "").strip()
-                if instance.store_id and item_store != str(instance.store_id):
+                # Look-ups are filtered by storeId; an item that names ANOTHER store is skipped, but items
+                # that name none (shipments never do) are legitimate and must not be dropped.
+                if not instance._remote_store_matches(item):
                     continue
                 self.env[model]._upsert_from_payload(instance, item)
             total_pages = result.get("pages")

@@ -361,6 +361,39 @@ class ShipStationSyncBase(models.AbstractModel):
             return False
         return False
 
+    @staticmethod
+    def _remote_store_id(data):
+        """The store a ShipStation V1 payload names, or "" when it names none.
+
+        Orders carry it at ``advancedOptions.storeId`` (a top-level ``storeId`` is tolerated). Shipments
+        carry no store at all: they are scoped by the ``storeId`` *query filter* of the request.
+        """
+        if not isinstance(data, dict):
+            return ""
+        value = data.get("storeId")
+        if value in (None, ""):
+            advanced = data.get("advancedOptions")
+            value = advanced.get("storeId") if isinstance(advanced, dict) else None
+        return "" if value in (None, "") else str(value).strip()
+
+    def _attributed_store_id(self, data):
+        """Store to record on a mirror: what the payload names, else the store the request was filtered by."""
+        return self._remote_store_id(data) or str(self.store_id or "").strip()
+
+    def _remote_store_matches(self, data):
+        """False only when the payload NAMES a store other than the configured one.
+
+        A payload that names no store is accepted: with a configured store the request itself was
+        filtered by it (orders, shipments and webhook look-ups all send ``storeId``).
+        """
+        configured = str(self.store_id or "").strip()
+        remote = self._remote_store_id(data)
+        return not (configured and remote and remote != configured)
+
+    def _is_only_instance_of_company(self):
+        return self.env["shipstation.instance"].sudo().with_context(active_test=False).search_count(
+            [("company_id", "=", self.company_id.id)]) == 1
+
     def _get_sync_window(self, last_sync_at, days_back=7):
         end_dt = fields.Datetime.now()
         start_dt = last_sync_at or (end_dt - timedelta(days=days_back))
@@ -558,13 +591,18 @@ class ShipStationSyncBase(models.AbstractModel):
                     raise UserError(_("ShipStation order has a conflicting store identity."))
                 return matches
 
-        # Carefully adopt pre-upgrade sales: exact external ID + company + store,
-        # and only those with no prior instance ownership.
+        # Carefully adopt pre-upgrade sales: exact external ID + company, and only those with no prior
+        # instance ownership. The published build recorded a blank store (ShipStation orders carry none at
+        # the top level), so a blank legacy store is accepted when this is the company's only connection:
+        # then ownership is unambiguous and an already-imported order is never imported twice.
         if order_id:
+            store_values = [str(store_id) if store_id else False]
+            if store_id and self._is_only_instance_of_company():
+                store_values.append(False)
             legacy = SaleOrder.search(company_domain + [
                 ("shipstation_instance_id", "=", False),
                 ("shipstation_order_id", "=", str(order_id)),
-                ("shipstation_store_id", "=", str(store_id) if store_id else False),
+                ("shipstation_store_id", "in", store_values),
             ], limit=2)
             if len(legacy) > 1:
                 raise UserError(_("Ambiguous legacy ShipStation order: manual reconciliation required."))

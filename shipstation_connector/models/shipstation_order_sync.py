@@ -289,9 +289,12 @@ class ShipStationOrderSync(models.Model):
         if customer_username:
             payload["customerUsername"] = customer_username
 
-        store_id = str(base.get("storeId") or source.get("storeId") or self.shipstation_store_id or self.instance_id.store_id or "").strip()
-        if store_id and store_id.isdigit():
-            payload["storeId"] = int(store_id)
+        if not known_id.isdigit():
+            # ShipStation takes the store at advancedOptions.storeId, and only when the order is created.
+            store_id = str(self.shipstation_store_id or self.instance_id._remote_store_id(source)
+                           or self.instance_id.store_id or "").strip()
+            if store_id.isdigit():
+                payload["advancedOptions"] = {"storeId": int(store_id)}
 
         bill_to = self._sanitize_address(source.get("billTo"))
         ship_to = self._sanitize_address(source.get("shipTo"))
@@ -902,7 +905,8 @@ class ShipStationOrderSync(models.Model):
         params = {}
         order_id = str(self.shipstation_order_id or payload.get("orderId") or "").strip()
         order_number = str(self.shipstation_order_number or payload.get("orderNumber") or "").strip()
-        store_id = str(self.shipstation_store_id or payload.get("storeId") or self.instance_id.store_id or "").strip()
+        store_id = str(self.shipstation_store_id or self.instance_id._remote_store_id(payload)
+                       or self.instance_id.store_id or "").strip()
 
         if order_id and order_id.isdigit():
             params["orderId"] = int(order_id)
@@ -955,7 +959,7 @@ class ShipStationOrderSync(models.Model):
         if not order_id:
             raise UserError(_("ShipStation order ID required to upsert the sync mirror."))
         order_number = order_data.get("orderNumber") or ""
-        store_id = str(order_data.get("storeId") or "")
+        store_id = instance._attributed_store_id(order_data)
         existing = self.search(
             [
                 ("shipstation_order_id", "=", order_id),
@@ -971,7 +975,10 @@ class ShipStationOrderSync(models.Model):
         order_date_val = overrides.get("order_date", order_data.get("orderDate"))
         status_val = overrides.get("status", order_data.get("orderStatus"))
         normalized_status = str(status_val or "").strip().lower()
-        customer_name_val = overrides.get("customer_name", order_data.get("customerName") or order_data.get("customerUsername"))
+        # The V1 Order model has no customerName: the buyer's name is billTo.name (or shipTo.name).
+        customer_name_val = overrides.get("customer_name", (
+            order_data.get("customerName") or (order_data.get("billTo") or {}).get("name")
+            or (order_data.get("shipTo") or {}).get("name") or order_data.get("customerUsername")))
         customer_email_val = overrides.get("customer_email", order_data.get("customerEmail"))
         vals = {
             "instance_id": instance.id,

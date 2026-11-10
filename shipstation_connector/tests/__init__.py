@@ -7,3 +7,4 @@ from . import test_label_flow
 from . import test_void_label
 from . import test_shipping_ops
 from . import test_upgrade
+from . import test_store_contract

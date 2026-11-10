@@ -58,6 +58,22 @@ company-scoped by record rules.
    because the V2 key is sent to it.
 5. Run **Sync Orders** and **Sync Shipments**, then work the queues in **Operations Home**.
 
+### How the store id is used
+
+Every order, shipment and webhook look-up request is filtered by the numeric store id you enter, so a
+connection only ever sees that store. ShipStation's V1 API is asymmetric about stores, and the connector
+follows it exactly:
+
+- **Orders** carry their store only at `advancedOptions.storeId` (there is no top-level `storeId`). An order
+  that names a different store is rejected; one that names none is trusted to the request filter.
+- **Shipments** carry no store at all, so they are scoped only by the `storeId` filter of the request.
+  A shipment that explicitly names another store is rejected.
+- **Pushing an order** assigns the store through `advancedOptions.storeId` **when the order is created**.
+  ShipStation cannot change the store of an existing order, so updates never send it. Without a store id
+  ShipStation puts a new order into the account's first manual store.
+- An empty store id means no store filter: every store of the account is read, and new orders go to the
+  account's first manual store. Set the id whenever the account has more than one store.
+
 ### Webhooks (V1)
 
 Set the system parameter `web.base.url` to your public **https** address. The **Webhook** tab then
@@ -107,7 +123,7 @@ tested on a database installed from the published build.
 | **The old `/shipstation/webhook` endpoint is disabled (404).** It accepted anonymous posts. | **Action required if you used webhooks:** open each connection > Webhook tab, copy the new callback URL and register it in ShipStation. |
 | Every connection receives its own webhook secret (a plain update would have given them all the same one). | Nothing. |
 | Shipments whose delivery already carries the same ShipStation shipment id are marked Linked. Others show as Pending. | Work the Pending ones in the Shipping Workbench (or leave them if they predate Odoo). |
-| Sale orders imported by the old version are recognised by exact ShipStation id and store; they never get duplicated. | Nothing. |
+| Sale orders imported by the old version are recognised by exact ShipStation id and never get duplicated. The old version recorded no store on them, so a blank store is accepted when the company has only one connection (otherwise ownership is ambiguous and they are left alone). Pending shipment placeholders with a blank store are adopted by their real shipment. | Nothing. |
 | Manual syncs now run as the integration, and only administrators can start them. | Give people the ShipStation Manager/Admin groups they need. |
 | Request logs older than 14 days (failures 90) and processed webhooks older than 30 days are purged by Odoo's autovacuum. | Export anything you must keep before upgrading. |
 

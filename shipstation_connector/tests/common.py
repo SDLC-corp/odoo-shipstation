@@ -224,11 +224,17 @@ class ShipStationFixtures:
 
     def order_payload(self, order_id=9001, number="SO-9001", store_id=111, status="awaiting_shipment",
                       modify="2026-11-05T09:30:00.0000000", sku="SS-SKU-1", qty=2, **extra):
+        """A V1 order exactly as ShipStation documents it: the store is ONLY at advancedOptions.storeId
+        (``store_id=None`` omits it), and there is no top-level storeId, customerName or currencyCode."""
+        advanced = {"warehouseId": 1, "source": "Shopify"}
+        if store_id is not None:
+            advanced["storeId"] = store_id
         payload = {
-            "orderId": order_id, "orderNumber": number, "storeId": store_id,
+            "orderId": order_id, "orderNumber": number, "advancedOptions": advanced,
             "orderStatus": status, "orderDate": "2026-11-05T08:00:00.0000000",
-            "modifyDate": modify, "customerName": "Import Customer",
-            "customerEmail": "import@example.test", "orderTotal": 25.0, "currencyCode": "USD",
+            "createDate": "2026-11-05T07:59:00.0000000", "customerUsername": "import_buyer",
+            "modifyDate": modify,
+            "customerEmail": "import@example.test", "orderTotal": 25.0,
             "billTo": {"name": "Import Customer", "street1": "1 Main St", "city": "Austin",
                        "state": "TX", "postalCode": "78701", "country": "US"},
             "shipTo": {"name": "Import Customer", "street1": "1 Main St", "city": "Austin",
@@ -238,10 +244,12 @@ class ShipStationFixtures:
         payload.update(extra)
         return payload
 
-    def shipment_payload(self, shipment_id=5001, order_id=9001, number="SO-9001", store_id=111,
+    def shipment_payload(self, shipment_id=5001, order_id=9001, number="SO-9001",
                          tracking="TRK123", voided=False, **extra):
+        """A V1 shipment as ShipStation documents it: it names NO store (advancedOptions is null);
+        the only store scoping is the storeId query filter of the request."""
         payload = {
-            "shipmentId": shipment_id, "orderId": order_id, "orderNumber": number, "storeId": store_id,
+            "shipmentId": shipment_id, "orderId": order_id, "orderNumber": number, "advancedOptions": None,
             "trackingNumber": tracking, "carrierCode": "ups", "serviceCode": "ups_ground",
             "shipDate": "2026-11-05", "createDate": "2026-11-05T08:00:00.0000000",
             "voided": voided, "voidDate": "2026-11-05T10:00:00.0000000" if voided else None,
