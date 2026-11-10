@@ -8,7 +8,7 @@ This branch is the 19.0.1.1.0 hardening ported to Odoo 15 Community (Python 3.8)
 - **source-tested:** `devtools/run_offline_tests.py` under Python 3.8: 236 tests, 0 failures (234 from 19.0, contract
   checks updated to the Odoo 15 spellings, plus 2 for the Odoo 15 webhook dispatch and JSON responses).
 - **runtime-tested:** Odoo 15 test suite (169 tests: the 167 from 19.0 plus a secret-field oracle test and an asset
-  bundle test) passes on a fresh database installed without demo data, and on a database installed from the published
+  bundle test) passes on fresh databases installed with and without demo data, and on a database installed from the published
   15.0.1.0.0 build, seeded through its own code and upgraded (`migrations/15.0.1.1.0`: distinct webhook secrets, provably
   linked historical shipments, blank order currencies filled). PostgreSQL 18, HTTP mocked.
 - **not done on 15:** no browser pass (the Owl 1 Operations Home, dashboard and chatbot are checked by the asset test and a
