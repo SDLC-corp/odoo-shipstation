@@ -185,6 +185,14 @@ class TestRuntimeIntegrity(ShipStationCommon):
         self.assertIn("action_create_label", manager)
         self.assertIn("action_pull_from_shipstation", manager)
 
+    def test_exception_board_cards_open_their_shipment(self):
+        # Odoo 15 kanban cards only open the record when the card root has oe_kanban_global_click.
+        arch = self.env["shipstation.shipment.sync"].fields_view_get(
+            self.env.ref("shipstation_connector.view_shipstation_s08_exception_kanban").id, "kanban")["arch"]
+        box = etree.fromstring(arch).xpath("//t[@t-name='kanban-box']/div")
+        self.assertTrue(box)
+        self.assertIn("oe_kanban_global_click", box[0].get("class", "").split())
+
     def test_list_screens_explain_themselves_when_empty(self):
         """A fresh install must tell the user what each empty screen is for and what to do next."""
         for xmlid in (
