@@ -55,10 +55,17 @@ class HttpRouter:
     def __init__(self):
         self.routes = []
         self.calls = []
+        self.defaults = []
 
     def reset(self):
-        self.routes = []
+        """Forget calls and test routes; standing defaults (see ``add_default``) stay registered."""
+        self.routes = [dict(route) for route in self.defaults]
         self.calls = []
+
+    def add_default(self, method, path, response=None, **kwargs):
+        """A route that survives ``reset()``; a test can still override it with ``add``."""
+        self.add(method, path, response, **kwargs)
+        self.defaults.append(self.routes[-1])
 
     def add(self, method, path, response=None, status=200, headers=None, callback=None, exc=None,
             sequence=None):
@@ -273,6 +280,10 @@ class ShipStationCommon(ShipStationFixtures, TransactionCase):
         super().setUp()
         self.http.reset()
         self.sleep.reset_mock()
+        # Label purchases first check the account has a Ship From location (tests may override this route).
+        if not self.http.defaults:
+            self.http.add_default("GET", "/warehouses", [{"warehouseId": 1, "warehouseName": "Main", "isDefault": True}])
+            self.http.reset()
 
 
 class ShipStationHttpCommon(ShipStationFixtures, HttpCase):

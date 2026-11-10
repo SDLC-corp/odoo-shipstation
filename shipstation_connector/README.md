@@ -114,6 +114,8 @@ ways. During the one repeated hour when daylight saving ends the sync window is 
 | "Request Sent - Outcome Unknown" | See the label rule above. |
 | Webhook URL empty | `web.base.url` is not https. |
 | 429 / rate limited | ShipStation allows 40 calls per minute per key; the connector waits at most 45 s per call. |
+| "no Ship From location" when buying a label | ShipStation needs a Ship From location before it can create labels. Add one in ShipStation (Settings > Shipping > Ship From Locations). No label was requested. |
+| Push fails with HTTP 404 for one order | The order was deleted in ShipStation; ShipStation will not accept it again under the same key. Recreate it in ShipStation or leave it. |
 
 ## Upgrading from 19.0.1.0.0 (the build published before this release)
 

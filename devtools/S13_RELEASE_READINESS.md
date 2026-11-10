@@ -120,6 +120,11 @@ Odoo 19 baseline.
     order with a clear message and nothing is sent) and weights are Weight objects in the database's unit (kilograms are sent as
     grams, pounds as pounds; no weight when the product has none). The undocumented product push (`POST /products`, which V1 does not
     offer) now refuses explicitly. Six tests in `tests/test_store_contract.py` (`TestRealApiItemFormat`) pin the accepted format.
+19. **A missing Ship From location locked orders as "outcome unknown" (found live).** Without one, ShipStation answers
+    `createlabelfororder` with HTTP 500 "No warehouse has been selected". A 500 is rightly treated as "a label may have been bought",
+    so the order was locked for an administrator although nothing could have been bought. The label button now reads `GET /warehouses`
+    first (read-only, before the durable claim) and stops with an actionable message; locked or bought orders skip the check. Verified
+    live: message shown, order not locked, no paid request sent, carrier balance unchanged.
 
 ### Live API verification (real ShipStation account, owner-approved, 2026-11-10)
 
@@ -135,6 +140,8 @@ Run from a disposable Odoo 19 database with a guard that let through only GETs, 
 | The real order as ShipStation stores it | **no top-level `storeId`**, store only at `advancedOptions.storeId` (= configured store); **no `customerName`, no `currencyCode`**; `billTo.name` present. Confirms defects 16 and 17 against reality |
 | Re-sync of that order (`_sync_orders`, cron mode) | updated the same sale order (no duplicate); mirror store, currency (company currency) and customer name filled; checkpoint advanced |
 | Pacific time | an order dated 08:32 UTC came back as `00:32` (PST), as the converter assumes |
+| Label purchase (owner-approved, `testLabel=true`, USPS only) | not possible on this account: no Ship From location (defect 19); the pre-flight stopped it cleanly, balance 0.00 before and after |
+| Order delete (`DELETE /orders/{id}`) | 200 "The requested order has been deleted"; re-pushing the same order key afterwards returns 404 (README troubleshooting) |
 
 Not verified live: shipments (none exist without a label), label purchase, void, webhook delivery, V2 key.
 
