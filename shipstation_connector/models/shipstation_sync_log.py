@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
+from odoo.tools.sql import create_index
 
 
 class ShipStationSyncLog(models.Model):
@@ -22,6 +23,12 @@ class ShipStationSyncLog(models.Model):
     error_message = fields.Text()
     retry_count = fields.Integer(default=0)
     last_retry_at = fields.Datetime()
+
+    def init(self):
+        super().init()
+        # list order, dashboard 24 h window and autovacuum purge all filter or sort on create_date
+        # (Odoo 18 has no models.Index; same index name as the 19.0 build)
+        create_index(self.env.cr, "shipstation_sync_log__create_date_idx", self._table, ["create_date"])
 
     @api.autovacuum
     def _gc_old_requests(self):

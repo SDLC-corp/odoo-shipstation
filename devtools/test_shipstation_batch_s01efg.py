@@ -37,13 +37,19 @@ def load_python_module(path, name, extra=None):
     fake_odoo = types.ModuleType("odoo")
     fake_odoo.api = SimpleNamespace(**{_n: (lambda *a, **k: a[0] if len(a) == 1 and callable(a[0]) and not k else (lambda fn: fn)) for _n in ("model", "model_create_multi", "depends", "depends_context", "constrains", "autovacuum", "onchange", "returns")})
     fake_odoo.fields = fields
-    fake_odoo.models = SimpleNamespace(Model=object)
+    fake_odoo.models = SimpleNamespace(Model=object, Index=lambda *a, **k: None,
+                                       Constraint=lambda *a, **k: None)
     fake_odoo._ = lambda text: text
     fake_exc = types.ModuleType("odoo.exceptions")
     fake_exc.UserError = type("UserError", (Exception,), {})
     fake_exc.AccessError = type("AccessError", (Exception,), {})
     fake_exc.ValidationError = type("ValidationError", (Exception,), {})
-    modules = {"odoo": fake_odoo, "odoo.exceptions": fake_exc}
+    fake_tools = types.ModuleType("odoo.tools")
+    fake_sql = types.ModuleType("odoo.tools.sql")
+    fake_sql.create_index = lambda *a, **k: None   # 18.0 creates the create_date index in init()
+    fake_tools.sql = fake_sql
+    fake_odoo.tools = fake_tools
+    modules = {"odoo": fake_odoo, "odoo.exceptions": fake_exc, "odoo.tools": fake_tools, "odoo.tools.sql": fake_sql}
     if extra:
         modules.update(extra)
     with patch.dict(sys.modules, modules):
