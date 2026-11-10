@@ -1,19 +1,27 @@
 <odoo>
-    <record id="group_shipstation_admin" model="res.groups">
-        <field name="name">ShipStation Admin</field>
-        <field name="category_id" ref="base.module_category_inventory"/>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    <!-- Odoo 15 has no res.groups.privilege: the role chain lives in its own category under
+         Inventory, so the user form shows one "ShipStation" selection (Read Only < Manager < Admin). -->
+    <record id="module_category_shipstation" model="ir.module.category">
+        <field name="name">ShipStation</field>
+        <field name="parent_id" ref="base.module_category_inventory"/>
+        <field name="sequence">40</field>
     </record>
-
-    <record id="group_shipstation_manager" model="res.groups">
-        <field name="name">ShipStation Manager</field>
-        <field name="category_id" ref="base.module_category_inventory"/>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-
     <record id="group_shipstation_user_readonly" model="res.groups">
         <field name="name">ShipStation User (Read Only)</field>
-        <field name="category_id" ref="base.module_category_inventory"/>
+        <field name="category_id" ref="module_category_shipstation"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    <record id="group_shipstation_manager" model="res.groups">
+        <field name="name">ShipStation Manager</field>
+        <field name="category_id" ref="module_category_shipstation"/>
+        <field name="implied_ids" eval="[(4, ref('group_shipstation_user_readonly'))]"/>
+    </record>
+    <record id="group_shipstation_admin" model="res.groups">
+        <field name="name">ShipStation Admin</field>
+        <field name="category_id" ref="module_category_shipstation"/>
+        <field name="implied_ids" eval="[(4, ref('group_shipstation_manager'))]"/>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_shipstation_admin'))]"/>
     </record>
 </odoo>

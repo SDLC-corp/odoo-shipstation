@@ -1,0 +1,167 @@
+"""Runtime security: ACLs, record rules, secret fields, RPC entry points and multi-company."""
+from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.tests.common import tagged
+
+from ..services.chatbot_service import ShipStationSimpleChatbotService
+from .common import ShipStationCommon
+
+
+@tagged("post_install", "-at_install", "shipstation")
+class TestSecurityRuntime(ShipStationCommon):
+
+    # ---- secrets -------------------------------------------------------------
+    def test_credentials_are_hidden_from_non_admins(self):
+        secret_fields = ("api_key", "api_secret", "v2_api_key", "webhook_token", "webhook_target_url")
+        for user in (self.user_manager, self.user_reader):
+            instance = self.instance.with_user(user)
+            visible = instance.fields_get()
+            for name in secret_fields:
+                self.assertNotIn(name, visible, "%s can see field %s" % (user.login, name))
+                with self.assertRaises(AccessError):
+                    instance.read([name])
+
+    def test_admin_can_read_credentials(self):
+        self.assertEqual(self.instance.with_user(self.user_admin).api_key, "TEST-KEY-A")
+
+    def test_secret_values_never_appear_in_list_or_search_results(self):
+        found = self.instance.with_user(self.user_manager).search_read([], ["name"])
+        self.assertTrue(found)
+        self.assertNotIn("TEST-KEY", str(found))
+        with self.assertRaises(AccessError):
+            self.instance.with_user(self.user_manager).search([("api_key", "=", "TEST-KEY-A")])
+
+    def test_secret_fields_cannot_be_probed_by_grouping_sorting_or_related_paths(self):
+        """Odoo 15 does not check field groups in read_group, sort orders or dotted domains: the
+        instance model enforces it itself so no role below Admin can use a secret as an oracle."""
+        Instance = self.instance.with_user(self.user_manager)
+        probes = (
+            lambda: Instance.read_group([], ["api_key"], ["api_key"]),
+            lambda: Instance.read_group([("webhook_token", "!=", False)], ["name"], ["name"]),
+            lambda: Instance.search([], order="api_secret desc"),
+            lambda: self.env["shipstation.order.sync"].with_user(self.user_manager).search(
+                [("instance_id.api_key", "=", "TEST-KEY-A")]),
+        )
+        for index, probe in enumerate(probes):
+            with self.subTest(probe=index), self.assertRaises(AccessError):
+                probe()
+        # the admin keeps full use of the fields
+        self.assertTrue(self.instance.with_user(self.user_admin).search([("api_key", "=", "TEST-KEY-A")]))
+
+    # ---- privileged instance actions -------------------------------------------
+    def test_non_admin_cannot_run_instance_operations_and_no_http_leaves(self):
+        before = len(self.http.calls)
+        actions = ("action_test_v1_connection", "action_test_v2_connection", "action_sync_orders",
+                   "action_sync_shipments", "action_sync_products", "action_sync_customers",
+                   "action_sync_inventory", "action_push_orders", "action_push_products",
+                   "action_push_customers", "action_discover_carrier_catalog",
+                   "action_rotate_v1_webhook_token")
+        for user in (self.user_manager, self.user_reader, self.user_plain):
+            instance = self.instance.with_user(user)
+            for action in actions:
+                with self.subTest(user=user.login, action=action), self.assertRaises(AccessError):
+                    getattr(instance, action)()
+        self.assertEqual(len(self.http.calls), before, "A denied action still reached the network")
+
+    def test_api_helpers_refuse_readers(self):
+        reader = self.instance.with_user(self.user_reader)
+        with self.assertRaises(AccessError):
+            reader._ss_request("GET", "/stores")
+        with self.assertRaises(AccessError):
+            reader._ss_v2_request("GET", "/carriers")
+        self.assertFalse(self.http.calls)
+
+    # ---- shipping operations -----------------------------------------------------
+    def test_reader_and_plain_user_cannot_quote_or_buy_labels(self):
+        order = self.make_order_sync(
+            carrier_code="ups", service_code="ups_ground", package_code="package")
+        for user in (self.user_reader, self.user_plain):
+            rec = order.with_user(user)
+            for action in ("action_get_rates", "action_create_label", "action_select_best_rate"):
+                with self.subTest(user=user.login, action=action), self.assertRaises(AccessError):
+                    getattr(rec, action)()
+        self.assertFalse(self.http.calls)
+
+    def test_batch_and_return_state_cannot_be_forged_by_direct_write(self):
+        order = self.make_order_sync()
+        batch = self.env["shipstation.fulfillment.batch"].with_user(self.user_manager).create(
+            {"instance_id": self.instance.id})
+        with self.assertRaises(AccessError):
+            batch.write({"state": "ready"})
+        case = self.env["shipstation.return.case"].with_user(self.user_manager).create(
+            {"instance_id": self.instance.id, "order_id": order.id})
+        for vals in ({"state": "approved"}, {"approved_by_id": self.user_manager.id}):
+            with self.assertRaises(AccessError):
+                case.write(vals)
+        # a manager may submit but only an admin may approve
+        case.env["shipstation.return.case.line"].create({"case_id": case.id, "sku": "X", "quantity": 1})
+        case.action_submit_review()
+        with self.assertRaises(AccessError):
+            case.action_approve_manual_handling()
+        case.with_user(self.user_admin).action_approve_manual_handling()
+        self.assertEqual(case.state, "approved")
+        self.assertEqual(case.approved_by_id, self.user_admin)
+
+    # ---- multi-company ---------------------------------------------------------------
+    def test_company_isolation_for_every_company_scoped_model(self):
+        order_b = self.make_order_sync(self.instance_b, shipstation_order_id="7001",
+                                       shipstation_order_number="SO-B-7001")
+        ship_b = self.make_shipment_sync(self.instance_b, shipstation_order_id="7001")
+        for user, own, foreign in ((self.user_manager, self.instance, self.instance_b),
+                                   (self.user_manager_b, self.instance_b, self.instance)):
+            Instance = self.env["shipstation.instance"].with_user(user)
+            visible = Instance.search([])
+            self.assertIn(own, visible, user.login)
+            self.assertNotIn(foreign, visible, user.login)
+            self.assertEqual(visible.mapped("company_id"), user.company_id, "only the user's own company")
+            with self.assertRaises(AccessError):
+                foreign.with_user(user).read(["name"])
+        for record in (order_b, ship_b):
+            with self.assertRaises(AccessError):
+                record.with_user(self.user_manager).read(["id"])
+            self.assertFalse(
+                self.env[record._name].with_user(self.user_manager).search([("id", "=", record.id)]))
+
+    def test_cross_company_batch_and_return_creation_is_rejected(self):
+        order_b = self.make_order_sync(self.instance_b, shipstation_order_id="7002")
+        with self.assertRaises(AccessError):
+            self.env["shipstation.fulfillment.batch"].with_user(self.user_manager).create(
+                {"instance_id": self.instance_b.id})
+        # the company rule hides the foreign order from the manager ...
+        with self.assertRaises(AccessError):
+            order_b.with_user(self.user_manager).read(["id"])
+        # ... and a return that mixes instances is rejected by the model constraint
+        with self.assertRaises(ValidationError):
+            self.env["shipstation.return.case"].with_user(self.user_admin).create(
+                {"instance_id": self.instance.id, "order_id": order_b.id})
+
+    # ---- AI assistant (chatbot) ----------------------------------------------------------
+    def test_chatbot_denies_users_without_shipstation_access(self):
+        self.make_order_sync(shipstation_order_number="SO-SECRET-1", customer_name="Secret Customer")
+        for user in (self.user_plain, self.user_portal):
+            service = ShipStationSimpleChatbotService(self.env(user=user))
+            for prompt in ("recent orders", "recent shipments", "low stock", "sync status",
+                           "pending tracking", "today shipments"):
+                with self.subTest(user=user.login, prompt=prompt), self.assertRaises(AccessError):
+                    service.get_reply(prompt)
+
+    def test_chatbot_tolerates_malformed_input(self):
+        service = ShipStationSimpleChatbotService(self.env(user=self.user_reader))
+        for junk in (None, 12345, {"a": 1}, ["x"], "", "x" * 100000, "\u0000\ud83d"):
+            with self.subTest(junk=str(junk)[:20]):
+                self.assertTrue(service.get_reply(junk)["reply"])
+
+    def test_chatbot_respects_company_isolation(self):
+        self.make_order_sync(self.instance, shipstation_order_id="1", shipstation_order_number="SO-A-1")
+        self.make_order_sync(self.instance_b, shipstation_order_id="2",
+                             shipstation_order_number="SO-LEAK-B", customer_name="Leaky B")
+        reply = ShipStationSimpleChatbotService(self.env(user=self.user_manager)).get_reply(
+            "recent orders")["reply"]
+        self.assertIn("SO-A-1", reply)
+        self.assertNotIn("SO-LEAK-B", reply)
+        self.assertNotIn("Leaky B", reply)
+
+    def test_chatbot_reader_gets_answers_without_privileged_data(self):
+        self.make_shipment_sync(tracking_number="TRK-READER")
+        reply = ShipStationSimpleChatbotService(self.env(user=self.user_reader)).get_reply(
+            "recent shipments")["reply"]
+        self.assertIn("TRK-READER", reply)
