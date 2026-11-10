@@ -2,7 +2,7 @@ import ast
 
 from datetime import timedelta
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, tools, _
 from odoo.exceptions import AccessError, UserError
 
 
@@ -36,6 +36,11 @@ class ShipStationSyncLog(models.Model):
     def _compute_display_name(self):
         for rec in self:
             rec.display_name = rec._shipstation_display_label()
+
+    def init(self):
+        # list order, dashboard 24 h window and autovacuum purge all filter or sort on create_date
+        # (Odoo 16 has no models.Index: create it here, idempotently, under the name 19 uses)
+        tools.create_index(self.env.cr, "shipstation_sync_log__create_date_idx", self._table, ["create_date"])
 
     def _shipstation_display_label(self):
         return "%s %s (%s)" % (self.method or "", self.endpoint or _("request"), self.status or "")

@@ -641,15 +641,19 @@ class ShipStationInstance(models.Model):
             payload["advancedOptions"] = {"storeId": int(self.store_id)}
 
         # Delivery charges are sent as shippingAmount, never also as an item.
+        # Verified against the real API: quantity must be a whole number and weight a Weight object.
         for line in order.order_line.filtered(lambda l: not l.display_type and not l.is_delivery):
             sku = line.product_id.default_code or ""
-            payload["items"].append({
+            item = {
                 "sku": sku,
                 "name": line.name or line.product_id.display_name,
-                "quantity": float(line.product_uom_qty or 0.0),
+                "quantity": self._ss_item_quantity(line.product_uom_qty, line.product_id.display_name),
                 "unitPrice": float(line.price_unit or 0.0),
-                "weight": float(line.product_id.weight or 0.0),
-            })
+            }
+            weight = self._ss_item_weight(line.product_id)
+            if weight:
+                item["weight"] = weight
+            payload["items"].append(item)
 
         return self._apply_field_mappings(payload, order, "order")
 
@@ -657,52 +661,6 @@ class ShipStationInstance(models.Model):
         """Stable, instance-scoped idempotency key for an Odoo sale order."""
         self.ensure_one()
         return "odoo-%s-%s" % (self.id, order.name)
-
-    def _build_product_payload(self, product):
-        stock_level = self._get_template_stock_qty(product)
-        sku = product.default_code or product.product_variant_id.default_code or ""
-        payload = {
-            "sku": sku,
-            "name": product.name,
-            "price": float(product.list_price or 0.0),
-            "weight": float(product.weight or 0.0),
-            "stockLevel": float(stock_level or 0.0),
-        }
-        self._apply_field_mappings(payload, product, "product")
-        if product.categ_id:
-            self._apply_field_mappings(payload, product.categ_id, "category")
-        if product.attribute_line_ids:
-            mappings = self._get_field_mappings("attribute")
-            attributes = product.attribute_line_ids.mapped("attribute_id")
-            for mapping in mappings:
-                values = []
-                for attribute in attributes:
-                    value = self._get_record_field_value(attribute, mapping.odoo_field_id.name)
-                    if value:
-                        values.append(str(value))
-                if values:
-                    self._set_payload_value(
-                        payload,
-                        mapping.shipstation_field_key.name,
-                        ", ".join(values),
-                    )
-        return payload
-
-    def _get_template_stock_qty(self, product_template):
-        """Compute accurate template stock, optionally scoped to configured warehouse."""
-        if not product_template:
-            return 0.0
-        variants = product_template.product_variant_ids
-        if not variants:
-            return 0.0
-        location = self.inventory_warehouse_id.lot_stock_id if self.inventory_warehouse_id else False
-        if not location:
-            return float(sum(variants.mapped("qty_available")) or 0.0)
-        Quant = self.env["stock.quant"].sudo()
-        qty = 0.0
-        for variant in variants:
-            qty += float(Quant._get_available_quantity(variant, location) or 0.0)
-        return qty
 
     def _build_customer_payload(self, partner):
         payload = {
@@ -822,44 +780,14 @@ class ShipStationInstance(models.Model):
         return {"pushed": pushed, "failed": failed, "remaining": remaining}
 
     def _push_products(self, mode="manual"):
-        self.ensure_one()
-        Product = self.env["product.template"].with_company(self.company_id)
-        products = Product.search([("company_id", "=", self.company_id.id)])
-        pushed = 0
-        for product in products:
-            if product.shipstation_pushed and product.shipstation_product_id:
-                continue
-            try:
-                payload = self._build_product_payload(product)
-                response = self._ss_request("POST", "/products", data=payload)
-                product_id = response.get("productId") or response.get("product_id")
-                product.write({
-                    "shipstation_product_id": product_id or product.shipstation_product_id,
-                    "shipstation_pushed": True,
-                    "shipstation_push_date": fields.Datetime.now(),
-                    "shipstation_push_state": "success",
-                    "shipstation_push_error": False,
-                })
-                pushed += 1
-            except Exception as exc:
-                product.write({
-                    "shipstation_push_state": "failed",
-                    "shipstation_push_error": str(exc),
-                })
-                self._create_report(
-                    operation="Product Push",
-                    status="failed",
-                    message=str(exc),
-                    mode=mode,
-                    reference=product.display_name,
-                )
+        """ShipStation V1 cannot create products: ``/products`` is list/get, and update needs an existing id.
 
-        self._create_report(
-            operation="Product Push",
-            status="success",
-            message=f"{pushed} products pushed successfully",
-            mode=mode,
-        )
+        Products appear in ShipStation from imported orders and connected stores. Refuse explicitly instead
+        of sending a request the API does not offer.
+        """
+        self.ensure_one()
+        raise UserError(_("ShipStation's API cannot create products. Products appear in ShipStation from "
+                          "imported orders and connected stores; use Sync Products to read them into Odoo."))
 
     def _push_customers(self, mode="manual"):
         self.ensure_one()

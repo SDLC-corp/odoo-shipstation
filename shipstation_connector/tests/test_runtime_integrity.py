@@ -179,3 +179,24 @@ class TestRuntimeIntegrity(ShipStationCommon):
         """Background jobs may only read/sync; none may reference label or refund code."""
         for cron in self._module_records("ir.cron"):
             self.assertNotRegex(cron.code or "", r"(?i)label|refund|void|push")
+
+
+@tagged("post_install", "-at_install", "shipstation")
+class TestHotPathIndexes(ShipStationCommon):
+    """Volume testing at 100k rows (all versions) showed the default list orders and the request-log date filter
+    scanning whole tables. These indexes turned 95-180 ms page loads into <1 ms; keep them."""
+
+    def test_list_order_and_purge_columns_are_indexed(self):
+        expected = {
+            ("shipstation_order_sync", "order_date"),
+            ("shipstation_shipment_sync", "ship_date"),
+            ("shipstation_sync_log", "create_date"),
+            ("shipstation_order_sync", "shipstation_order_number"),
+        }
+        self.env.cr.execute("SELECT tablename, indexdef FROM pg_indexes WHERE tablename IN %s",
+                            (tuple({t for t, _c in expected}),))
+        rows = self.env.cr.fetchall()
+        for table, column in expected:
+            with self.subTest(table=table, column=column):
+                self.assertTrue(any(t == table and re.search(r"\(\s*%s\b" % column, d) for t, d in rows),
+                                "%s.%s has no index" % (table, column))

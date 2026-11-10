@@ -8,6 +8,7 @@ export class ShipStationSimpleChatbot extends Component {
     setup() {
         this.menuService = useService("menu");
         this.rpc = useService("rpc");
+        this.user = useService("user");
         this.state = useState({
             isVisible: this.isShipStationApp(),
             isOpen: false,
@@ -74,7 +75,11 @@ export class ShipStationSimpleChatbot extends Component {
         this.state.input = "";
         this.state.isLoading = true;
         try {
-            const response = await this.rpc("/shipstation/ai/chatbot/message", { message });
+            // Send the companies active in the switcher: the rpc service sends no client context.
+            const response = await this.rpc("/shipstation/ai/chatbot/message", {
+                message,
+                company_ids: this.user.context.allowed_company_ids || [],
+            });
             this.state.messages.push({
                 role: "bot",
                 text: (response && response.reply) || "I'm here to help with ShipStation connector questions.",
