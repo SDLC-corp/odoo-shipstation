@@ -4,7 +4,7 @@ import logging
 import requests
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 _logger = logging.getLogger(__name__)
@@ -22,6 +22,24 @@ class ShipStationInventory(models.Model):
     sku = fields.Char(index=True)
     name = fields.Char()
     stock_level = fields.Float()
+    remote_stock_verified = fields.Boolean(
+        string="Remote Quantity Verified", readonly=True, default=False,
+        help="True only when this sync received an explicit ShipStation inventory quantity."
+    )
+    odoo_stock_level = fields.Float(string="Odoo Available (Snapshot)", readonly=True)
+    stock_difference = fields.Float(string="Remote - Odoo", readonly=True)
+    reconciliation_state = fields.Selection(
+        [
+            ("no_warehouse", "Select a Warehouse"),
+            ("unverified", "Remote Quantity Unverified"),
+            ("missing_sku", "SKU Missing"),
+            ("product_missing", "Odoo Product Missing"),
+            ("ambiguous_sku", "Ambiguous Odoo SKU"),
+            ("match", "Quantities Match"),
+            ("difference", "Quantity Difference"),
+        ], string="Reconciliation", readonly=True, default="unverified", index=True,
+    )
+    reconciled_at = fields.Datetime(string="Last Compared", readonly=True)
     stock_status = fields.Selection(
         [("in_stock", "In stock"), ("out_of_stock", "Out of stock")],
         compute="_compute_stock_status",
@@ -108,7 +126,7 @@ class ShipStationInventory(models.Model):
 
     def _fetch_v2_product_payload(self, instance, sku):
         sku = str(sku or "").strip()
-        api_key = str(instance.api_key or "").strip()
+        api_key = str(instance._get_shipstation_auth_record().v2_api_key or "").strip()
         if not sku or not api_key:
             return {}, "missing_credentials"
         url = "%s/v2/products" % self._inventory_api_base_url(instance)
@@ -155,7 +173,7 @@ class ShipStationInventory(models.Model):
     def _fetch_v2_inventory_payload(self, instance, sku, product_id=None):
         sku = str(sku or "").strip()
         product_id = str(product_id or "").strip()
-        api_key = str(instance.api_key or "").strip()
+        api_key = str(instance._get_shipstation_auth_record().v2_api_key or "").strip()
         if not api_key:
             _logger.info(
                 "ShipStation inventory auth missing for instance=%s sku=%s product_id=%s",
@@ -270,9 +288,6 @@ class ShipStationInventory(models.Model):
                 [("instance_id", "=", instance.id), ("sku", "=", sku)],
                 limit=1,
             )
-        if existing and float(existing.stock_level or 0.0) > 0.0:
-            return max(float(existing.stock_level or 0.0), 0.0), {}, False
-
         inventory_payload, issue = self._fetch_v2_inventory_payload(instance, sku, product_id=product_id)
         if inventory_payload:
             inventory_stock, inventory_source = self._extract_stock_value_and_source(inventory_payload)
@@ -300,9 +315,10 @@ class ShipStationInventory(models.Model):
             product_issue or "none",
         )
         final_issue = issue or product_issue
-        if existing and final_issue in ("missing_credentials", "invalid_credentials"):
-            return float(existing.stock_level or 0.0), {}, final_issue
-        return None, {}, final_issue
+        if existing:
+            # Preserve cached quantity without reporting it as freshly verified.
+            return float(existing.stock_level or 0.0), {}, final_issue or "unresolved"
+        return None, {}, final_issue or "unresolved"
 
     def _upsert_from_payload(self, instance, product_data):
         product_id = str(product_data.get("productId") or product_data.get("product_id") or "").strip()
@@ -335,11 +351,13 @@ class ShipStationInventory(models.Model):
             issue or "none",
             existing.id if existing else False,
         )
+        verified = stock_level is not None and not issue
         if stock_level is None and existing:
             stock_level = float(existing.stock_level or 0.0)
         if stock_level is None:
             stock_level = 0.0
         vals = {
+            "remote_stock_verified": bool(verified),
             "instance_id": instance.id,
             "shipstation_product_id": product_id or False,
             "sku": sku or False,
@@ -379,14 +397,69 @@ class ShipStationInventory(models.Model):
         )
         return created
 
+    def _snapshot_odoo_inventory(self, instance):
+        """Compare remote quantity with a same-company warehouse; never adjust Odoo stock.
+
+        No warehouse, ambiguous SKU, or unverified remote quantity must not be
+        presented as an actionable stock difference. The snapshot is informational.
+        """
+        self.ensure_one()
+        instance.ensure_one()
+        self.check_access("write")
+        instance.check_access("read")
+        warehouse = instance.inventory_warehouse_id
+        values = {
+            "odoo_stock_level": 0.0,
+            "stock_difference": 0.0,
+            "reconciled_at": fields.Datetime.now(),
+        }
+        if not warehouse:
+            values["reconciliation_state"] = "no_warehouse"
+        elif warehouse.company_id.id != instance.company_id.id:
+            raise UserError(_("Inventory warehouse must belong to the ShipStation instance company."))
+        elif not self.remote_stock_verified:
+            values["reconciliation_state"] = "unverified"
+        elif not self.sku:
+            values["reconciliation_state"] = "missing_sku"
+        else:
+            products = self.env["product.product"].with_company(instance.company_id).search(
+                [
+                    ("default_code", "=", self.sku),
+                    ("company_id", "in", [False, instance.company_id.id]),
+                ], limit=2,
+            )
+            if not products:
+                values["reconciliation_state"] = "product_missing"
+            elif len(products) != 1:
+                values["reconciliation_state"] = "ambiguous_sku"
+            else:
+                product = products[0]
+                quant_model = self.env["stock.quant"].sudo().with_company(instance.company_id)
+                available = float(quant_model._get_available_quantity(
+                    product, warehouse.lot_stock_id,
+                ) or 0.0)
+                difference = float(self.stock_level or 0.0) - available
+                values.update({
+                    "odoo_stock_level": available,
+                    "stock_difference": difference,
+                    "reconciliation_state": "difference" if abs(difference) > 0.0001 else "match",
+                })
+        self.write(values)
+        return values["reconciliation_state"]
+
+    def _require_inventory_sync_admin(self):
+        if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
+            raise AccessError(_("Only ShipStation administrators can synchronize inventory."))
+
     def action_refresh_inventory(self):
+        self._require_inventory_sync_admin()
         instances = self.mapped("instance_id")
         if not instances:
             instances = self.env["shipstation.instance"].search([("active", "=", True)])
         if not instances:
             raise UserError(_("No active ShipStation instance found."))
         for instance in instances:
-            instance.with_context(suppress_toast=True)._sync_inventory(mode="manual")
+            instance.sudo().with_context(suppress_toast=True)._sync_inventory(mode="manual")
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
@@ -399,6 +472,7 @@ class ShipStationInventory(models.Model):
         }
 
     def action_update_inventory(self):
+        self._require_inventory_sync_admin()
         self.ensure_one()
         if not self.instance_id:
             raise UserError(_("Missing ShipStation instance."))

@@ -1,0 +1,192 @@
+<odoo>
+    <record id="view_shipstation_s07_batch_list" model="ir.ui.view">
+        <field name="name">shipstation.fulfillment.batch.list</field>
+        <field name="model">shipstation.fulfillment.batch</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="instance_id"/>
+                <field name="company_id"/>
+                <field name="operator_id"/>
+                <field name="state"/>
+                <field name="last_reviewed_at"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_shipstation_s07_batch_form" model="ir.ui.view">
+        <field name="name">shipstation.fulfillment.batch.form</field>
+        <field name="model">shipstation.fulfillment.batch</field>
+        <field name="arch" type="xml">
+            <form string="Fulfillment Preparation Batch">
+                <header>
+                    <button name="action_refresh_readiness" type="object" string="Recheck All Orders"
+                            class="btn-primary" invisible="state == 'closed'"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+                    <button name="action_close_batch" type="object" string="Close Batch"
+                            invisible="state == 'closed'"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+                    <button name="action_reopen_batch" type="object" string="Reopen Batch"
+                            invisible="state != 'closed'"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,review,ready,closed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="instance_id" readonly="state != 'draft'"/>
+                        <field name="company_id" readonly="1"/>
+                        <field name="operator_id"/>
+                        <field name="last_reviewed_at" readonly="1"/>
+                    </group>
+                    <group string="Work Instructions">
+                        <field name="note" placeholder="Review blocked orders; open a prepared order to purchase its label individually. No bulk label purchases occur."/>
+                    </group>
+                    <notebook>
+                        <page string="Shipping Readiness">
+                            <field name="line_ids" readonly="state == 'closed'">
+                                <list create="0" delete="0" edit="0" decoration-danger="state == 'blocked'" decoration-success="state == 'ready'">
+                                    <field name="order_id"/>
+                                    <field name="state"/>
+                                    <field name="review_message"/>
+                                    <field name="last_reviewed_at"/>
+                                    <button name="action_open_shipping_order" type="object" string="Open Order"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_shipstation_s07_batch_search" model="ir.ui.view">
+        <field name="name">shipstation.fulfillment.batch.search</field>
+        <field name="model">shipstation.fulfillment.batch</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="instance_id"/>
+                <filter name="open" string="Active Batches" domain="[('state','!=','closed')]"/>
+                <filter name="needs_review" string="Needs Review" domain="[('state','=','review')]"/>
+                <group>
+                    <filter name="instance" string="Instance" context="{'group_by':'instance_id'}"/>
+                    <filter name="state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_shipstation_s07_fulfillment_batches" model="ir.actions.act_window">
+        <field name="name">Fulfillment Batches</field>
+        <field name="res_model">shipstation.fulfillment.batch</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_shipstation_s07_batch_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No fulfillment batches</p>
+            <p>Select orders in ShipStation Orders and create a batch to check their readiness. Batches never buy labels.</p>
+        </field>
+    </record>
+    <record id="action_shipstation_s07_make_batch" model="ir.actions.server">
+        <field name="name">Prepare Fulfillment Batch</field>
+        <field name="model_id" ref="model_shipstation_order_sync"/>
+        <field name="binding_model_id" ref="model_shipstation_order_sync"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_create_fulfillment_batch()</field>
+    </record>
+
+    <record id="view_shipstation_s07_return_list" model="ir.ui.view">
+        <field name="name">shipstation.return.case.list</field>
+        <field name="model">shipstation.return.case</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="state == 'review'">
+                <field name="name"/>
+                <field name="instance_id"/>
+                <field name="order_id"/>
+                <field name="shipment_id"/>
+                <field name="reason"/>
+                <field name="owner_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_shipstation_s07_return_form" model="ir.ui.view">
+        <field name="name">shipstation.return.case.form</field>
+        <field name="model">shipstation.return.case</field>
+        <field name="arch" type="xml">
+            <form string="Return Case — Manual Tracking">
+                <header>
+                    <button name="action_submit_review" type="object" string="Submit for Approval"
+                            invisible="state != 'draft'" class="btn-primary"
+                            groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+                    <button name="action_approve_manual_handling" type="object" string="Approve for Manual Handling"
+                            invisible="state != 'review'" class="btn-primary"
+                            groups="shipstation_connector.group_shipstation_admin"/>
+                    <button name="action_reject_case" type="object" string="Reject"
+                            invisible="state != 'review'" groups="shipstation_connector.group_shipstation_admin"/>
+                    <button name="action_close_manual_case" type="object" string="Close (External Resolution Recorded)"
+                            invisible="state != 'approved'" groups="shipstation_connector.group_shipstation_admin"/>
+                    <button name="action_open_related_shipment" type="object" string="Open Shipment"
+                            invisible="not shipment_id"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,review,approved,closed,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="instance_id" readonly="state not in ('draft','review')"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="order_id" domain="[('instance_id','=',instance_id)]"/>
+                            <field name="shipment_id" domain="[('instance_id','=',instance_id)]"/>
+                            <field name="reason"/>
+                        </group>
+                        <group>
+                            <field name="owner_id"/>
+                            <field name="requested_at" readonly="1"/>
+                            <field name="approved_by_id" readonly="1"/>
+                            <field name="approved_at" readonly="1"/>
+                            <field name="return_tracking_number"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Items">
+                            <field name="line_ids" readonly="state not in ('draft','review')">
+                                <list editable="bottom">
+                                    <field name="sku"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="condition"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes &amp; Resolution">
+                            <group><field name="customer_note"/><field name="resolution_note"/></group>
+                            <div class="text-muted">This screen tracks external return work only. It does not create a return label, stock movement or refund.</div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_shipstation_s07_return_cases" model="ir.actions.act_window">
+        <field name="name">Return Cases (Manual)</field>
+        <field name="res_model">shipstation.return.case</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No return cases</p>
+            <p>Start a return from a shipment. Cases are tracked here; no return label, refund or stock move is created.</p>
+        </field>
+    </record>
+    <record id="view_shipstation_s07_start_return_shipment" model="ir.ui.view">
+        <field name="name">shipstation.shipment.s07.start.return</field>
+        <field name="model">shipstation.shipment.sync</field>
+        <field name="inherit_id" ref="view_shipstation_shipment_sync_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="action_start_return_case" type="object" string="Log Return Case"
+                        groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

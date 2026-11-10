@@ -1,6 +1,6 @@
 {
     "name": "ShipStation Odoo Connector",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "summary": "Connect ShipStation with Odoo for orders, shipments, labels, tracking, inventory, and reports",
     "description": """
     ShipStation Odoo Connector
@@ -33,19 +33,19 @@
     -----------------------------------
     * Export Odoo orders to ShipStation
     * Synchronize products and product updates
-    * Export inventory quantities
-    * Send shipment information to ShipStation
-    * Update fulfillment and shipping status
-    * Maintain product and stock consistency
-    * Support operational shipping workflows
+    * Review inventory discrepancies without ever changing Odoo stock
+    * Link ShipStation shipments and tracking to the matching delivery order
+    * Preserve inventory safety with read-only reconciliation
 
     Shipping & Fulfillment Management
     ---------------------------------
-    * Shipment processing and tracking synchronization
-    * Shipping label management support
-    * Carrier and fulfillment information handling
-    * Delivery workflow synchronization
-    * Centralized shipping operations inside Odoo
+    * Shipment import with tracking, carrier and voided-label status
+    * Shipping-rate comparison and carrier / package presets
+    * Single-order label purchase with an explicit confirmation, a durable
+      "request sent" guard and no automatic retry (never bulk or background)
+    * Shipping Workbench and Visual Exception Board for unlinked shipments
+    * Fulfillment preparation batches and manual return-case tracking
+    * Operations Home dashboard, guided setup and webhook inbox with retry
 
     Operational Features
     --------------------
@@ -61,10 +61,10 @@
     --------------------
     * Built with standard Odoo architecture
     * Odoo ORM-based implementation
-    * Easy customization and scalability
+    * Role-based access (Reader, Manager, Admin) and multi-company isolation
+    * Automated test suite (database-backed and offline)
     * Upgrade-friendly module structure
-    * Supports Odoo Community and Enterprise
-    * Compatible with Odoo.sh and On-Premise deployments
+    * Tested on Odoo 18 Community, on-premise (Enterprise and Odoo.sh not yet verified)
 
     Business Benefits
     -----------------
@@ -82,6 +82,7 @@
     * Inventory
     * Delivery
     * Contacts
+    * Discuss (mail)
     * Web
 
     External Python Dependency
@@ -101,9 +102,11 @@
     'price': 19.99,
     'currency': 'USD',
     "license": "OPL-1",
+    "external_dependencies": {"python": ["requests"]},
     "depends": [
         "base",
         "web",
+        "mail",
         "sale_management",
         "stock",
         "delivery",
@@ -112,6 +115,7 @@
     "data": [
         "security/shipstation_security.xml",
         "security/ir.model.access.csv",
+        "security/shipstation_record_rules.xml",
         "data/ir_cron.xml",
         "views/shipstation_instance_view.xml",
         "views/shipstation_field_mapping_views.xml",
@@ -127,16 +131,24 @@
         "views/shipstation_res_config_settings_view.xml",
         "views/shipstation_dashboard_action.xml",
         "views/shipstation_actions.xml",
+        "views/shipstation_workbench_views.xml",
+        "views/shipstation_s06_shipping_views.xml",
+        "views/shipstation_s07_fulfillment_returns_views.xml",
+        "views/shipstation_s08_operations_views.xml",
         "views/menu.xml",
+        "views/shipstation_webhook_inbox_views.xml",
     ],
     "assets": {
         "web.assets_backend": [
             "shipstation_connector/static/src/css/shipstation_dashboard.css",
+            "shipstation_connector/static/src/css/shipstation_operations_home.css",
             "shipstation_connector/static/src/scss/chatbot.scss",
             "shipstation_connector/static/src/js/shipstation_dashboard.js",
+            "shipstation_connector/static/src/js/shipstation_operations_home.js",
             "shipstation_connector/static/src/js/chatbot.js",
             "shipstation_connector/static/src/xml/chatbot.xml",
             "shipstation_connector/static/src/xml/shipstation_dashboard_templates.xml",
+            "shipstation_connector/static/src/xml/shipstation_operations_home.xml",
         ],
     },
     "images": ["static/description/banner.gif"],

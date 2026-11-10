@@ -2,7 +2,8 @@ import json
 from collections import Counter
 from datetime import datetime, timedelta
 
-from odoo import api, models
+from odoo import api, models, _
+from odoo.exceptions import AccessError
 
 from ..services.shipstation_ai_service import ShipStationAIService
 
@@ -10,6 +11,10 @@ from ..services.shipstation_ai_service import ShipStationAIService
 class ShipStationDashboard(models.Model):
     _name = "shipstation.dashboard"
     _description = "ShipStation Dashboard"
+
+    def _require_shipstation_dashboard_admin(self):
+        if not self.env.su and not self.env.user.has_group("shipstation_connector.group_shipstation_admin"):
+            raise AccessError(_("Only ShipStation administrators can access the current dashboard."))
 
     def _table_exists(self, table_name):
         self.env.cr.execute("SELECT to_regclass(%s)", (table_name,))
@@ -21,6 +26,7 @@ class ShipStationDashboard(models.Model):
                 ("scope", "=", "all"),
                 ("instance_id", "=", False),
                 ("range_days", "=", int(range_days or 30)),
+                ("company_id", "=", self.env.company.id),
             ],
             limit=1,
         )
@@ -42,7 +48,11 @@ class ShipStationDashboard(models.Model):
     def _shipment_window_summary(self, days):
         Shipment = self.env["shipstation.shipment.sync"].sudo()
         cutoff = datetime.utcnow() - timedelta(days=days)
-        shipments = Shipment.search([("ship_date", ">=", cutoff.strftime("%Y-%m-%d %H:%M:%S"))])
+        company_id = self.env.company.id
+        shipments = Shipment.search([
+            ("company_id", "=", company_id),
+            ("ship_date", ">=", cutoff.strftime("%Y-%m-%d %H:%M:%S")),
+        ])
         order_refs = list(
             {
                 shipment.shipstation_order_id
@@ -53,15 +63,18 @@ class ShipStationDashboard(models.Model):
         revenue = 0.0
         if order_refs:
             orders = self.env["shipstation.order.sync"].sudo().search(
-                [("shipstation_order_id", "in", order_refs)]
+                [("shipstation_order_id", "in", order_refs), ("company_id", "=", company_id)]
             )
             revenue = sum(orders.mapped("total_amount"))
+        currencies = {str(o.currency or "").strip().upper() for o in orders} if order_refs else set()
         return {
             "count": len(shipments),
-            "revenue": revenue,
+            "revenue": revenue if len(currencies) == 1 and "" not in currencies else None,
+            "currency": next(iter(currencies)) if len(currencies) == 1 else "",
         }
 
     def _build_ai_metrics(self):
+        company_domain = [("company_id", "=", self.env.company.id)]
         Shipment = self.env["shipstation.shipment.sync"].sudo()
         Inventory = self.env["shipstation.inventory"].sudo()
 
@@ -70,12 +83,13 @@ class ShipStationDashboard(models.Model):
                 "|",
                 ("tracking_number", "=", False),
                 ("status", "=", "shipped_pending_tracking"),
+                *company_domain,
             ],
             order="ship_date desc, id desc",
             limit=10,
         )
         low_stock = Inventory.search(
-            [("stock_level", "<=", 5)],
+            [("stock_level", "<=", 5), ("remote_stock_verified", "=", True), *company_domain],
             order="stock_level asc, modify_date desc, id desc",
             limit=10,
         )
@@ -94,7 +108,7 @@ class ShipStationDashboard(models.Model):
 
         carrier_counts = Counter()
         for shipment in Shipment.search(
-            [("ship_date", ">=", (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S"))],
+            [("ship_date", ">=", (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")), *company_domain],
             limit=500,
         ):
             carrier = shipment.carrier_code or "Unknown"
@@ -108,6 +122,7 @@ class ShipStationDashboard(models.Model):
                     "|",
                     ("tracking_number", "=", False),
                     ("status", "=", "shipped_pending_tracking"),
+                    *company_domain,
                 ]
             ),
             "pending_tracking_shipments": [
@@ -138,6 +153,7 @@ class ShipStationDashboard(models.Model):
 
     @api.model
     def generate_ai_insights(self, range=30):
+        self._require_shipstation_dashboard_admin()
         range_days = int(range or 30)
         metrics = self._build_ai_metrics()
         context_meta = {
@@ -151,6 +167,7 @@ class ShipStationDashboard(models.Model):
                 "scope": "all",
                 "instance_id": False,
                 "range_days": range_days,
+                "company_id": self.env.company.id,
                 "summary_text": result["summary_text"],
                 "insight_json": json.dumps(result["insight_payload"], default=str),
                 "status": result["status"],
@@ -162,7 +179,9 @@ class ShipStationDashboard(models.Model):
 
     @api.model
     def get_dashboard_data(self):
+        self._require_shipstation_dashboard_admin()
         cr = self.env.cr
+        company_id = self.env.company.id
         instances = []
         summary = {
             "instances": 0,
@@ -173,6 +192,8 @@ class ShipStationDashboard(models.Model):
             "customers": 0,
             "inventory_items": 0,
             "revenue": 0.0,
+            "revenue_available": True,
+            "currency": self.env.company.currency_id.name,
             "failed_sync": 0,
             "failed_sync_24h": 0,
             "success_sync_24h": 0,
@@ -204,8 +225,9 @@ class ShipStationDashboard(models.Model):
                 si.last_sync
             FROM shipstation_instance si
             LEFT JOIN res_company rc ON rc.id = si.company_id
+            WHERE si.company_id = %s
             ORDER BY si.name
-            """
+            """, (company_id,)
         )
         instance_map = {}
         for inst_id, name, company_name, active, sync_dt in cr.fetchall():
@@ -221,6 +243,9 @@ class ShipStationDashboard(models.Model):
                 "total_customers": 0,
                 "inventory_items": 0,
                 "total_revenue": 0.0,
+                "revenue_available": True,
+                "currency": "",
+                "revenue_by_currency": {},
                 "failed_24h": 0,
                 "success_24h": 0,
                 "health": "healthy",
@@ -234,8 +259,9 @@ class ShipStationDashboard(models.Model):
                 f"""
                 SELECT instance_id, {count_expr}
                 FROM {table_name}
+                WHERE instance_id = ANY(%s)
                 GROUP BY instance_id
-                """
+                """, (list(instance_map),)
             )
             for inst_id, count in cr.fetchall():
                 if inst_id in instance_map:
@@ -244,17 +270,26 @@ class ShipStationDashboard(models.Model):
         if table_orders:
             cr.execute(
                 """
-                SELECT instance_id, COUNT(*), COALESCE(SUM(total_amount), 0.0)
+                SELECT instance_id, COALESCE(NULLIF(UPPER(TRIM(currency)), ''), 'UNKNOWN') AS currency_code,
+                       COUNT(*), COALESCE(SUM(total_amount), 0.0)
                 FROM shipstation_order_sync
-                GROUP BY instance_id
-                """
+                WHERE instance_id = ANY(%s)
+                GROUP BY instance_id, currency_code
+                """, (list(instance_map),)
             )
-            for inst_id, count, revenue in cr.fetchall():
+            for inst_id, currency_code, count, revenue in cr.fetchall():
                 if inst_id in instance_map:
-                    instance_map[inst_id]["total_orders"] = int(count or 0)
-                    instance_map[inst_id]["total_revenue"] = float(revenue or 0.0)
+                    row = instance_map[inst_id]
+                    row["total_orders"] += int(count or 0)
+                    row["revenue_by_currency"][currency_code] = float(revenue or 0.0)
+            for row in instance_map.values():
+                currencies = row["revenue_by_currency"]
+                row["revenue_available"] = len(currencies) <= 1 and "UNKNOWN" not in currencies
+                row["currency"] = next(iter(currencies), "") if row["revenue_available"] else ""
+                row["total_revenue"] = sum(currencies.values()) if row["revenue_available"] else None
 
-        _apply_count("shipstation_shipment_sync", "total_shipments")
+        _apply_count("shipstation_shipment_sync", "total_shipments",
+                     "COUNT(*) FILTER (WHERE voided IS NOT TRUE)")  # a voided label is not a shipment
         _apply_count("shipstation_product_sync", "total_products")
         _apply_count("shipstation_customer_sync", "total_customers")
         _apply_count("shipstation_inventory", "inventory_items")
@@ -265,9 +300,10 @@ class ShipStationDashboard(models.Model):
             cr.execute(
                 """
                 SELECT COALESCE(COUNT(*), 0)
-                FROM shipstation_sync_log
-                WHERE status = 'failed'
-                """
+                FROM shipstation_sync_log l
+                JOIN shipstation_instance si ON si.id = l.instance_id
+                WHERE l.status = 'failed' AND si.company_id = %s
+                """, (company_id,)
             )
             summary["failed_sync"] = int(cr.fetchone()[0] or 0)
 
@@ -279,8 +315,9 @@ class ShipStationDashboard(models.Model):
                     SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_24h
                 FROM shipstation_sync_log
                 WHERE create_date >= (NOW() - INTERVAL '24 hours')
+                  AND instance_id = ANY(%s)
                 GROUP BY instance_id
-                """
+                """, (list(instance_map),)
             )
             for inst_id, failed_24h, success_24h in cr.fetchall():
                 if inst_id in instance_map:
@@ -296,10 +333,10 @@ class ShipStationDashboard(models.Model):
                     COALESCE(l.error_message, '')
                 FROM shipstation_sync_log l
                 LEFT JOIN shipstation_instance si ON si.id = l.instance_id
-                WHERE l.status = 'failed'
-                ORDER BY create_date DESC
+                WHERE l.status = 'failed' AND si.company_id = %s
+                ORDER BY l.create_date DESC
                 LIMIT 8
-                """
+                """, (company_id,)
             )
             for create_date, instance_name, endpoint, error_message in cr.fetchall():
                 recent_failures.append(
@@ -322,9 +359,10 @@ class ShipStationDashboard(models.Model):
                     COALESCE(l.error_message, '')
                 FROM shipstation_sync_log l
                 LEFT JOIN shipstation_instance si ON si.id = l.instance_id
+                WHERE si.company_id = %s
                 ORDER BY l.create_date DESC
                 LIMIT 12
-                """
+                """, (company_id,)
             )
             for create_date, instance_name, status, method, endpoint, error_message in cr.fetchall():
                 recent_activity.append(
@@ -350,9 +388,11 @@ class ShipStationDashboard(models.Model):
                 FROM shipstation_inventory inv
                 LEFT JOIN shipstation_instance si ON si.id = inv.instance_id
                 WHERE COALESCE(inv.stock_level, 0.0) <= 5.0
+                  AND inv.remote_stock_verified IS TRUE
+                  AND si.company_id = %s
                 ORDER BY inv.stock_level ASC, inv.modify_date DESC NULLS LAST, inv.id DESC
                 LIMIT 8
-                """
+                """, (company_id,)
             )
             for instance_name, sku, name, stock_level in cr.fetchall():
                 low_stock_items.append(
@@ -364,7 +404,10 @@ class ShipStationDashboard(models.Model):
                     }
                 )
 
+        revenue_currencies = {}
         for inst in instance_map.values():
+            for code, amount in inst["revenue_by_currency"].items():
+                revenue_currencies[code] = revenue_currencies.get(code, 0.0) + amount
             if inst["failed_24h"] >= 5:
                 inst["health"] = "critical"
             elif inst["failed_24h"] > 0:
@@ -377,13 +420,18 @@ class ShipStationDashboard(models.Model):
             summary["products"] += inst["total_products"]
             summary["customers"] += inst["total_customers"]
             summary["inventory_items"] += inst["inventory_items"]
-            summary["revenue"] += inst["total_revenue"]
+            # Never sum monetary amounts of different currencies.
+            inst.pop("revenue_by_currency", None)
             summary["instances"] += 1
             if inst["active"]:
                 summary["active_instances"] += 1
             if inst["last_sync"] and (not summary["last_sync"] or inst["last_sync"] > summary["last_sync"]):
                 summary["last_sync"] = inst["last_sync"]
 
+        if revenue_currencies:
+            summary["revenue_available"] = len(revenue_currencies) == 1 and "UNKNOWN" not in revenue_currencies
+            summary["currency"] = next(iter(revenue_currencies), "") if summary["revenue_available"] else ""
+            summary["revenue"] = sum(revenue_currencies.values()) if summary["revenue_available"] else None
         failed_24h = sum(item.get("failed_24h", 0) for item in instances)
         success_24h = sum(item.get("success_24h", 0) for item in instances)
         total_24h = failed_24h + success_24h

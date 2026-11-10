@@ -3,24 +3,40 @@
         <field name="name">ShipStation Instances</field>
         <field name="res_model">shipstation.instance</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Connect your first ShipStation account</p>
+            <p>Enter the V1 API key and secret from ShipStation's API settings, then use Check Setup and Test V1 Connection.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_orders" model="ir.actions.act_window">
         <field name="name">ShipStation Orders</field>
         <field name="res_model">shipstation.order.sync</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No ShipStation orders yet</p>
+            <p>Open a connection and run Sync Orders. Awaiting-shipment orders are imported as draft quotations.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_shipments" model="ir.actions.act_window">
         <field name="name">ShipStation Shipments</field>
         <field name="res_model">shipstation.shipment.sync</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No shipments yet</p>
+            <p>Run Sync Shipments on a connection. Tracking is written to the matching delivery order only when the match is unambiguous.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_products" model="ir.actions.act_window">
         <field name="name">ShipStation Products</field>
         <field name="res_model">shipstation.product.sync</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No products yet</p>
+            <p>Open a connection and run Sync Products.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_inventory" model="ir.actions.act_window">
@@ -28,18 +44,30 @@
         <field name="res_model">shipstation.inventory</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_shipstation_inventory_tree"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No inventory comparison yet</p>
+            <p>Select an inventory warehouse on the connection and run Sync Inventory. Quantities are compared read-only; Odoo stock is never changed.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_customers" model="ir.actions.act_window">
         <field name="name">ShipStation Customers</field>
         <field name="res_model">shipstation.customer.sync</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No customers yet</p>
+            <p>Customer sync is optional. Open a connection and run Sync Customers.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_categories" model="ir.actions.act_window">
         <field name="name">ShipStation Categories</field>
         <field name="res_model">shipstation.category.sync</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No categories yet</p>
+            <p>Open a connection and run Sync Categories.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_attributes" model="ir.actions.act_window">
@@ -53,12 +81,20 @@
         <field name="name">ShipStation Reports</field>
         <field name="res_model">shipstation.report</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No sync reports yet</p>
+            <p>Every synchronization run records a report here.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_sync_logs" model="ir.actions.act_window">
         <field name="name">ShipStation Sync Logs</field>
         <field name="res_model">shipstation.sync.log</field>
         <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No ShipStation requests logged</p>
+            <p>Requests to ShipStation appear here with their outcome. API credentials are never stored in the log.</p>
+        </field>
     </record>
 
     <record id="action_shipstation_fields" model="ir.actions.act_window">

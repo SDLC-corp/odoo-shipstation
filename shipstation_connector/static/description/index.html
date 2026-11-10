@@ -37,7 +37,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
         <table style="width:100%;border-collapse:collapse;">
             <tr>
                 <td style="color:#E5E7EB;font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;">ShipStation Odoo Connector</td>
-                <td style="color:#F59E0B;font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;text-align:right;">Odoo 18 · Community & Enterprise · Odoo.sh / On-Premise</td>
+                <td style="color:#F59E0B;font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;text-align:right;">Odoo 18 · Tested on Community · On-Premise</td>
             </tr>
         </table>
     </div>
@@ -104,7 +104,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                     <td style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-left:5px solid #F59E0B;border-radius:16px;padding:22px 24px;">
                         <p style="margin:0 0 6px;color:#F59E0B;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;">Direction 01</p>
                         <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">Odoo &rarr; ShipStation</strong>
-                        <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Export orders, products, inventory, customers, categories, attributes, and shipment data from Odoo to ShipStation.</span>
+                        <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Send confirmed Odoo sales orders (those with an open delivery), products and customers to ShipStation. Re-sending an order updates it instead of duplicating it.</span>
                     </td>
                 </tr>
 
@@ -112,7 +112,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                     <td style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-left:5px solid #06B6D4;border-radius:16px;padding:22px 24px;">
                         <p style="margin:0 0 6px;color:#0891B2;font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;">Direction 02</p>
                         <strong style="display:block;color:#0F172A;font-size:22px;margin-bottom:8px;line-height:1.2;">ShipStation &rarr; Odoo</strong>
-                        <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Import orders, customers, shipping labels, tracking numbers, shipment status, reports, and logs into Odoo.</span>
+                        <span style="display:block;color:#64748B;font-size:14px;line-height:1.55;">Import orders, customers, shipments, tracking numbers, carrier details and voided-label status into Odoo, with sync reports and logs.</span>
                     </td>
                 </tr>
 
@@ -137,7 +137,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                 <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Order Sync</strong><span style="color:#64748B;font-size:13px;">Two-way order flow</span></td>
                 <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Label Handling</strong><span style="color:#64748B;font-size:13px;">Shipping label support</span></td>
                 <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Tracking Sync</strong><span style="color:#64748B;font-size:13px;">Carrier visibility</span></td>
-                <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Inventory Sync</strong><span style="color:#64748B;font-size:13px;">Stock accuracy</span></td>
+                <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Inventory Sync</strong><span style="color:#64748B;font-size:13px;">Read-only stock comparison</span></td>
                 <td style="width:20%;padding:18px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;text-align:center;"><strong style="display:block;color:#0F172A;font-size:14px;">Reports & Logs</strong><span style="color:#64748B;font-size:13px;">Sync monitoring</span></td>
             </tr>
         </table>
@@ -248,8 +248,8 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                 <table style="width:100%;border-collapse:collapse;">
                     <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Export Odoo orders to ShipStation</td></tr>
                     <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Sync products, categories, and attributes</td></tr>
-                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Send inventory quantities and product updates</td></tr>
-                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Share shipment-related order details</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Send product updates (name, SKU, price, weight)</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Update existing orders without creating duplicates</td></tr>
                     <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">&#10003; Support scalable shipping workflows</td></tr>
                 </table>
             </td>
@@ -263,7 +263,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                     <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Import ShipStation orders into Odoo</td></tr>
                     <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Sync customers and shipping addresses</td></tr>
                     <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Import shipment status and carrier details</td></tr>
-                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Pull tracking numbers and label-related details</td></tr>
+                    <tr><td style="padding:11px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:15px;">&#10003; Pull tracking numbers, carriers and services into the matching delivery order</td></tr>
                     <tr><td style="padding:11px 0;color:#0F172A;font-size:15px;">&#10003; Maintain reports, logs, and operational visibility</td></tr>
                 </table>
             </td>
@@ -287,7 +287,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
             </tr>
             <tr>
                 <td style="vertical-align:top;padding:28px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Product, Category & Attribute Sync</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Keep item data aligned for cleaner SKU handling and shipping operations.</p></td>
-                <td style="vertical-align:top;padding:28px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Inventory Synchronization</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Maintain stock visibility between Odoo and ShipStation for better fulfillment decisions.</p></td>
+                <td style="vertical-align:top;padding:28px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Inventory Synchronization</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Compare ShipStation quantities with Odoo stock in a read-only reconciliation. Odoo stock is never changed automatically.</p></td>
                 <td style="vertical-align:top;padding:28px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Shipment Processing</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Handle shipment records, carrier details, shipping status, and delivery data.</p></td>
             </tr>
             <tr>
@@ -308,7 +308,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
         <table style="width:100%;border-collapse:separate;border-spacing:18px;">
             <tr>
                 <td style="width:25%;vertical-align:top;background-color:#1E293B;border:1px solid #334155;border-radius:16px;padding:28px;"><p style="margin:0 0 10px;color:#F59E0B;font-size:38px;font-weight:900;">01</p><h3 style="margin:0 0 10px;color:#FFFFFF;font-size:21px;">Configure Instance</h3><p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.72;">Add ShipStation credentials and configure sync settings in Odoo.</p></td>
-                <td style="width:25%;vertical-align:top;background-color:#1E293B;border:1px solid #334155;border-radius:16px;padding:28px;"><p style="margin:0 0 10px;color:#F59E0B;font-size:38px;font-weight:900;">02</p><h3 style="margin:0 0 10px;color:#FFFFFF;font-size:21px;">Sync Business Data</h3><p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.72;">Move orders, customers, products, categories, attributes, and inventory.</p></td>
+                <td style="width:25%;vertical-align:top;background-color:#1E293B;border:1px solid #334155;border-radius:16px;padding:28px;"><p style="margin:0 0 10px;color:#F59E0B;font-size:38px;font-weight:900;">02</p><h3 style="margin:0 0 10px;color:#FFFFFF;font-size:21px;">Sync Business Data</h3><p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.72;">Move orders, customers, products and categories; compare inventory read-only.</p></td>
                 <td style="width:25%;vertical-align:top;background-color:#1E293B;border:1px solid #334155;border-radius:16px;padding:28px;"><p style="margin:0 0 10px;color:#F59E0B;font-size:38px;font-weight:900;">03</p><h3 style="margin:0 0 10px;color:#FFFFFF;font-size:21px;">Process Shipments</h3><p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.72;">Handle labels, carrier data, shipment records, and fulfillment updates.</p></td>
                 <td style="width:25%;vertical-align:top;background-color:#1E293B;border:1px solid #334155;border-radius:16px;padding:28px;"><p style="margin:0 0 10px;color:#F59E0B;font-size:38px;font-weight:900;">04</p><h3 style="margin:0 0 10px;color:#FFFFFF;font-size:21px;">Track and Monitor</h3><p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.72;">Review tracking numbers, sync logs, reports, and fulfillment status.</p></td>
             </tr>
@@ -344,6 +344,22 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
         </table>
     </div>
 
+    <!-- SAFE BY DESIGN -->
+    <div style="padding:72px 56px;background-color:#FFFFFF;border-top:1px solid #E2E8F0;">
+        <div style="max-width:920px;margin:0 auto 34px;text-align:center;">
+            <p style="margin:0 0 12px;color:#D97706;font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Safe By Design</p>
+            <h2 style="margin:0 0 18px;color:#0F172A;font-family:Georgia,'Times New Roman',serif;font-size:44px;line-height:1.13;font-weight:900;letter-spacing:-1px;">What The Connector Never Does On Its Own</h2>
+            <p style="margin:0;color:#475569;font-size:16px;line-height:1.78;">Shipping money and stock are too important to automate silently. These guarantees are built in and covered by automated tests.</p>
+        </div>
+        <table style="width:100%;max-width:920px;margin:0 auto;border-collapse:collapse;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;">
+            <tr><td style="padding:16px 24px;border-bottom:1px solid #E2E8F0;color:#475569;font-size:15px;line-height:1.7;"><strong style="color:#0F172A;">Labels are bought only on explicit confirmation.</strong> A Manager confirms one order at a time. Bulk actions, scheduled jobs and webhooks can never buy a label, and a double click or timeout can never buy it twice.</td></tr>
+            <tr><td style="padding:16px 24px;border-bottom:1px solid #E2E8F0;color:#475569;font-size:15px;line-height:1.7;"><strong style="color:#0F172A;">Odoo stock is never changed automatically.</strong> ShipStation quantities are compared read-only; differences are reported, not corrected.</td></tr>
+            <tr><td style="padding:16px 24px;border-bottom:1px solid #E2E8F0;color:#475569;font-size:15px;line-height:1.7;"><strong style="color:#0F172A;">Unclear answers lock the order, they are never guessed.</strong> If ShipStation does not answer clearly, the order stays locked until an administrator checks it.</td></tr>
+            <tr><td style="padding:16px 24px;border-bottom:1px solid #E2E8F0;color:#475569;font-size:15px;line-height:1.7;"><strong style="color:#0F172A;">Re-sending never duplicates.</strong> Orders are updated in place, and shipments for one order never overwrite each other's tracking.</td></tr>
+            <tr><td style="padding:16px 24px;color:#475569;font-size:15px;line-height:1.7;"><strong style="color:#0F172A;">Credentials and companies are protected on the server.</strong> API keys are visible to administrators only, every action checks the user's role and company, and incoming webhooks are authenticated, de-duplicated and retried.</td></tr>
+        </table>
+    </div>
+
     <!-- TECH SPECS -->
     <div style="padding:84px 56px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;">
         <div style="max-width:920px;margin:0 auto 42px;text-align:center;">
@@ -354,13 +370,13 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
         <table style="width:100%;border-collapse:collapse;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;">
             <tr><td style="width:34%;padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Product Name</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">ShipStation Odoo Connector</td></tr>
             <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Odoo Version</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">Odoo 18.0</td></tr>
-            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Odoo Editions</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">Community and Enterprise</td></tr>
-            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Deployment</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">Odoo.sh and On-Premise</td></tr>
+            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Odoo Editions</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">Odoo 18 Community (tested). Enterprise is expected to work because only standard apps are used, but it has not been verified yet.</td></tr>
+            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Deployment</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">On-Premise (tested). Odoo.sh is not yet verified.</td></tr>
             <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Technical Name</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">shipstation_connector</td></tr>
-            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">License</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">LGPL-3</td></tr>
-            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Main Dependencies</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">base, web, sale_management, stock, delivery, contacts</td></tr>
+            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">License</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">OPL-1 (Odoo Proprietary License v1.0)</td></tr>
+            <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">Main Dependencies</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">base, web, mail, sale_management, stock, delivery, contacts</td></tr>
             <tr><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;font-weight:900;color:#0F172A;">External Python Library</td><td style="padding:17px 24px;border-bottom:1px solid #E2E8F0;color:#475569;">requests</td></tr>
-            <tr><td style="padding:17px 24px;font-weight:900;color:#0F172A;">Core Functions</td><td style="padding:17px 24px;color:#475569;">Orders, customers, products, categories, attributes, inventory, shipments, labels, tracking, reports, dashboards, sync logs, scheduled cron sync</td></tr>
+            <tr><td style="padding:17px 24px;font-weight:900;color:#0F172A;">Core Functions</td><td style="padding:17px 24px;color:#475569;">Orders, customers, products, categories, shipments and tracking, shipping-rate comparison, guarded single-order label purchase, shipping workbench and exception board, fulfillment preparation batches, return-case tracking, webhook inbox, read-only inventory reconciliation, reports, dashboards, sync logs, scheduled sync</td></tr>
         </table>
     </div>
 
@@ -386,7 +402,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
                 <td style="vertical-align:top;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;padding:22px;"><img src="shipping tracking.png" alt="Shipment tracking sync from ShipStation to Odoo" style="display:block;width:100%;height:auto;border:1px solid #E2E8F0;border-radius:12px;"><h3 style="margin:18px 0 8px;color:#0F172A;font-size:20px;">6. Shipment Tracking</h3><p style="margin:0;color:#475569;font-size:14px;line-height:1.72;">Sync tracking numbers and shipment status back into Odoo.</p></td>
             </tr>
             <tr>
-                <td style="vertical-align:top;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;padding:22px;"><img src="inventory.png" alt="Inventory synchronization between Odoo and ShipStation" style="display:block;width:100%;height:auto;border:1px solid #E2E8F0;border-radius:12px;"><h3 style="margin:18px 0 8px;color:#0F172A;font-size:20px;">7. Inventory Synchronization</h3><p style="margin:0;color:#475569;font-size:14px;line-height:1.72;">Keep stock data aligned for better fulfillment and warehouse decisions.</p></td>
+                <td style="vertical-align:top;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;padding:22px;"><img src="inventory.png" alt="Inventory synchronization between Odoo and ShipStation" style="display:block;width:100%;height:auto;border:1px solid #E2E8F0;border-radius:12px;"><h3 style="margin:18px 0 8px;color:#0F172A;font-size:20px;">7. Inventory Synchronization</h3><p style="margin:0;color:#475569;font-size:14px;line-height:1.72;">Review ShipStation and Odoo quantities side by side; differences are reported and never auto-corrected.</p></td>
                 <td style="vertical-align:top;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;padding:22px;"><img src="sync logs.png" alt="ShipStation Odoo sync logs and reports" style="display:block;width:100%;height:auto;border:1px solid #E2E8F0;border-radius:12px;"><h3 style="margin:18px 0 8px;color:#0F172A;font-size:20px;">8. Sync Logs and Reports</h3><p style="margin:0;color:#475569;font-size:14px;line-height:1.72;">Review sync success, failures, API communication, reports, and history.</p></td>
             </tr>
         </table>
@@ -417,15 +433,15 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
         <table style="width:100%;border-collapse:separate;border-spacing:16px;">
             <tr>
                 <td style="width:50%;vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">What is the ShipStation Odoo Connector?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">It is an Odoo module that connects Odoo with ShipStation to sync orders, products, customers, inventory, shipments, labels, tracking details, reports, and logs.</p></td>
-                <td style="width:50%;vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Does it support Odoo to ShipStation sync?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. It supports Odoo to ShipStation sync for orders, products, inventory, categories, attributes, and shipment-related workflows.</p></td>
+                <td style="width:50%;vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Does it support Odoo to ShipStation sync?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. It sends confirmed sales orders that still have an open delivery, products and customers to ShipStation. Re-sending an order updates it instead of duplicating it.</p></td>
             </tr>
             <tr>
-                <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Does it support ShipStation to Odoo sync?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. It can bring ShipStation orders, customers, shipment updates, label-related details, tracking numbers, and fulfillment records into Odoo.</p></td>
+                <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Does it support ShipStation to Odoo sync?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. It brings ShipStation orders, customers, shipments, tracking numbers and voided-label status into Odoo and links them to the right delivery order.</p></td>
                 <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Can I sync tracking numbers with Odoo?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. Shipment tracking numbers and carrier details can be synchronized back into Odoo for better shipment visibility.</p></td>
             </tr>
             <tr>
                 <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Does it support multiple ShipStation accounts?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. Multi-instance support allows businesses to manage multiple ShipStation accounts or fulfillment environments from Odoo.</p></td>
-                <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Is this connector compatible with Odoo 18?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. This module is designed for Odoo 18 and supports Community and Enterprise deployments.</p></td>
+                <td style="vertical-align:top;padding:26px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;"><h3 style="margin:0 0 10px;color:#0F172A;font-size:21px;">Is this connector compatible with Odoo 18?</h3><p style="margin:0;color:#475569;font-size:15px;line-height:1.72;">Yes. It is built and tested for Odoo 18 Community on-premise. It uses only standard Odoo apps, so Enterprise and Odoo.sh are expected to work, but they have not been verified yet.</p></td>
             </tr>
         </table>
     </div>
@@ -434,7 +450,7 @@ Odoo to ShipStation sync, ShipStation to Odoo sync, Odoo shipping label integrat
     <div style="padding:90px 56px;background-color:#0F172A;text-align:center;border-top:5px solid #F59E0B;">
         <p style="display:inline-block;margin:0 0 18px;padding:9px 16px;background-color:#1E293B;color:#F59E0B;border:1px solid #334155;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;">Ready for Better Fulfillment</p>
         <h2 style="max-width:900px;margin:0 auto 20px;color:#FFFFFF;font-family:Georgia,'Times New Roman',serif;font-size:48px;line-height:1.13;font-weight:900;letter-spacing:-1px;">Connect Odoo and ShipStation With a Professional Bidirectional Shipping Workflow</h2>
-        <p style="max-width:850px;margin:0 auto 34px;color:#CBD5E1;font-size:17px;line-height:1.78;">Automate order sync, shipping labels, tracking, inventory updates, product data, customers, reports, and logs between Odoo and ShipStation.</p>
+        <p style="max-width:850px;margin:0 auto 34px;color:#CBD5E1;font-size:17px;line-height:1.78;">Automate order and shipment sync, tracking, product and customer data, reports and logs between Odoo and ShipStation. Shipping labels are bought only after an explicit confirmation, never automatically.</p>
         <table style="margin:0 auto;border-collapse:separate;border-spacing:12px 0;">
             <tr>
                 <td><a href="#screenshots" style="display:inline-block;background-color:#F59E0B;color:#111827;text-decoration:none;padding:15px 25px;border-radius:9px;font-size:13px;font-weight:900;letter-spacing:1px;text-transform:uppercase;">View Product Screens</a></td>
