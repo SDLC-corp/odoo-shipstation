@@ -52,7 +52,7 @@ class TestLabelPurchase(ShipStationCommon):
         order = self._ready_order()
         self.http.add("POST", "/orders/createlabelfororder", LABEL_OK)
         self._buy(order)
-        self.assertEqual(self.http.calls[0]["json"]["confirmation"], "none")
+        self.assertEqual(self.http.calls_to("POST", "/orders/createlabelfororder")[0]["json"]["confirmation"], "none")
 
     def test_result_is_recorded_and_pdf_attached_to_order_and_delivery(self):
         sale = self.link_sale_to_shipstation(self.make_confirmed_sale())
@@ -128,7 +128,7 @@ class TestLabelPurchase(ShipStationCommon):
         self.http.add("POST", "/orders/createlabelfororder", {"Message": "oops"}, status=502)
         self.attempt(lambda: self._buy(order), UserError)
         self.assertEqual(order.label_state, "requested")
-        self.assertEqual(len(self.http.calls), 1, "no retry of a paid POST")
+        self.assertEqual(len(self.http.calls_to("POST", "/orders/createlabelfororder")), 1, "no retry of a paid POST")
 
     def test_response_without_a_shipment_is_not_trusted(self):
         order = self._ready_order()
@@ -186,3 +186,19 @@ class TestLabelPurchase(ShipStationCommon):
         self.http.add("POST", "/orders/createlabelfororder", LABEL_OK)
         self._buy(order)
         self.assertFalse(self.http.calls_to("POST", "/shipments/createlabel"))
+
+
+@tagged("post_install", "-at_install", "shipstation")
+class TestLabelShipFromPreflight(ShipStationCommon):
+    """Found against the real API: with no Ship From location ShipStation answers createlabelfororder with HTTP 500
+    "No warehouse has been selected". The connector now checks first, so the order is not locked as ambiguous."""
+
+    def test_no_ship_from_location_stops_before_the_paid_request_without_locking(self):
+        order = self.make_order_sync(carrier_code="stamps_com", service_code="usps_ground_advantage",
+                                     package_code="package", status="awaiting_shipment")
+        self.http.add("GET", "/warehouses", [])
+        self.http.add("POST", "/orders/createlabelfororder", {"shipmentId": 1, "trackingNumber": "X"})
+        with self.assertRaisesRegex(UserError, "no Ship From location"):
+            order.with_user(self.user_manager).action_create_label()
+        self.assertFalse(self.http.calls_to("POST", "/orders/createlabelfororder"), "the paid request is never sent")
+        self.assertIn(order.label_state, (False, "none"), "nothing was claimed, so nothing is locked")

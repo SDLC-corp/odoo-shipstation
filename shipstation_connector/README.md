@@ -84,6 +84,8 @@ and register the URL in ShipStation. ShipStation V1 notifications are not signed
 authentication. Notifications are queued, de-duplicated and fetched by a cron job with retries; failed ones
 appear in **Webhook Inbox** (default filter "Needs Attention") and can be re-queued with **Retry Now**.
 The old `/shipstation/webhook` endpoint is deliberately disabled and returns 404.
+Odoo's access log shows the callback path with the secret replaced by `[redacted]`. A reverse proxy in front of
+Odoo (nginx, Apache, a load balancer) logs the full URL in its own access log; restrict or filter that log too.
 
 ## Scheduled jobs
 
@@ -114,6 +116,8 @@ ways. During the one repeated hour when daylight saving ends the sync window is 
 | "Request Sent - Outcome Unknown" | See the label rule above. |
 | Webhook URL empty | `web.base.url` is not https. |
 | 429 / rate limited | ShipStation allows 40 calls per minute per key; the connector waits at most 45 s per call. |
+| "no Ship From location" when buying a label | ShipStation needs a Ship From location before it can create labels. Add one in ShipStation (Settings > Shipping > Ship From Locations). No label was requested. |
+| Push fails with HTTP 404 for one order | The order was deleted in ShipStation; ShipStation will not accept it again under the same key. Recreate it in ShipStation or leave it. |
 
 ## Upgrading from 20.0.1.0.0 (the build published before this release)
 

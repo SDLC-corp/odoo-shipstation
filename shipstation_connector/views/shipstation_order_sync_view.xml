@@ -79,8 +79,8 @@
                         <field name="last_void_tracking_number" invisible="not last_void_at"/>
                     </group>
                     <group string="Rates">
-                        <field name="rate_ids">
-                            <list>
+                        <field name="rate_ids" readonly="1">
+                            <list create="0" delete="0">
                                 <field name="carrier_code"/>
                                 <field name="service_code"/>
                                 <field name="shipment_cost"/>

@@ -1,7 +1,18 @@
 """Runtime security: ACLs, record rules, secret fields, RPC entry points and multi-company."""
+import logging
+import threading
+
+import h11
+
 from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.http import server_log
 from odoo.tests.common import tagged
 
+from ..controllers.chatbot_controller import active_company_ids
+from ..controllers.shipstation_webhook import ACCESS_LOGGER, WebhookTokenLogFilter, redact_webhook_token
+
+# per-thread counters that odoo.http.server_log.http_log reads; saved and restored around the call
+_THREAD_LOG_ATTRS = ("query_count", "query_time", "perf_t0", "cursor_mode", "rpc_model_method", "req_ident")
 from ..services.chatbot_service import ShipStationSimpleChatbotService
 from .common import ShipStationCommon
 
@@ -160,6 +171,59 @@ class TestSecurityRuntime(ShipStationCommon):
         self.assertIn("SO-A-1", reply)
         self.assertNotIn("SO-LEAK-B", reply)
         self.assertNotIn("Leaky B", reply)
+
+    def test_chatbot_follows_the_company_switcher(self):
+        """Found in the browser pass: the JSON-RPC call carried no company context, so a user with two
+        companies saw both companies' orders while only one was active in the switcher."""
+        self.make_order_sync(self.instance, shipstation_order_id="1", shipstation_order_number="SO-ACTIVE-A")
+        self.make_order_sync(self.instance_b, shipstation_order_id="2", shipstation_order_number="SO-OTHER-B")
+        admin = self.user_admin
+        a, b = self.company.id, self.company_b.id
+        self.assertEqual(active_company_ids(admin, [a]), [a])
+        self.assertEqual(active_company_ids(admin, [b, a, b]), [b, a])
+        foreign = self.env["res.company"].create({"name": "Not Mine"}).id
+        for junk in (None, "1", {"a": 1}, [True], ["1"], [foreign], [1.0]):
+            with self.subTest(junk=junk):
+                self.assertEqual(active_company_ids(admin, junk), [], "never a company the user lacks")
+        env = self.env(user=admin, context={"allowed_company_ids": active_company_ids(admin, [a])})
+        reply = ShipStationSimpleChatbotService(env).get_reply("recent orders")["reply"]
+        self.assertIn("SO-ACTIVE-A", reply)
+        self.assertNotIn("SO-OTHER-B", reply)
+
+    def test_webhook_secret_is_redacted_from_the_access_log(self):
+        """Found in the HTTP pass: Odoo's access log wrote the full callback URL, secret included."""
+        token = "S3cr3t-Token_value"
+        # Odoo 20 writes the access log with odoo.http.server_log.http_log on the 'odoo.http.server' logger;
+        # drive that real function so a change in how Odoo builds the line is caught here.
+        access_logger = logging.getLogger(ACCESS_LOGGER)
+        self.assertIs(access_logger, server_log._logger)
+        self.assertTrue(any(isinstance(f, WebhookTokenLogFilter) for f in access_logger.filters))
+        req = h11.Request(method=b"POST", target=("/shipstation/webhook/v1/7/%s" % token).encode(),
+                          headers=[(b"host", b"odoo.example")])
+        thread = threading.current_thread()
+        saved = {name: getattr(thread, name) for name in _THREAD_LOG_ATTRS if hasattr(thread, name)}
+        try:
+            server_log.reset_thread_info()
+            with self.assertLogs(ACCESS_LOGGER, logging.INFO) as captured:
+                server_log.http_log(logging.INFO, "", req=req, res=None)
+        finally:
+            for name in _THREAD_LOG_ATTRS:
+                if name in saved:
+                    setattr(thread, name, saved[name])
+                elif hasattr(thread, name):
+                    delattr(thread, name)
+        [record] = captured.records
+        for text in (record.getMessage(), record.colored_message, record.http_request_line):
+            self.assertNotIn(token, text)
+            self.assertIn("/shipstation/webhook/v1/7/[redacted] HTTP/1.1", text)
+        self.assertEqual(redact_webhook_token("GET /web HTTP/1.1"), "GET /web HTTP/1.1")
+        self.assertEqual(redact_webhook_token(None), None)
+
+    def test_rate_quotes_cannot_be_typed_in_on_the_order_form(self):
+        arch = self.env["shipstation.order.sync"].with_user(self.user_manager).get_views([(False, "form")])
+        arch = arch["views"]["form"]["arch"]
+        self.assertRegex(arch, r'<field name="rate_ids"[^>]*readonly="(1|True)"')
+        self.assertRegex(arch, r'<list[^>]*create="0"')
 
     def test_chatbot_reader_gets_answers_without_privileged_data(self):
         self.make_shipment_sync(tracking_number="TRK-READER")

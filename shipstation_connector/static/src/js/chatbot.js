@@ -3,6 +3,7 @@
 import { Component, onWillUnmount, proxy } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { rpc } from "@web/core/network/rpc";
+import { user } from "@web/core/user";
 import { useService } from "@web/core/utils/hooks";
 
 export class ShipStationSimpleChatbot extends Component {
@@ -74,7 +75,11 @@ export class ShipStationSimpleChatbot extends Component {
         this.state.input = "";
         this.state.isLoading = true;
         try {
-            const response = await rpc("/shipstation/ai/chatbot/message", { message });
+            // Send the companies active in the switcher: a JSON-RPC route gets no client context.
+            const response = await rpc("/shipstation/ai/chatbot/message", {
+                message,
+                company_ids: user.context.allowed_company_ids || [],
+            });
             this.state.messages.push({
                 role: "bot",
                 text: (response && response.reply) || "I'm here to help with ShipStation connector questions.",

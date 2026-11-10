@@ -7,6 +7,7 @@ not accept V2 signed webhooks; those need a separate verifier and endpoint.
 import hmac
 import json
 import logging
+import re
 
 from psycopg2 import IntegrityError
 from odoo import http
@@ -18,6 +19,44 @@ from ..services.shipstation_webhook_security import (
 )
 
 _logger = logging.getLogger(__name__)
+
+_TOKEN_IN_PATH = re.compile(r"(/shipstation/webhook/v1/[^/\s]*/)[^\s?#\"]+")
+
+
+def redact_webhook_token(text):
+    """Replace the secret path segment of a V1 callback URL with [redacted]."""
+    return _TOKEN_IN_PATH.sub(r"\1[redacted]", text) if isinstance(text, str) else text
+
+
+# Odoo 20 serves HTTP itself (odoo/http/server.py) and writes the access log through 'odoo.http.server'
+# (odoo/http/server_log.py http_log), not through 'werkzeug' as earlier versions did.
+ACCESS_LOGGER = "odoo.http.server"
+# http_log pre-formats the line into msg and also attaches it as record attributes; the colored
+# formatter prints ``colored_message`` instead of the message, so every copy must be redacted.
+_REDACTED_RECORD_ATTRS = ("colored_message", "http_request_line")
+
+
+class WebhookTokenLogFilter(logging.Filter):
+    """The callback URL's last segment is the webhook secret, and Odoo's access log (the
+    'odoo.http.server' logger) writes every request path. Redact it so the secret never reaches log files."""
+
+    def filter(self, record):
+        if isinstance(record.args, tuple):
+            record.args = tuple(redact_webhook_token(arg) for arg in record.args)
+        record.msg = redact_webhook_token(record.msg)
+        for attr in _REDACTED_RECORD_ATTRS:
+            if hasattr(record, attr):
+                setattr(record, attr, redact_webhook_token(getattr(record, attr)))
+        return True
+
+
+def _install_log_filter():
+    access_logger = logging.getLogger(ACCESS_LOGGER)
+    if not any(isinstance(f, WebhookTokenLogFilter) for f in access_logger.filters):
+        access_logger.addFilter(WebhookTokenLogFilter())
+
+
+_install_log_filter()
 
 
 class ShipStationWebhookController(http.Controller):
