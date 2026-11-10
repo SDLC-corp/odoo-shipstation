@@ -529,10 +529,14 @@ class ShipStationOrderSync(models.Model):
             with self.env.registry.cursor() as cr:
                 cr.execute("SET LOCAL lock_timeout = '3s'")
                 cr.execute("SELECT 1 FROM shipstation_order_sync WHERE id = %s FOR UPDATE NOWAIT", (self.id,))
-                record = api.Environment(cr, SUPERUSER_ID, {})["shipstation.order.sync"].browse(self.id)
+                side_env = api.Environment(cr, SUPERUSER_ID, {})
+                record = side_env["shipstation.order.sync"].browse(self.id)
                 record.invalidate_recordset()
                 check(record)
                 record.write(vals)
+                # commit() only flushes environments that are still referenced (Transaction.envs is a WeakSet): flush explicitly so the
+                # durable marker can never be dropped with a collected env (seen on Odoo 18).
+                side_env.flush_all()
         except psycopg2.errors.LockNotAvailable:
             raise UserError(_("Another label request for this order is in progress. Wait for it to finish."))
         self.invalidate_recordset()
@@ -603,7 +607,11 @@ class ShipStationOrderSync(models.Model):
         """
         from odoo import SUPERUSER_ID, api
         with self.env.registry.cursor() as cr:
-            api.Environment(cr, SUPERUSER_ID, {})["shipstation.order.sync"].browse(self.id).write(vals)
+            side_env = api.Environment(cr, SUPERUSER_ID, {})
+            side_env["shipstation.order.sync"].browse(self.id).write(vals)
+            # commit() only flushes environments that are still referenced (Transaction.envs is a WeakSet): an inline Environment can be
+            # garbage-collected and its write silently dropped (seen on Odoo 18). Flush explicitly.
+            side_env.flush_all()
         self.invalidate_recordset()
 
     def _release_label_request(self, state):

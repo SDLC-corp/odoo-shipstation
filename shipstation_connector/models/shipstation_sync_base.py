@@ -118,7 +118,9 @@ class ShipStationSyncBase(models.AbstractModel):
             from odoo import SUPERUSER_ID, api  # local import: keeps the offline test loaders light
             with self.env.registry.cursor() as cr:
                 cr.execute("SET LOCAL lock_timeout = '2s'")
-                api.Environment(cr, SUPERUSER_ID, {})["shipstation.sync.log"].create(vals)
+                side_env = api.Environment(cr, SUPERUSER_ID, {})
+                side_env["shipstation.sync.log"].create(vals)
+                side_env.flush_all()  # never rely on commit() finding a collected environment
         except Exception:  # noqa: BLE001 - logging must never break business flow
             _logger.debug("ShipStation request log could not be written", exc_info=True)
 
