@@ -1,14 +1,16 @@
 # S13 Release-readiness assessment - shipstation_connector 16.0.1.1.0
 
 > **Odoo 16.0 port.** This is the 19.0.1.1.0 hardening (19.0 commit `954dc1c1`) ported to Odoo 16. On Odoo 16 it is
-> **runtime-tested** only: 234/234 offline tests, the Odoo suite 167/167 on a fresh database and 167/167 on a database
+> **runtime-tested** only: 234/234 offline tests, the Odoo suite 168/168 on a fresh database (with and without Odoo demo
+> data) and 168/168 on a database
 > installed from the published 16.0 build (`origin/16.0`), seeded through its own code and upgraded (migration
 > `migrations/16.0.1.1.0`). The backend asset bundle was generated and syntax-checked; **no browser pass was made on 16**.
 > The sections below describe the 19.0 assessment the port inherits (the browser pass and the 100k-row scale run were
 > done on Odoo 19, not on 16). Port-specific changes: `_sql_constraints`, `check_access_rights`+`check_access_rule`,
 > dict-based `_read_group`, `name_get` labels, a picking sub-select instead of the `any` operator, explicit flushes of the
-> side-cursor environments (Odoo 16 only flushes environments still referenced at commit), an explicit guard against
-> searching / sorting / grouping on credential fields (Odoo 16 does not refuse it), an own `ir.module.category` instead
+> side-cursor environments (on Odoo 16 a commit only flushes environments still referenced; a real-cursor probe confirmed
+> the inline-env label_state write is lost without it), a guard on `shipstation.instance._search` / `_read_group_raw` that
+> refuses domains, orders, groupings and dotted paths on the admin-only credential fields (Odoo 16 does not), an own `ir.module.category` instead
 > of `res.groups.privilege`, `<tree>`/`attrs`, `kanban-box`, `oe_chatter` and Owl 2 templates marked `owl="1"`.
 
 

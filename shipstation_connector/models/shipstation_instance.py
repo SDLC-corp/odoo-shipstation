@@ -192,31 +192,44 @@ class ShipStationInstance(models.Model):
         return res
 
     # ---- credential secrecy on Odoo 16 ---------------------------------------------------------
-    # Odoo 17+ refuses to search, sort or group on a field the user may not read. Odoo 16 does
-    # not, so without this guard a non-admin could probe a secret one character at a time with
-    # domains such as [("api_key", "=like", "A%")].
-    def _shipstation_forbidden_field(self, name):
-        field = self._fields.get((name or "").split(".", 1)[0].split(":", 1)[0].strip())
-        return bool(field and field.groups and not self.env.su and not self.user_has_groups(field.groups))
+    # Odoo 16 enforces field ``groups`` on read/write but NOT on search domains, sort orders or
+    # read_group (osv/expression.py never checks them; 18+ do). Without this guard a Manager could
+    # use the admin-only credential fields (api_key, api_secret, v2_api_key, webhook_token) as a
+    # search oracle, e.g. [("api_key", "=like", "A%")], also through a dotted path such as
+    # ("instance_id.api_key", ...) from another model, which 16 resolves with this model's _search.
+    @api.model
+    def _ss_check_restricted_fields(self, domain=(), names=()):
+        if self.env.su:
+            return
+        used = set()
+        for leaf in domain or ():
+            if isinstance(leaf, (list, tuple)) and len(leaf) == 3 and isinstance(leaf[0], str):
+                used.add(leaf[0].split(".", 1)[0])
+        for name in names or ():
+            if isinstance(name, str) and name.strip():
+                used.add(name.strip().split(" ")[0].split(":")[0].split(".")[0].strip('"'))
+        restricted = [name for name in used if name in self._fields and self._fields[name].groups]
+        if restricted:
+            self.check_field_access_rights("read", restricted)
 
-    def _shipstation_check_secret_query(self, domain=None, order=None, groupby=None):
-        names = [leaf[0] for leaf in (domain or []) if isinstance(leaf, (list, tuple)) and len(leaf) == 3
-                 and isinstance(leaf[0], str)]
-        names += [part.split()[0] for part in (order or "").split(",") if part.strip()]
-        names += [name for name in ([groupby] if isinstance(groupby, str) else (groupby or []))]
-        if any(self._shipstation_forbidden_field(name) for name in names):
-            raise AccessError(_("ShipStation credentials can only be searched or sorted by administrators."))
+    @staticmethod
+    def _ss_order_names(order):
+        return [part.strip() for part in (order or "").split(",") if part.strip()]
 
     @api.model
     def _search(self, domain, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
-        self._shipstation_check_secret_query(domain=domain, order=order)
+        self._ss_check_restricted_fields(domain, self._ss_order_names(order))
         return super()._search(domain, offset=offset, limit=limit, order=order, count=count,
                                access_rights_uid=access_rights_uid)
 
     @api.model
-    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-        self._shipstation_check_secret_query(domain=domain, order=orderby, groupby=groupby)
-        return super().read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
+    def _read_group_raw(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        # read_group() and _read_group() both end here; it builds its WHERE clause without _search.
+        groupby_names = [groupby] if isinstance(groupby, str) else list(groupby or [])
+        self._ss_check_restricted_fields(domain, list(fields or []) + groupby_names
+                                         + self._ss_order_names(orderby))
+        return super()._read_group_raw(domain, fields, groupby, offset=offset, limit=limit,
+                                       orderby=orderby, lazy=lazy)
 
     @api.depends_context("uid")
     def _compute_totals(self):
