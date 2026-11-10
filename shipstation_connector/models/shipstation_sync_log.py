@@ -10,6 +10,8 @@ class ShipStationSyncLog(models.Model):
     _name = "shipstation.sync.log"
     _description = "ShipStation Sync Log"
     _order = "create_date desc"
+    # list order, dashboard 24 h window and autovacuum purge all filter or sort on create_date
+    _create_date_idx = models.Index("(create_date)")
 
     instance_id = fields.Many2one("shipstation.instance", required=True, ondelete="cascade", index=True)
     operation = fields.Selection([("push", "Push"), ("pull", "Pull"), ("request", "Request")], default="request", required=True)

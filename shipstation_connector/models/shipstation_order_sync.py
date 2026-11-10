@@ -30,7 +30,7 @@ class ShipStationOrderSync(models.Model):
     customer_email = fields.Char()
     total_amount = fields.Float()
     currency = fields.Char()
-    order_date = fields.Datetime()
+    order_date = fields.Datetime(index=True)  # default list order: an unindexed sort scanned the whole table
     last_modified_date = fields.Datetime()
     synced_on = fields.Datetime(default=fields.Datetime.now)
     payload = fields.Text()

@@ -71,7 +71,14 @@ sale orders still adopted by id and store, views, ACLs, record rules and cron jo
 | Webhook cron claim (`SKIP LOCKED`) | 4 ms |
 | Autovacuum purge, one run | 271 ms |
 
-The query plans use indexes on every hot path. Nothing exceeded 130 ms; the largest tables were 31-34 MB.
+Nothing exceeded 130 ms; the largest tables were 31-34 MB. **Correction (2026-11-10):** an earlier version of this line said every
+hot path used an index. A second volume run on Odoo 15-20 (same row counts, `EXPLAIN ANALYZE` of every query) found three that did
+not: the default list orders (`order_date`, `ship_date`) and the request-log `create_date` filter (dashboard 24 h window, purge)
+scanned whole tables, 95-180 ms per list page at 100k rows. Indexes were added (list page 97 -> 0.3 ms, 24 h window 37 -> 1.4 ms,
+measured with the same indexes on the scale database) and `TestHotPathIndexes` keeps them. Still full-table by nature: Operations
+Home mirror count and instance totals (counts/sums over everything; would need cached counters). Order-number `ilike` search stays a
+scan (~100 ms at 100k): its btree index also serves the exact-match identity lookups. No version was more than 1.7x the same-session
+Odoo 19 baseline.
 
 ## 2. Defects found by real execution (all fixed, each with a regression test)
 
