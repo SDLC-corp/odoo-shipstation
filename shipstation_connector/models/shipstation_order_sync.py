@@ -210,7 +210,8 @@ class ShipStationOrderSync(models.Model):
             if price < 0:
                 price = 0.0
             clean = {
-                "quantity": qty,
+                # the real API rejects 1.0: whole numbers only
+                "quantity": self.instance_id._ss_item_quantity(qty, sku or name),
                 "unitPrice": price,
             }
             if sku:

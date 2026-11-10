@@ -16,7 +16,8 @@ verified without one has been, including an upgrade from the build published on 
 
 Maturity levels: **implemented** - **source-tested** (offline contract tests) - **runtime-tested** (Odoo test
 suite on a real, upgraded PostgreSQL 18 database, HTTP mocked) - **browser-tested** (real browser, isolated
-server, synthetic data) - **production-verified** (real ShipStation account). *Nothing is production-verified.*
+server, synthetic data) - **production-verified** (real ShipStation account). *Only the paths listed under "Live API
+verification" below are production-verified; labels, voids and shipments are not.*
 
 | Area | Source | Runtime | Browser | Production |
 |---|:-:|:-:|:-:|:-:|
@@ -106,6 +107,29 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 17. **Revenue never available for real orders.** V1 orders state no currency, so every mirror's currency was blank and the dashboard
     reported revenue as unavailable. Each connection now has an optional **Order Currency** (empty = company currency) used when a
     payload states none; the upgrade fills blank mirror currencies from it.
+18. **Every order push was rejected by the real API (found live, 2026-11-10).** Items were sent with a decimal quantity (`1.0`)
+    and a bare number as weight (`0.5`); ShipStation answered HTTP 400: "Input string '1.0' is not a valid integer" and "Error
+    converting value 0.5 to type 'Weight'". Mocks accepted both. Quantities are now whole numbers (a fractional quantity fails that
+    order with a clear message and nothing is sent) and weights are Weight objects in the database's unit (kilograms are sent as
+    grams, pounds as pounds; no weight when the product has none). The undocumented product push (`POST /products`, which V1 does not
+    offer) now refuses explicitly. Six tests in `tests/test_store_contract.py` (`TestRealApiItemFormat`) pin the accepted format.
+
+### Live API verification (real ShipStation account, owner-approved, 2026-11-10)
+
+Run from a disposable Odoo 19 database with a guard that let through only GETs, `POST /shipments/getrates` and one
+`POST /orders/createorder`. No label was bought, nothing was voided, no webhook was registered.
+
+| Check | Result |
+|---|---|
+| V1 authentication, `GET /stores`, `/carriers`, `/webhooks` | 200; 1 store, carriers `stamps_com`, `ups_walleted`, `fedex_walleted` |
+| Rate limit headers | `X-Rate-Limit-Limit: 40` as documented |
+| Rate quotes through the module (`action_get_rates`) | USPS 19 and UPS 8 services stored; response shape `serviceName/serviceCode/shipmentCost/otherCost` as coded. FedEx answered 500 "One or more providers reported an error" (carrier-side; shown to the user, POST not retried) |
+| Order push through `_push_orders` | first attempt 400 (defect 18); after the fix 200, order created in the configured store |
+| The real order as ShipStation stores it | **no top-level `storeId`**, store only at `advancedOptions.storeId` (= configured store); **no `customerName`, no `currencyCode`**; `billTo.name` present. Confirms defects 16 and 17 against reality |
+| Re-sync of that order (`_sync_orders`, cron mode) | updated the same sale order (no duplicate); mirror store, currency (company currency) and customer name filled; checkpoint advanced |
+| Pacific time | an order dated 08:32 UTC came back as `00:32` (PST), as the converter assumes |
+
+Not verified live: shipments (none exist without a label), label purchase, void, webhook delivery, V2 key.
 
 ## 3. Decisions made by the owner
 
@@ -117,7 +141,7 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 
 | # | Blocker | Why it matters | Action |
 |---|---|---|---|
-| B1 | **No real ShipStation call has ever been made.** | All behaviour is verified against mocks and ShipStation's published docs only. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
+| B1 | **Labels, voids, shipments and webhooks are not verified against the real API.** Read paths, rate quotes, order push and order import are (see "Live API verification"). | These are the money-moving paths. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
 
 ## 5. Residual risks (not blockers)
 
