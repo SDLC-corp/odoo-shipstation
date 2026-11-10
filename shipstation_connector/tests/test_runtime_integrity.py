@@ -129,6 +129,20 @@ class TestRuntimeIntegrity(ShipStationCommon):
                     missing.append(rel)
         self.assertFalse(missing, "Declared but missing files: %s" % missing)
 
+    def test_templates_use_the_odoo_20_icon_font(self):
+        # Odoo 20 no longer ships Font Awesome: an <i class="fa fa-..."/> renders as nothing.
+        # Icons are <i class="oi" data-icon="<material symbol>"/> instead.
+        from odoo.modules.module import Manifest
+        manifest = Manifest.for_addon("shipstation_connector")
+        files = ["shipstation_connector/" + rel for rel in manifest["data"] if rel.endswith(".xml")]
+        files += [rel for bundle in manifest["assets"].values() for rel in bundle if rel.endswith(".xml")]
+        offenders = []
+        for rel in files:
+            source = open(file_path(rel), encoding="utf-8").read()
+            if re.search(r"""class=["'][^"']*\bfa\b|\bicon=["']fa-""", source):
+                offenders.append(rel)
+        self.assertFalse(offenders, "Font Awesome icons (not rendered on 20): %s" % offenders)
+
     def test_backend_bundle_loads_module_js_and_templates(self):
         """Odoo 20 / Owl 3: the module's JS and QWeb templates must go into web.assets_backend cleanly.
 

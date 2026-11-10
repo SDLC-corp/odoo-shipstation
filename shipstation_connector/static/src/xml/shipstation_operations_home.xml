@@ -26,7 +26,7 @@
                         </select>
                         <button class="ss08_refresh" type="button" t-on-click="this.refresh"
                                 t-att-disabled="this.state.loading" aria-label="Refresh shipping overview">
-                            <i class="fa fa-refresh" aria-hidden="true"/>
+                            <i class="oi" data-icon="refresh" aria-hidden="true"/>
                             <t t-if="this.state.loading"> Loading…</t><t t-else=""> Refresh</t>
                         </button>
                     </div>
@@ -39,12 +39,12 @@
                     <span t-if="this.state.refreshedAt" class="ss08_refresh_time">Updated <t t-out="this.state.refreshedAt"/></span>
                 </div>
                 <div t-if="this.state.error" class="ss08_error" role="alert">
-                    <i class="fa fa-exclamation-circle" aria-hidden="true"/>
+                    <i class="oi" data-icon="error" aria-hidden="true"/>
                     <span t-out="this.state.error"/>
                     <button type="button" t-on-click="this.refresh">Retry</button>
                 </div>
                 <div t-if="this.state.loading &amp;&amp; !this.state.data" class="ss08_loading" role="status">
-                    <i class="fa fa-spinner fa-spin" aria-hidden="true"/> Loading the shipping overview…
+                    <i class="oi oi-spin" data-icon="autorenew" aria-hidden="true"/> Loading the shipping overview…
                 </div>
                 <t t-if="this.state.data">
                     <section class="ss08_section" aria-label="Shipping health">
@@ -54,37 +54,37 @@
                         </div>
                         <div class="ss08_stats">
                             <button type="button" class="ss08_stat ss08_stat_alert" t-on-click="() => this.openQueue('review')">
-                                <span class="ss08_stat_icon"><i class="fa fa-exclamation-triangle" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="warning" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.needs_review"/>
                                 <span class="ss08_stat_label">Need review</span>
                                 <span class="ss08_stat_hint">Unresolved delivery links</span>
                             </button>
                             <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('pending')">
-                                <span class="ss08_stat_icon"><i class="fa fa-clock-o" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="schedule" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.pending_links"/>
                                 <span class="ss08_stat_label">Awaiting delivery</span>
                                 <span class="ss08_stat_hint">Link still pending</span>
                             </button>
                             <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('mine')">
-                                <span class="ss08_stat_icon"><i class="fa fa-user-circle-o" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="account_circle" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.my_queue"/>
                                 <span class="ss08_stat_label">Assigned to me</span>
                                 <span class="ss08_stat_hint">My open investigations</span>
                             </button>
                             <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('batches')">
-                                <span class="ss08_stat_icon"><i class="fa fa-cubes" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="inventory_2" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.active_batches"/>
                                 <span class="ss08_stat_label">Active batches</span>
                                 <span class="ss08_stat_hint">Preparation in progress</span>
                             </button>
                             <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('returns')">
-                                <span class="ss08_stat_icon"><i class="fa fa-undo" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="undo" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.returns_review"/>
                                 <span class="ss08_stat_label">Returns for review</span>
                                 <span class="ss08_stat_hint">Manual approval queue</span>
                             </button>
                             <button type="button" class="ss08_stat" t-on-click="() => this.openQueue('orders')">
-                                <span class="ss08_stat_icon"><i class="fa fa-shopping-bag" aria-hidden="true"/></span>
+                                <span class="ss08_stat_icon"><i class="oi" data-icon="shopping_bag" aria-hidden="true"/></span>
                                 <strong t-out="this.state.data.metrics.synced_orders"/>
                                 <span class="ss08_stat_label">Synced orders</span>
                                 <span class="ss08_stat_hint">Across selected connections</span>
@@ -95,14 +95,14 @@
                         <div class="ss08_section_header">
                             <div><span class="ss08_kicker">ACTIVE WORK</span><h2>Open shipping queues</h2></div>
                             <button class="ss08_text_button" type="button" t-on-click="() => this.openQueue('unassigned')">
-                                <t t-out="this.state.data.metrics.unassigned"/> unassigned <i class="fa fa-arrow-right" aria-hidden="true"/>
+                                <t t-out="this.state.data.metrics.unassigned"/> unassigned <i class="oi" data-icon="arrow_forward" aria-hidden="true"/>
                             </button>
                         </div>
                         <div class="ss08_panels">
                             <div class="ss08_panel ss08_panel_wide">
                                 <div class="ss08_panel_head">
                                     <div><h3>Shipment exceptions</h3><p>Needs review or waiting for an Odoo delivery</p></div>
-                                    <button type="button" t-on-click="() => this.openQueue('review')">Open queue <i class="fa fa-arrow-right" aria-hidden="true"/></button>
+                                    <button type="button" t-on-click="() => this.openQueue('review')">Open queue <i class="oi" data-icon="arrow_forward" aria-hidden="true"/></button>
                                 </div>
                                 <t t-if="this.state.data.shipments.length">
                                     <div class="ss08_exception_list">
@@ -117,13 +117,13 @@
                                                     <t t-if="shipment.link_state === 'review'">Needs review</t>
                                                     <t t-else="">Pending</t>
                                                 </span>
-                                                <i class="fa fa-chevron-right ss08_chevron" aria-hidden="true"/>
+                                                <i class="oi ss08_chevron" data-icon="chevron_right" aria-hidden="true"/>
                                             </button>
                                         </t>
                                     </div>
                                 </t>
                                 <t t-else="">
-                                    <div class="ss08_empty"><i class="fa fa-check-circle" aria-hidden="true"/><strong>No open exceptions found</strong><span>There are no unresolved shipment links for this selection.</span></div>
+                                    <div class="ss08_empty"><i class="oi" data-icon="check_circle" aria-hidden="true"/><strong>No open exceptions found</strong><span>There are no unresolved shipment links for this selection.</span></div>
                                 </t>
                             </div>
                             <div class="ss08_panel">
@@ -161,12 +161,12 @@
                     <section class="ss08_shortcuts" aria-label="Shortcuts">
                         <div><span class="ss08_kicker">SHORTCUTS</span><h2>Move work forward</h2></div>
                         <div class="ss08_shortcuts_grid">
-                            <button type="button" t-on-click="() => this.openQueue('unassigned')"><i class="fa fa-inbox" aria-hidden="true"/> Unassigned exceptions</button>
-                            <button type="button" t-on-click="() => this.openQueue('linked')"><i class="fa fa-check-circle" aria-hidden="true"/> Linked shipments</button>
-                            <button t-if="this.state.data.can_admin" type="button" t-on-click="() => this.openQueue('connections')"><i class="fa fa-cog" aria-hidden="true"/> Connection setup</button>
-                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('carriers')"><i class="fa fa-truck" aria-hidden="true"/> Carriers &amp; services</button>
-                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('presets')"><i class="fa fa-cube" aria-hidden="true"/> Package presets</button>
-                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('logs')"><i class="fa fa-exclamation-circle" aria-hidden="true"/> Failed syncs: <t t-out="this.state.data.metrics.failed_syncs"/></button>
+                            <button type="button" t-on-click="() => this.openQueue('unassigned')"><i class="oi" data-icon="inbox" aria-hidden="true"/> Unassigned exceptions</button>
+                            <button type="button" t-on-click="() => this.openQueue('linked')"><i class="oi" data-icon="check_circle" aria-hidden="true"/> Linked shipments</button>
+                            <button t-if="this.state.data.can_admin" type="button" t-on-click="() => this.openQueue('connections')"><i class="oi" data-icon="settings" aria-hidden="true"/> Connection setup</button>
+                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('carriers')"><i class="oi" data-icon="local_shipping" aria-hidden="true"/> Carriers &amp; services</button>
+                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('presets')"><i class="oi" data-icon="deployed_code" aria-hidden="true"/> Package presets</button>
+                            <button t-if="this.state.data.can_manage" type="button" t-on-click="() => this.openQueue('logs')"><i class="oi" data-icon="error" aria-hidden="true"/> Failed syncs: <t t-out="this.state.data.metrics.failed_syncs"/></button>
                         </div>
                         <p class="ss08_disclaimer">This view is read-only. Creating labels, shipping orders, refunds, or stock adjustments requires separate authorized actions.</p>
                     </section>
