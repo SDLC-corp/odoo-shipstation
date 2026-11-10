@@ -1,0 +1,110 @@
+<odoo>
+    <!-- A native Odoo 17 operator-first list, deliberately no bespoke JS or paid API calls. -->
+    <record id="view_shipstation_workbench_list" model="ir.ui.view">
+        <field name="name">shipstation.workbench.list</field>
+        <field name="model">shipstation.shipment.sync</field>
+        <field name="arch" type="xml">
+            <tree string="Shipping Workbench" create="0" delete="0"
+                  decoration-danger="link_state == 'review'"
+                  decoration-warning="link_state == 'pending'">
+                <header>
+                    <button name="action_claim_review" type="object" string="Assign to Me"
+                            groups="shipstation_connector.group_shipstation_manager,shipstation_connector.group_shipstation_admin"
+                            class="btn-secondary"/>
+                    <button name="action_bulk_recheck_delivery_links" type="object"
+                            string="Recheck Selected Deliveries"
+                            groups="shipstation_connector.group_shipstation_admin" class="btn-primary"/>
+                </header>
+                <field name="review_priority" widget="priority" optional="show"/>
+                <field name="shipstation_order_number" string="Order"/>
+                <field name="shipstation_shipment_id" string="Shipment" optional="hide"/>
+                <field name="instance_id" optional="show"/>
+                <field name="link_state" widget="badge"/>
+                <field name="link_message" string="Action Needed" optional="show"/>
+                <field name="review_owner_id" optional="show"/>
+                <field name="tracking_number" optional="show"/>
+                <field name="ship_date" optional="show"/>
+                <field name="review_last_checked_at" optional="hide"/>
+                <field name="synced_on" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_shipstation_workbench_search" model="ir.ui.view">
+        <field name="name">shipstation.workbench.search</field>
+        <field name="model">shipstation.shipment.sync</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="shipstation_order_number" string="Order Number"/>
+                <field name="tracking_number"/>
+                <field name="instance_id"/>
+                <field name="review_owner_id"/>
+                <filter name="open_queue" string="Open Exceptions"
+                        domain="[('link_state','in',['pending','review'])]"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('link_state','=','review')]"/>
+                <filter name="pending" string="Waiting for Delivery"
+                        domain="[('link_state','=','pending')]"/>
+                <filter name="linked" string="Linked"
+                        domain="[('link_state','=','linked')]"/>
+                <separator/>
+                <filter name="my_queue" string="Assigned to Me"
+                        domain="[('review_owner_id','=',uid)]"/>
+                <filter name="unassigned" string="Unassigned"
+                        domain="[('review_owner_id','=',False)]"/>
+                <group>
+                    <filter name="by_state" string="Link Status" context="{'group_by':'link_state'}"/>
+                    <filter name="by_owner" string="Owner" context="{'group_by':'review_owner_id'}"/>
+                    <filter name="by_instance" string="Instance" context="{'group_by':'instance_id'}"/>
+                    <filter name="by_priority" string="Priority" context="{'group_by':'review_priority'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_shipstation_workbench_form_extension" model="ir.ui.view">
+        <field name="name">shipstation.workbench.form.extension</field>
+        <field name="model">shipstation.shipment.sync</field>
+        <field name="inherit_id" ref="view_shipstation_shipment_sync_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="action_open_sales_order" string="Open Sales Order"
+                        type="object" class="btn-secondary"/>
+                <button name="action_claim_review" string="Assign to Me"
+                        type="object" class="btn-secondary"
+                        groups="shipstation_connector.group_shipstation_manager,shipstation_connector.group_shipstation_admin"
+                        invisible="link_state == 'linked'"/>
+                <button name="action_release_review" string="Release Assignment"
+                        type="object" class="btn-secondary"
+                        groups="shipstation_connector.group_shipstation_manager,shipstation_connector.group_shipstation_admin"
+                        invisible="not review_owner_id"/>
+            </xpath>
+            <xpath expr="//form/sheet/group[1]" position="after">
+                <group string="Operator Review">
+                    <group>
+                        <field name="review_owner_id"/>
+                        <field name="review_priority"/>
+                        <field name="review_note"/>
+                    </group>
+                    <group>
+                        <field name="review_last_checked_at" readonly="1"/>
+                        <field name="review_check_count" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_shipstation_shipping_workbench" model="ir.actions.act_window">
+        <field name="name">Shipping Workbench</field>
+        <field name="res_model">shipstation.shipment.sync</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_shipstation_workbench_list"/>
+        <field name="search_view_id" ref="view_shipstation_workbench_search"/>
+        <field name="context">{'search_default_open_queue': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No open exceptions</p>
+            <p>Shipments that need a person to link them to a delivery order appear here.</p>
+        </field>
+    </record>
+</odoo>

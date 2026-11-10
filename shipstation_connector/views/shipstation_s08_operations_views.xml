@@ -1,0 +1,107 @@
+<odoo>
+    <record id="action_shipstation_s08_operations_home" model="ir.actions.client">
+        <field name="name">Operations Home</field>
+        <field name="tag">shipstation_connector.operations_home</field>
+    </record>
+
+    <!-- Visually grouped exception board; all buttons call existing safe local actions. -->
+    <record id="view_shipstation_s08_exception_kanban" model="ir.ui.view">
+        <field name="name">shipstation.shipment.s08.exception.kanban</field>
+        <field name="model">shipstation.shipment.sync</field>
+        <field name="arch" type="xml">
+            <kanban create="0" delete="0" default_group_by="link_state" class="o_ss08_kanban">
+                <field name="shipstation_order_number"/>
+                <field name="instance_id"/>
+                <field name="link_state"/>
+                <field name="review_priority"/>
+                <field name="review_owner_id"/>
+                <field name="tracking_number"/>
+                <field name="ship_date"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="ss08_kanban_card">
+                            <div class="ss08_kanban_meta">
+                                <span><field name="instance_id"/></span>
+                                <span t-if="record.review_priority.raw_value == '2'" class="text-danger fw-bold">Urgent</span>
+                                <span t-elif="record.review_priority.raw_value == '1'" class="text-warning fw-bold">High</span>
+                            </div>
+                            <div class="ss08_kanban_heading"><field name="shipstation_order_number"/></div>
+                            <div class="ss08_kanban_status"><field name="link_state" widget="badge"/></div>
+                            <div class="ss08_kanban_meta">
+                                <span><i class="fa fa-user" role="img" title="Assigned to" aria-label="Assigned to"/> <field name="review_owner_id"/></span>
+                            </div>
+                            <div class="ss08_kanban_meta" t-if="record.tracking_number.raw_value">
+                                <span>Tracking: <field name="tracking_number"/></span>
+                            </div>
+                            <div class="ss08_kanban_actions">
+                                <button name="action_open_sales_order" type="object" class="btn btn-link btn-sm p-0">Open sales order</button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="action_shipstation_s08_exception_board" model="ir.actions.act_window">
+        <field name="name">Visual Exception Board</field>
+        <field name="res_model">shipstation.shipment.sync</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_id" ref="view_shipstation_s08_exception_kanban"/>
+        <field name="search_view_id" ref="view_shipstation_workbench_search"/>
+        <field name="context">{'search_default_open_queue': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No open exceptions</p>
+            <p>Shipments that need a person to link them to a delivery order appear here.</p>
+        </field>
+    </record>
+
+    <record id="view_shipstation_s08_return_search" model="ir.ui.view">
+        <field name="name">shipstation.return.case.s08.search</field>
+        <field name="model">shipstation.return.case</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="instance_id"/>
+                <field name="owner_id"/>
+                <filter name="open_cases" string="Open" domain="[('state','in',['draft','review','approved'])]"/>
+                <filter name="approvals" string="Awaiting Approval" domain="[('state','=','review')]"/>
+                <filter name="mine" string="Assigned to Me" domain="[('owner_id','=',uid)]"/>
+                <separator/>
+                <group>
+                    <filter name="by_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="by_owner" string="Owner" context="{'group_by':'owner_id'}"/>
+                    <filter name="by_instance" string="Connection" context="{'group_by':'instance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_shipstation_s07_return_cases" model="ir.actions.act_window">
+        <field name="search_view_id" ref="view_shipstation_s08_return_search"/>
+        <field name="context">{'search_default_open_cases': 1}</field>
+    </record>
+
+    <record id="view_shipstation_s08_batch_search" model="ir.ui.view">
+        <field name="name">shipstation.fulfillment.batch.s08.search</field>
+        <field name="model">shipstation.fulfillment.batch</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="instance_id"/>
+                <field name="operator_id"/>
+                <filter name="active" string="Active" domain="[('state','!=','closed')]"/>
+                <filter name="review" string="Needs Review" domain="[('state','=','review')]"/>
+                <filter name="ready" string="Ready for Manual Shipping" domain="[('state','=','ready')]"/>
+                <filter name="mine" string="Assigned to Me" domain="[('operator_id','=',uid)]"/>
+                <separator/>
+                <group>
+                    <filter name="by_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="by_owner" string="Operator" context="{'group_by':'operator_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_shipstation_s07_fulfillment_batches" model="ir.actions.act_window">
+        <field name="search_view_id" ref="view_shipstation_s08_batch_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+</odoo>

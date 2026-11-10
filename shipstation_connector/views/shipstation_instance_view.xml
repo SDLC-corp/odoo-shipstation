@@ -5,31 +5,37 @@
         <field name="arch" type="xml">
             <form string="ShipStation Instance">
                 <header>
-                    <button name="action_test_connection"
+                    <button name="action_test_v1_connection" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
-                            string="Test Connection"
+                            string="Test V1 Connection"
                             class="btn-primary"/>
-                    <button name="action_sync_orders"
+                    <button name="action_test_v2_connection" groups="shipstation_connector.group_shipstation_admin"
+                            type="object"
+                            string="Test V2 Connection"
+                            class="btn-secondary"/>
+                    <button name="action_check_local_setup" groups="shipstation_connector.group_shipstation_admin"
+                            type="object" string="Check Setup" class="btn-secondary"/>
+                    <button name="action_sync_orders" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Orders"
                             class="btn-secondary"/>
-                    <button name="action_sync_shipments"
+                    <button name="action_sync_shipments" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Shipments"
                             class="btn-secondary"/>
-                    <button name="action_sync_products"
+                    <button name="action_sync_products" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Products"
                             class="btn-secondary"/>
-                    <button name="action_sync_customers"
+                    <button name="action_sync_customers" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Customers"
                             class="btn-secondary"/>
-                    <button name="action_sync_categories"
+                    <button name="action_sync_categories" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Categories"
                             class="btn-secondary"/>
-                    <button name="action_sync_inventory"
+                    <button name="action_sync_inventory" groups="shipstation_connector.group_shipstation_admin"
                             type="object"
                             string="Sync Inventory"
                             class="btn-secondary"/>
@@ -43,12 +49,16 @@
                         <field name="company_id"/>
                         <field name="base_url"/>
                         <field name="store_id"/>
+                        <field name="order_currency_id" placeholder="Company currency" options="{'no_create': True}"/>
                         <field name="api_key" password="True"/>
                         <field name="api_secret" password="True"/>
+                        <field name="v2_api_key" password="True"/>
                         <field name="order_status"/>
                         <field name="order_sync_days_back"/>
-                        <field name="inventory_update_odoo_stock"/>
-                        <field name="inventory_warehouse_id" invisible="inventory_update_odoo_stock == False"/>
+                        <field name="inventory_warehouse_id"/>
+                        <div class="text-muted">Inventory sync is read-only for Odoo stock. Selecting a warehouse enables discrepancy comparisons, not adjustments.</div>
+                        <field name="allow_label_void" groups="shipstation_connector.group_shipstation_admin"/>
+                        <div class="text-muted" groups="shipstation_connector.group_shipstation_admin">Off by default. When on, administrators get a confirmed, single-order "Void Label (Request Refund)" button. Voiding cannot be undone from Odoo.</div>
                     </group>
                     <group string="Sync Status" col="4">
                         <field name="last_order_sync_at" readonly="1"/>
@@ -58,14 +68,30 @@
                         <field name="last_sync" readonly="1"/>
                     </group>
                     <notebook>
-                        <page string="Webhook">
+                        <page string="Setup Checklist" groups="shipstation_connector.group_shipstation_admin">
+                            <group string="Local Configuration Readiness">
+                                <field name="setup_state" readonly="1" widget="badge"/>
+                                <field name="setup_summary" readonly="1"/>
+                                <field name="setup_next_step" readonly="1"/>
+                                <field name="setup_checklist" readonly="1" nolabel="1"/>
+                            </group>
+                            <div class="text-muted">This checklist reads local configuration only. It never tests credentials, registers webhooks, buys labels, changes stock or contacts ShipStation.</div>
+                            <div class="text-muted">Recommended sequence: set V1 credentials and store ID, test V1, optionally configure V2, select warehouse for reconciliation, set up HTTPS webhook if needed, then begin controlled synchronization.</div>
+                        </page>
+                        <page string="Webhook" groups="shipstation_connector.group_shipstation_admin">
                             <group>
                                 <field name="webhook_order_create"/>
                                 <field name="webhook_order_update"/>
                                 <field name="webhook_shipment_update"/>
+                                <field name="webhook_target_url" readonly="1" widget="url"/>
+                                <button name="action_rotate_v1_webhook_token" groups="shipstation_connector.group_shipstation_admin"
+                                        type="object" string="Generate / Rotate V1 Webhook URL"
+                                        class="btn-secondary"
+                                        confirm="Existing ShipStation subscriptions will stop working until their URL is updated. Continue?"/>
+                                <div class="text-muted">V1 only: enable the relevant events, then register the HTTPS URL in ShipStation. Signed V2 notifications are not accepted here.</div>
                             </group>
                         </page>
-                        <page string="Cron">
+                        <page string="Cron" groups="shipstation_connector.group_shipstation_admin">
                             <group>
                                 <field name="cron_sync_orders"/>
                                 <field name="cron_sync_shipments"/>
@@ -74,7 +100,7 @@
                                 <field name="cron_sync_inventory"/>
                             </group>
                         </page>
-                        <page string="Store Mapping">
+                        <page string="Store Mapping" groups="shipstation_connector.group_shipstation_admin">
                             <field name="store_mapping_ids">
                                 <tree editable="bottom">
                                     <field name="shipstation_store_id"/>
@@ -85,7 +111,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Carrier Mapping">
+                        <page string="Carrier Mapping" groups="shipstation_connector.group_shipstation_admin">
                             <field name="carrier_mapping_ids">
                                 <tree editable="bottom">
                                     <field name="shipstation_carrier_code"/>
@@ -94,7 +120,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Automation Rules">
+                        <page string="Automation Rules" groups="shipstation_connector.group_shipstation_admin">
                             <field name="automation_rule_ids">
                                 <tree editable="bottom">
                                     <field name="sequence"/>
