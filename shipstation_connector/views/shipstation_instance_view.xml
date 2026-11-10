@@ -49,6 +49,7 @@
                         <field name="company_id"/>
                         <field name="base_url"/>
                         <field name="store_id"/>
+                        <field name="order_currency_id" placeholder="Company currency" options="{'no_create': True}"/>
                         <field name="api_key" password="True"/>
                         <field name="api_secret" password="True"/>
                         <field name="v2_api_key" password="True"/>

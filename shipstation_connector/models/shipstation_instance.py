@@ -32,6 +32,13 @@ class ShipStationInstance(models.Model):
         required=True,
         default=lambda self: self.env.company,
     )
+    # No callable default on purpose: Odoo would stamp one value onto every existing row at upgrade.
+    order_currency_id = fields.Many2one(
+        "res.currency",
+        string="Order Currency",
+        help="Currency of the amounts in this ShipStation store. ShipStation V1 orders do not state a currency, "
+             "so this is what order totals are reported in. Leave empty to use the company currency.",
+    )
     active = fields.Boolean(default=True)
 
     last_sync = fields.Datetime()

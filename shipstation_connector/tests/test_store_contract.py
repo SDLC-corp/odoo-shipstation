@@ -69,6 +69,23 @@ class TestStoreContract(ShipStationCommon):
         self.assertEqual((result["processed"], result["failed"]), (1, 0))
         self.assertEqual(self.http.calls[0]["params"]["storeId"], "111")
 
+    def test_documented_orders_have_a_currency_so_revenue_is_reported(self):
+        """V1 orders state no currency; the connection's order currency (default: company's) is used."""
+        self.make_product("SS-SKU-1")
+        self.instance._import_order_record(self.order_payload())
+        self.assertEqual(self._mirror().currency, self.company.currency_id.name)
+        row = next(r for r in self.env["shipstation.dashboard"].get_dashboard_data()["instances"]
+                   if r["id"] == self.instance.id)
+        self.assertTrue(row["revenue_available"], row)
+        self.assertEqual(row["currency"], self.company.currency_id.name)
+        eur = self.env.ref("base.EUR")
+        eur.active = True
+        self.instance.order_currency_id = eur
+        self.instance._import_order_record(self.order_payload(modify="2026-11-05T10:30:00.0000000"))
+        self.assertEqual(self._mirror().currency, "EUR")
+        self.instance._import_order_record(self.order_payload(modify="2026-11-05T11:30:00.0000000", currencyCode="CAD"))
+        self.assertEqual(self._mirror().currency, "CAD", "a currency stated by the payload is kept")
+
     # ---- shipments --------------------------------------------------------------------------------------------
     def test_documented_shipments_without_any_store_sync_and_link(self):
         sale = self.link_sale_to_shipstation(self.make_confirmed_sale())

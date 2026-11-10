@@ -40,8 +40,8 @@ server, synthetic data) - **production-verified** (real ShipStation account). *N
 Evidence at the time of writing:
 
 - Offline suite **234/234**.
-- Odoo runtime suite **165/165** on a clean database (0 failed, 0 errors, 0 skipped; 0 view and 0 translation warnings).
-- The same suite **165/165** on a database installed from the published build and upgraded to this branch (pre-existing data kept).
+- Odoo runtime suite **167/167** on a clean database (0 failed, 0 errors, 0 skipped; 0 view and 0 translation warnings).
+- The same suite **167/167** on a database installed from the published build and upgraded to this branch (pre-existing data kept).
 - 0 JavaScript console errors across Administrator, Manager and Reader browser sessions.
 
 ### Upgrade from the published build
@@ -103,6 +103,9 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
     documented payload shapes; against the previous code 11 of them fail (e.g. order sync `0 processed / 1 failed`, shipment sync
     `0 linked / 1 failed`, webhook items dropped, push sends a top-level `storeId`); with the fix all pass. The shared fixtures were
     changed to the documented shapes and a test guards them against drifting back.
+17. **Revenue never available for real orders.** V1 orders state no currency, so every mirror's currency was blank and the dashboard
+    reported revenue as unavailable. Each connection now has an optional **Order Currency** (empty = company currency) used when a
+    payload states none; the upgrade fills blank mirror currencies from it.
 
 ## 3. Decisions made by the owner
 

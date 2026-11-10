@@ -13,7 +13,11 @@ installed from the published build):
    carries the same ShipStation shipment id) are marked linked. Everything else stays pending for the
    Shipping Workbench.
 
-Both steps are idempotent and use plain SQL, so they are safe to re-run.
+3. ShipStation V1 orders state no currency, so the published build stored order mirrors with a blank
+   currency and the dashboard could not report revenue. Blank currencies are filled with the currency of
+   the connection's company (the new per-connection "Order Currency" is empty after the upgrade).
+
+All steps are idempotent and use plain SQL, so they are safe to re-run.
 """
 import logging
 import secrets
@@ -64,8 +68,25 @@ def _link_shipments_already_on_a_delivery(cr):
     return cr.rowcount
 
 
+def _fill_blank_order_currencies(cr):
+    cr.execute(
+        """
+        UPDATE shipstation_order_sync o
+           SET currency = cur.name
+          FROM shipstation_instance i
+          JOIN res_company c ON c.id = i.company_id
+          JOIN res_currency cur ON cur.id = COALESCE(i.order_currency_id, c.currency_id)
+         WHERE o.instance_id = i.id
+           AND COALESCE(TRIM(o.currency), '') = ''
+        """
+    )
+    _logger.info("ShipStation upgrade: filled the currency of %s order mirror(s)", cr.rowcount)
+    return cr.rowcount
+
+
 def migrate(cr, version):
     if not version:  # fresh install: nothing to repair
         return
     _give_every_connection_its_own_webhook_secret(cr)
     _link_shipments_already_on_a_delivery(cr)
+    _fill_blank_order_currencies(cr)

@@ -51,7 +51,9 @@ company-scoped by record rules.
 ## Setup
 
 1. **ShipStation > Instances > New.** Enter the V1 API key and secret and the numeric store id.
-   Optionally add a separate V2 key (never reuse the V1 key).
+   Optionally add a separate V2 key (never reuse the V1 key). Set **Order Currency** if the store does not
+   sell in the company currency: ShipStation V1 orders do not state a currency, so order totals and dashboard
+   revenue are reported in this one (empty = company currency).
 2. **Check Setup** (local only), then **Test V1 Connection** / **Test V2 Connection** (read-only requests).
 3. Optional: select an inventory warehouse for the read-only comparison.
 4. Leave the base URL as `https://api.shipstation.com`. It must be `https://*.shipstation.com`

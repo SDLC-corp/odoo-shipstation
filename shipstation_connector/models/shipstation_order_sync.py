@@ -989,7 +989,8 @@ class ShipStationOrderSync(models.Model):
             "customer_name": str(customer_name_val).strip() if customer_name_val not in (None, "") else False,
             "customer_email": str(customer_email_val).strip() if customer_email_val not in (None, "") else False,
             "total_amount": self._to_float(total_amount_val, 0.0),
-            "currency": order_data.get("currencyCode"),
+            # V1 orders state no currency; amounts are in the store's currency, configured on the connection.
+            "currency": order_data.get("currencyCode") or instance._order_currency_code() or False,
             "order_date": instance._parse_ss_datetime(order_date_val),
             "last_modified_date": instance._parse_ss_datetime(order_data.get("modifyDate")),
             "synced_on": fields.Datetime.now(),

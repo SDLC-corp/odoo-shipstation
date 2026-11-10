@@ -390,6 +390,10 @@ class ShipStationSyncBase(models.AbstractModel):
         remote = self._remote_store_id(data)
         return not (configured and remote and remote != configured)
 
+    def _order_currency_code(self):
+        """Currency of this store's order amounts: ShipStation V1 orders carry none."""
+        return (self.order_currency_id or self.company_id.currency_id).name or ""
+
     def _is_only_instance_of_company(self):
         return self.env["shipstation.instance"].sudo().with_context(active_test=False).search_count(
             [("company_id", "=", self.company_id.id)]) == 1

@@ -48,6 +48,21 @@ class TestUpgradeFromPublishedBuild(ShipStationCommon):
         migration.migrate(self.env.cr, "19.0.1.0.0")
         self.assertEqual(self._tokens(self.instance, self.instance_b), first, "idempotent")
 
+    def test_blank_order_currencies_are_filled_from_the_connection(self):
+        """V1 orders carry no currency, so the published build stored mirrors without one."""
+        eur = self.env.ref("base.EUR")
+        eur.active = True
+        self.instance_b.order_currency_id = eur
+        blank_a = self.make_order_sync(currency=False)
+        blank_b = self.make_order_sync(instance=self.instance_b, shipstation_order_id="9002", currency="")
+        kept = self.make_order_sync(shipstation_order_id="9003", currency="CAD")
+        self.env.flush_all()
+        load_migration().migrate(self.env.cr, "19.0.1.0.0")
+        self.env.invalidate_all()
+        self.assertEqual(blank_a.currency, self.company.currency_id.name)
+        self.assertEqual(blank_b.currency, "EUR", "a configured order currency wins over the company's")
+        self.assertEqual(kept.currency, "CAD", "a stated currency is never overwritten")
+
     def test_a_fresh_install_runs_nothing(self):
         before = self._tokens(self.instance, self.instance_b)
         self.env.cr.execute("UPDATE shipstation_instance SET webhook_token = 'SAME' WHERE id IN %s",
