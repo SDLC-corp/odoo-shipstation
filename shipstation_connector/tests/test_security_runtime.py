@@ -30,6 +30,20 @@ class TestSecurityRuntime(ShipStationCommon):
         with self.assertRaises(AccessError):
             self.instance.with_user(self.user_manager).search([("api_key", "=", "TEST-KEY-A")])
 
+    def test_secret_fields_cannot_be_probed_by_grouping_sorting_or_related_paths(self):
+        Instance = self.instance.with_user(self.user_manager)
+        probes = (
+            lambda: Instance._read_group([], ["api_key"], ["__count"]),
+            lambda: Instance._read_group([("webhook_token", "!=", False)], ["name"], ["__count"]),
+            lambda: Instance.search([], order="api_secret desc"),
+            lambda: self.env["shipstation.order.sync"].with_user(self.user_manager).search(
+                [("instance_id.api_key", "=", "TEST-KEY-A")]),
+        )
+        for index, probe in enumerate(probes):
+            with self.subTest(probe=index), self.assertRaises(AccessError):
+                probe()
+        self.assertTrue(self.instance.with_user(self.user_admin).search([("api_key", "=", "TEST-KEY-A")]))
+
     # ---- privileged instance actions -------------------------------------------
     def test_non_admin_cannot_run_instance_operations_and_no_http_leaves(self):
         before = len(self.http.calls)

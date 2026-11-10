@@ -5,8 +5,9 @@
 > only). What was re-verified on Odoo 17:
 >
 > - Offline suite **234/234** (Odoo 17 venv, Python 3.10).
-> - Odoo 17 runtime suite **168/168** (the 167 Odoo 19 tests plus a web.assets_backend build test) on a fresh database
->   without demo data, and **168/168** on a database installed from the published 17.0 build (17.0.1.0.0), seeded through its own
+> - Odoo 17 runtime suite **169/169** (the Odoo 19 tests, including the secret-field probe test, plus a web.assets_backend
+>   build test) on a fresh database with Odoo demo data and on one without; and **168/168** (before the probe test was
+>   added) on a database installed from the published 17.0 build (17.0.1.0.0), seeded through its own
 >   code and upgraded with `-u shipstation_connector`; the upgrade ran `migrations/17.0.1.1.0/post-migration.py`.
 >   0 failures, 0 errors, no view or translation warnings.
 > - Not repeated on Odoo 17: the browser pass, the 100k-row scale run and the two-connection PostgreSQL label probe.
@@ -14,8 +15,9 @@
 >   commit; Odoo 17 holds a cursor's environments weakly and would otherwise drop the pending write. Proven with two
 >   real cursors (not test mode) on an Odoo 17 database: the inline write left `label_state` unchanged after the
 >   commit, the flushed write persisted. Without the fix 19 tests failed (paid labels stuck in "Request Sent").
-> - The runtime suite expects a database without demo data (Odoo 17 installs demo data unless `--without-demo=all`; demo
->   confirmed sale orders are legitimate push candidates and change the push counts three tests assert).
+> - Admin-only credential fields (`api_key`, `api_secret`, `v2_api_key`, `webhook_token`) cannot be used as a search
+>   oracle by a Manager: Odoo 17 core already checks field `groups` for domain leaves (including related paths), sort
+>   orders (`_flush_search`) and read_group groupby/aggregates, so no module-level guard was needed; the probe test proves it.
 
 
 Status: **one blocker remains: no real ShipStation account has ever been used (B1).** Everything that can be
