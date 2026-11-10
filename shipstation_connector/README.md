@@ -136,8 +136,7 @@ tested on a database installed from the published build.
 python -B -I devtools/run_offline_tests.py
 
 # database-backed tests: use a DISPOSABLE database, never a production one
-# (create it without demo data: Odoo 18 loads demo data by default and the push tests count orders)
-odoo-bin -c <conf> -d <disposable_db> --without-demo=all -i shipstation_connector --stop-after-init \
+odoo-bin -c <conf> -d <disposable_db> -u shipstation_connector --stop-after-init \
          --test-enable --test-tags /shipstation_connector
 ```
 
@@ -159,8 +158,9 @@ it can never reach ShipStation or buy a label.
 
 ## Release notes 18.0.1.1.0
 
-Odoo 18 port of the 19.0.1.1.0 release. Runtime-tested on Odoo 18 Community (Odoo test suite on a fresh
-database and on a database upgraded from the published 18.0.1.0.0 build, PostgreSQL 18, HTTP mocked).
+Odoo 18 port of the 19.0.1.1.0 release. Runtime-tested on Odoo 18 Community (Odoo test suite on fresh
+databases with and without demo data and on a database upgraded from the published 18.0.1.0.0 build,
+PostgreSQL 18, HTTP mocked).
 The browser pass and the 100k-row scale measurements were done on the Odoo 19 build and have not been
 repeated on Odoo 18. Fixes order push on installs without `website_sale`, manager rate refresh,
 Pacific-time handling, shipment listing parameters, assistant ACLs, hard-failing unmatched shipments,
@@ -168,5 +168,4 @@ voided labels, and adds the guarded label purchase, webhook retry and return val
 
 Odoo 18 specifics: label/void bookkeeping and request logs written on a separate cursor are flushed
 explicitly before that cursor commits (on Odoo 18 a commit only flushes environments that are still
-referenced, so these writes could otherwise be dropped silently). The test suite is run on databases
-created without demo data (Odoo 18 loads demo data by default, Odoo 19 does not).
+referenced, so these writes could otherwise be dropped silently).

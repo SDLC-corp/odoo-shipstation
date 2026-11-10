@@ -9,9 +9,10 @@ Odoo 18** (Community, on-premise, PostgreSQL 18, Python 3.11, HTTP mocked):
 | Check | Result |
 |---|---|
 | Offline suite (`devtools/run_offline_tests.py`, Odoo 18 venv) | 234/234 |
-| Odoo suite on a fresh database (`--without-demo=all -i`) | 167/167, 0 failed, 0 errors; no view, translation or loader warnings |
+| Odoo suite on a fresh database **with** Odoo demo data | 168/168, 0 failed, 0 errors |
+| Odoo suite on a fresh database **without** demo data | 168/168, 0 failed, 0 errors; no view, translation or loader warnings |
 | Upgrade from the published 18.0.1.0.0 build (seeded through its own code) | `-u` exit 0; the three migration steps logged; data checked |
-| Odoo suite on that upgraded database | 167/167, 0 failed, 0 errors |
+| Odoo suite on that upgraded database | 167/167, 0 failed, 0 errors (run before the secret-probing test was added) |
 | Backend bundles (`web.assets_backend`, `web.assets_web`) compiled via `ir.qweb._get_asset_bundle` | all 3 JS, 3 XML, 3 CSS/SCSS files included, registry keys and templates present, no CSS errors |
 
 Not repeated on Odoo 18: the real-browser pass, the 100k-row scale measurements and the two-connection
@@ -28,8 +29,9 @@ a reset or a void (and the request log) built their environment inline, so the w
 **silently dropped**: a label that was paid for stayed "Request Sent - Outcome Unknown". 16 label and void tests
 caught it. Every side-cursor write now keeps its environment and calls `flush_all()` before the commit.
 
-The database suite must run on a database created **without demo data**: Odoo 18 installs demo data by default
-(Odoo 19 does not) and the order-push tests count every eligible order in the company.
+Secrets as search oracles: Odoo 18 checks field groups in `_field_to_sql`, so a Manager cannot use `api_key`,
+`api_secret` or `webhook_token` in a domain, a sort order, a grouping or a dotted path from another model; no extra
+guard was needed (covered by `test_secret_fields_cannot_be_probed_by_grouping_sorting_or_related_paths`).
 
 ## 19.0 assessment (history)
 
@@ -178,10 +180,10 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 
 ```
 python -B -I devtools/run_offline_tests.py
-odoo-bin -c <conf> -d <DISPOSABLE db> --without-demo=all -i shipstation_connector --stop-after-init \
+odoo-bin -c <conf> -d <DISPOSABLE db> -u shipstation_connector --stop-after-init \
          --test-enable --test-tags /shipstation_connector
 ```
 Use a throw-away database: the upgrade step modifies the database it runs on. Never point it at production.
 To reproduce the published-build upgrade on Odoo 18: check out the published `18.0` commit (`bcf70c1f`) detached,
-install the module on a fresh database created with `--without-demo=all`, seed it, switch to this branch, then
+install the module on a fresh database, seed it, switch to this branch, then
 `-u shipstation_connector`. (On 19.0 the published build was `09e8866f`.)
