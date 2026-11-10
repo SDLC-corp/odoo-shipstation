@@ -5,13 +5,17 @@
         <field name="arch" type="xml">
             <list>
                 <header>
-                    <button name="action_refresh_inventory" type="object" string="Refresh Inventory" class="btn-primary"/>
+                    <button name="action_refresh_inventory" groups="shipstation_connector.group_shipstation_admin" type="object" string="Refresh Inventory" class="btn-primary"/>
                 </header>
                 <field name="instance_id"/>
                 <field name="shipstation_product_id"/>
                 <field name="sku"/>
                 <field name="name"/>
-                <field name="stock_level" string="In Stock"/>
+                <field name="stock_level" string="ShipStation Quantity"/>
+                <field name="remote_stock_verified"/>
+                <field name="odoo_stock_level"/>
+                <field name="stock_difference"/>
+                <field name="reconciliation_state"/>
                 <field name="stock_status"/>
                 <field name="modify_date"/>
                 <field name="synced_on"/>
@@ -25,7 +29,7 @@
         <field name="arch" type="xml">
             <form string="ShipStation Inventory">
                 <header>
-                    <button name="action_update_inventory" type="object" string="Update Inventory" class="btn-primary"/>
+                    <button name="action_update_inventory" groups="shipstation_connector.group_shipstation_admin" type="object" string="Update Inventory" class="btn-primary"/>
                 </header>
                 <sheet>
                     <group>
@@ -33,7 +37,12 @@
                         <field name="shipstation_product_id"/>
                         <field name="sku"/>
                         <field name="name"/>
-                        <field name="stock_level" string="In Stock"/>
+                        <field name="stock_level" string="ShipStation Quantity"/>
+                        <field name="remote_stock_verified"/>
+                        <field name="odoo_stock_level"/>
+                        <field name="stock_difference"/>
+                        <field name="reconciliation_state"/>
+                        <field name="reconciled_at"/>
                         <field name="stock_status"/>
                         <field name="modify_date"/>
                         <field name="synced_on"/>

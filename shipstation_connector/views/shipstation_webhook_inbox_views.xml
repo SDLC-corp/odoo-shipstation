@@ -1,0 +1,57 @@
+<odoo>
+    <record id="view_shipstation_webhook_inbox_list" model="ir.ui.view">
+        <field name="name">shipstation.webhook.inbox.list</field>
+        <field name="model">shipstation.webhook.inbox</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0"
+                  decoration-danger="state == 'exhausted'" decoration-warning="state == 'failed'"
+                  decoration-success="state == 'done'">
+                <header>
+                    <button name="action_retry_now" type="object" string="Retry Now" class="btn-primary"
+                            groups="shipstation_connector.group_shipstation_admin"
+                            confirm="Re-queue the selected notifications for processing?"/>
+                </header>
+                <field name="create_date"/>
+                <field name="instance_id"/>
+                <field name="event_type"/>
+                <field name="state"/>
+                <field name="attempts"/>
+                <field name="next_retry_at"/>
+                <field name="processed_at"/>
+                <field name="last_error"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_shipstation_webhook_inbox_search" model="ir.ui.view">
+        <field name="name">shipstation.webhook.inbox.search</field>
+        <field name="model">shipstation.webhook.inbox</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="instance_id"/>
+                <field name="event_type"/>
+                <filter name="needs_attention" string="Needs Attention"
+                        domain="[('state', 'in', ('failed', 'exhausted'))]"/>
+                <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="done" string="Processed" domain="[('state', '=', 'done')]"/>
+                <group>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_instance" string="Connection" context="{'group_by': 'instance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_shipstation_webhook_inbox" model="ir.actions.act_window">
+        <field name="name">Webhook Inbox</field>
+        <field name="res_model">shipstation.webhook.inbox</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_needs_attention': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No webhook notifications</p>
+            <p>Authenticated ShipStation notifications are queued here before they are processed.</p>
+        </field>
+    </record>
+    <menuitem id="menu_shipstation_webhook_inbox"
+              name="Webhook Inbox" parent="menu_shipstation_root"
+              action="action_shipstation_webhook_inbox"
+              groups="shipstation_connector.group_shipstation_admin,shipstation_connector.group_shipstation_manager" sequence="95"/>
+</odoo>

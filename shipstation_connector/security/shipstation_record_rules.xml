@@ -1,0 +1,165 @@
+<odoo>
+    <!-- Odoo 20 merged ir.rule into ir.access. Each record below is a RESTRICTION (no group): it is
+         AND-ed for every user, exactly like a global ir.rule on Odoo 19. sudo service paths must be
+         reviewed separately. -->
+    <record id="rule_shipstation_instance_company" model="ir.access">
+        <field name="name">ShipStation instance company isolation</field>
+        <field name="model_id" ref="model_shipstation_instance"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_order_sync_company" model="ir.access">
+        <field name="name">ShipStation order sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_order_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_shipment_sync_company" model="ir.access">
+        <field name="name">ShipStation shipment sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_shipment_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_product_sync_company" model="ir.access">
+        <field name="name">ShipStation product sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_product_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_inventory_company" model="ir.access">
+        <field name="name">ShipStation inventory company isolation</field>
+        <field name="model_id" ref="model_shipstation_inventory"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_customer_sync_company" model="ir.access">
+        <field name="name">ShipStation customer sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_customer_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_category_sync_company" model="ir.access">
+        <field name="name">ShipStation category sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_category_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_attribute_sync_company" model="ir.access">
+        <field name="name">ShipStation attribute sync company isolation</field>
+        <field name="model_id" ref="model_shipstation_attribute_sync"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_report_company" model="ir.access">
+        <field name="name">ShipStation report company isolation</field>
+        <field name="model_id" ref="model_shipstation_report"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_rate_company" model="ir.access">
+        <field name="name">ShipStation rate company isolation</field>
+        <field name="model_id" ref="model_shipstation_rate"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('order_id.instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_report_line_company" model="ir.access">
+        <field name="name">ShipStation report line company isolation</field>
+        <field name="model_id" ref="model_shipstation_report_line"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('report_id.instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_store_mapping_company" model="ir.access">
+        <field name="name">ShipStation store mapping company isolation</field>
+        <field name="model_id" ref="model_shipstation_store_mapping"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_carrier_mapping_company" model="ir.access">
+        <field name="name">ShipStation carrier mapping company isolation</field>
+        <field name="model_id" ref="model_shipstation_carrier_mapping"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_automation_rule_company" model="ir.access">
+        <field name="name">ShipStation automation rule company isolation</field>
+        <field name="model_id" ref="model_shipstation_automation_rule"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_field_company" model="ir.access">
+        <field name="name">ShipStation field company isolation</field>
+        <field name="model_id" ref="model_shipstation_field"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_field_mapping_company" model="ir.access">
+        <field name="name">ShipStation field mapping company isolation</field>
+        <field name="model_id" ref="model_shipstation_field_mapping"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_sync_log_company" model="ir.access">
+        <field name="name">ShipStation sync log company isolation</field>
+        <field name="model_id" ref="model_shipstation_sync_log"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('instance_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_ai_insight_company" model="ir.access">
+        <field name="name">ShipStation ai insight company isolation</field>
+        <field name="model_id" ref="model_shipstation_ai_insight"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_webhook_inbox_company" model="ir.access">
+        <field name="name">ShipStation webhook inbox company isolation</field>
+        <field name="model_id" ref="model_shipstation_webhook_inbox"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s06_preset_company" model="ir.access">
+        <field name="name">ShipStation package preset company</field>
+        <field name="model_id" ref="model_shipstation_package_preset"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s06_carrier_catalog_company" model="ir.access">
+        <field name="name">ShipStation carrier catalog company</field>
+        <field name="model_id" ref="model_shipstation_carrier_catalog"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s07_fulfillment_batch_company" model="ir.access">
+        <field name="name">ShipStation fulfillment batch company isolation</field>
+        <field name="model_id" ref="model_shipstation_fulfillment_batch"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s07_fulfillment_batch_line_company" model="ir.access">
+        <field name="name">ShipStation fulfillment batch line company isolation</field>
+        <field name="model_id" ref="model_shipstation_fulfillment_batch_line"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s07_return_case_company" model="ir.access">
+        <field name="name">ShipStation return case company isolation</field>
+        <field name="model_id" ref="model_shipstation_return_case"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_shipstation_s07_return_case_line_company" model="ir.access">
+        <field name="name">ShipStation return case line company isolation</field>
+        <field name="model_id" ref="model_shipstation_return_case_line"/>
+        <field name="operation">crud</field>
+        <field name="domain">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <!-- The published 20.0.1.0.0 build granted the read-only group this sync-log access. The XML id is
+         kept and the grant deactivated so an upgrade revokes it explicitly (ir.access has no "no
+         operation" value, unlike the 0,0,0,0 row of ir.model.access). -->
+    <record id="access_shipstation_sync_log_readonly" model="ir.access">
+        <field name="name">access_shipstation_sync_log_readonly</field>
+        <field name="model_id" ref="model_shipstation_sync_log"/>
+        <field name="group_id" ref="group_shipstation_admin"/>
+        <field name="operation">r</field>
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

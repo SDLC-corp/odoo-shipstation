@@ -49,7 +49,10 @@
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Revenue</div>
-                        <div class="o_shipstation_kpi_value">$<t t-out="this.formatMoney(this.state.summary.revenue)"/></div>
+                        <div class="o_shipstation_kpi_value">
+                            <t t-if="this.state.summary.revenue_available"><t t-out="this.state.summary.currency"/> <t t-out="this.formatMoney(this.state.summary.revenue)"/></t>
+                            <t t-else="">Mixed / unknown currency</t>
+                        </div>
                     </div>
                     <div class="o_shipstation_kpi">
                         <div class="o_shipstation_kpi_label">Products</div>
@@ -153,7 +156,10 @@
                                         <td t-out="this.formatNumber(inst.total_shipments)"/>
                                         <td t-out="this.formatNumber(inst.total_products)"/>
                                         <td t-out="this.formatNumber(inst.total_customers)"/>
-                                        <td>$<t t-out="this.formatMoney(inst.total_revenue)"/></td>
+                                        <td>
+                                            <t t-if="inst.revenue_available"><t t-out="inst.currency || this.state.summary.currency"/> <t t-out="this.formatMoney(inst.total_revenue)"/></t>
+                                            <t t-else="">Mixed / unknown</t>
+                                        </td>
                                         <td t-out="this.formatNumber(inst.failed_24h)"/>
                                         <td t-out="this.formatNumber(inst.success_24h)"/>
                                         <td>

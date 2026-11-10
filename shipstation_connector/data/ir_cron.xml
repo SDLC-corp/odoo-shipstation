@@ -48,4 +48,13 @@
         <field name="interval_type">minutes</field>
         <field name="active">False</field>
     </record>
+    <record id="ir_cron_shipstation_webhook_inbox" model="ir.cron">
+        <field name="name">ShipStation Process Authenticated Webhooks</field>
+        <field name="model_id" ref="model_shipstation_webhook_inbox"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_webhooks(limit=5)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
 </odoo>
