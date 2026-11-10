@@ -158,6 +158,11 @@ class ShipStationFixtures:
             "store_id": "222", "company_id": cls.company_b.id,
         })
 
+        # A database with Odoo demo data already holds confirmed orders with open deliveries. Mark them
+        # as already in ShipStation so push tests see only the orders they create (rolled back after).
+        for order in cls.env["sale.order"].search([("state", "=", "sale"), ("shipstation_order_id", "=", False)]):
+            order.shipstation_order_id = "pre-test-%s" % order.id
+
     # ---- helpers -----------------------------------------------------------
     def make_order_sync(self, instance=None, **extra):
         instance = instance or self.instance
