@@ -84,6 +84,8 @@ and register the URL in ShipStation. ShipStation V1 notifications are not signed
 authentication. Notifications are queued, de-duplicated and fetched by a cron job with retries; failed ones
 appear in **Webhook Inbox** (default filter "Needs Attention") and can be re-queued with **Retry Now**.
 The old `/shipstation/webhook` endpoint is deliberately disabled and returns 404.
+Odoo's access log shows the callback path with the secret replaced by `[redacted]`. A reverse proxy in front of
+Odoo (nginx, Apache, a load balancer) logs the full URL in its own access log; restrict or filter that log too.
 
 ## Scheduled jobs
 
