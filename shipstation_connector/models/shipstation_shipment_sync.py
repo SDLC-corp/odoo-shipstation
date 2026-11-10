@@ -19,7 +19,7 @@ class ShipStationShipmentSync(models.Model):
     tracking_number = fields.Char()
     tracking_url = fields.Char()
     service_code = fields.Char()
-    ship_date = fields.Datetime()
+    ship_date = fields.Datetime(index=True)  # default list order: an unindexed sort scanned the whole table
     status = fields.Char()
     voided = fields.Boolean(
         index=True, copy=False,

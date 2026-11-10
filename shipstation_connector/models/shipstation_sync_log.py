@@ -2,7 +2,7 @@ import ast
 
 from datetime import timedelta
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, tools, _
 from odoo.exceptions import AccessError, UserError
 
 
@@ -22,6 +22,11 @@ class ShipStationSyncLog(models.Model):
     error_message = fields.Text()
     retry_count = fields.Integer(default=0)
     last_retry_at = fields.Datetime()
+
+    def init(self):
+        # list order, dashboard 24 h window and autovacuum purge all filter or sort on create_date
+        # (Odoo 15 has no models.Index; create_index does nothing when the index already exists)
+        tools.create_index(self._cr, "shipstation_sync_log_create_date_index", self._table, ["create_date"])
 
     @api.autovacuum
     def _gc_old_requests(self):

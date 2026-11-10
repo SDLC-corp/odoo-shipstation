@@ -7,6 +7,7 @@ not accept V2 signed webhooks; those need a separate verifier and endpoint.
 import hmac
 import json
 import logging
+import re
 
 from psycopg2 import IntegrityError
 from odoo import http
@@ -19,6 +20,33 @@ from ..services.shipstation_webhook_security import (
 )
 
 _logger = logging.getLogger(__name__)
+
+_TOKEN_IN_PATH = re.compile(r"(/shipstation/webhook/v1/[^/\s]*/)[^\s?#\"]+")
+
+
+def redact_webhook_token(text):
+    """Replace the secret path segment of a V1 callback URL with [redacted]."""
+    return _TOKEN_IN_PATH.sub(r"\1[redacted]", text) if isinstance(text, str) else text
+
+
+class WebhookTokenLogFilter(logging.Filter):
+    """The callback URL's last segment is the webhook secret, and Odoo's access log (the
+    'werkzeug' logger) writes every request path. Redact it so the secret never reaches log files."""
+
+    def filter(self, record):
+        if isinstance(record.args, tuple):
+            record.args = tuple(redact_webhook_token(arg) for arg in record.args)
+        record.msg = redact_webhook_token(record.msg)
+        return True
+
+
+def _install_log_filter():
+    access_logger = logging.getLogger("werkzeug")
+    if not any(isinstance(f, WebhookTokenLogFilter) for f in access_logger.filters):
+        access_logger.addFilter(WebhookTokenLogFilter())
+
+
+_install_log_filter()
 
 
 def _json_response(data, status=200):

@@ -215,3 +215,63 @@ class TestStoreContract(ShipStationCommon):
     def test_an_order_recorded_under_another_store_is_never_adopted(self):
         self._legacy_sale(store="222")
         self.assertFalse(self.instance._find_order("9001", "SO-9001", "111"))
+
+
+@tagged("post_install", "-at_install", "shipstation")
+class TestRealApiItemFormat(ShipStationCommon):
+    """Item format the REAL ShipStation API demanded (a live push on 2026-11-10 was rejected with HTTP 400:
+    "Input string '1.0' is not a valid integer" for items[].quantity and "Error converting value 0.5 to type
+    Weight" for items[].weight). The mocked suite never noticed."""
+
+    def _push_body(self, order):
+        self.http.add("POST", "/orders/createorder", {"orderId": 4242})
+        self.instance._push_orders(mode="manual")
+        calls = self.http.calls_to("POST", "/orders/createorder")
+        return calls[-1]["json"] if calls else None
+
+    def test_quantity_is_a_whole_number_and_weight_a_weight_object(self):
+        product = self.make_product("REAL-1")
+        product.weight = 0.5   # kilograms by default
+        order = self.make_confirmed_sale(qty=3.0, product=product)
+        item = self._push_body(order)["items"][0]
+        self.assertIs(type(item["quantity"]), int)
+        self.assertEqual(item["quantity"], 3)
+        self.assertEqual(item["weight"], {"value": 500.0, "units": "grams"})
+        self.assertEqual(order.shipstation_push_state, "success")
+
+    def test_weight_in_pounds_when_the_database_uses_pounds(self):
+        self.env["ir.config_parameter"].sudo().set_param("product.weight_in_lbs", "1")
+        product = self.make_product("REAL-LB")
+        product.weight = 2.25
+        item = self._push_body(self.make_confirmed_sale(qty=1.0, product=product))["items"][0]
+        self.assertEqual(item["weight"], {"value": 2.25, "units": "pounds"})
+
+    def test_no_weight_is_sent_when_the_product_has_none(self):
+        product = self.make_product("REAL-0")
+        product.weight = 0.0
+        item = self._push_body(self.make_confirmed_sale(qty=1.0, product=product))["items"][0]
+        self.assertNotIn("weight", item)
+
+    def test_a_fractional_quantity_fails_that_order_clearly_and_sends_nothing(self):
+        order = self.make_confirmed_sale(qty=1.5, product=self.make_product("REAL-FRAC"))
+        self.http.add("POST", "/orders/createorder", {"orderId": 1})
+        result = self.instance._push_orders(mode="manual")
+        self.assertEqual((result["pushed"], result["failed"]), (0, 1))
+        self.assertFalse(self.http.calls_to("POST", "/orders/createorder"), "an invalid order is never sent")
+        self.assertEqual(order.shipstation_push_state, "failed")
+        self.assertIn("whole quantity", order.shipstation_push_error)
+
+    def test_mirror_push_sends_whole_quantities(self):
+        source = str({"orderNumber": "SO-MIR", "orderDate": "2026-11-05T08:00:00", "customerEmail": "a@example.test",
+                      "billTo": {"name": "A", "street1": "1 St", "city": "X", "postalCode": "1", "country": "US"},
+                      "shipTo": {"name": "A", "street1": "1 St", "city": "X", "postalCode": "1", "country": "US"},
+                      "items": [{"sku": "S", "name": "S", "quantity": 2.0, "unitPrice": 1.0}]})
+        mirror = self.make_order_sync(shipstation_order_id=False, shipstation_order_number="SO-MIR", payload=source)
+        item = mirror._prepare_createorder_payload()["items"][0]
+        self.assertIs(type(item["quantity"]), int)
+        self.assertEqual(item["quantity"], 2)
+
+    def test_product_push_is_refused_because_the_api_cannot_create_products(self):
+        with self.assertRaisesRegex(UserError, "cannot create products"):
+            self.instance.with_user(self.user_admin).action_push_products()
+        self.assertFalse(self.http.calls, "no request is sent to an endpoint ShipStation does not offer")

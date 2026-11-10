@@ -38,6 +38,7 @@ def load_python_module(path, name, extra=None):
     fake_odoo.api = SimpleNamespace(**{_n: (lambda *a, **k: a[0] if len(a) == 1 and callable(a[0]) and not k else (lambda fn: fn)) for _n in ("model", "model_create_multi", "depends", "depends_context", "constrains", "autovacuum", "onchange", "returns")})
     fake_odoo.fields = fields
     fake_odoo.models = SimpleNamespace(Model=object)
+    fake_odoo.tools = SimpleNamespace(create_index=lambda *a, **k: None)
     fake_odoo._ = lambda text: text
     fake_exc = types.ModuleType("odoo.exceptions")
     fake_exc.UserError = type("UserError", (Exception,), {})

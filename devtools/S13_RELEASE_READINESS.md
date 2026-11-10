@@ -35,7 +35,8 @@ verified without one has been, including an upgrade from the build published on 
 
 Maturity levels: **implemented** - **source-tested** (offline contract tests) - **runtime-tested** (Odoo test
 suite on a real, upgraded PostgreSQL 18 database, HTTP mocked) - **browser-tested** (real browser, isolated
-server, synthetic data) - **production-verified** (real ShipStation account). *Nothing is production-verified.*
+server, synthetic data) - **production-verified** (real ShipStation account). *Only the paths listed under "Live API
+verification" below are production-verified; labels, voids and shipments are not.*
 
 | Area | Source | Runtime | Browser | Production |
 |---|:-:|:-:|:-:|:-:|
@@ -89,7 +90,14 @@ sale orders still adopted by id and store, views, ACLs, record rules and cron jo
 | Webhook cron claim (`SKIP LOCKED`) | 4 ms |
 | Autovacuum purge, one run | 271 ms |
 
-The query plans use indexes on every hot path. Nothing exceeded 130 ms; the largest tables were 31-34 MB.
+Nothing exceeded 130 ms; the largest tables were 31-34 MB. **Correction (2026-11-10):** an earlier version of this line said every
+hot path used an index. A second volume run on Odoo 15-20 (same row counts, `EXPLAIN ANALYZE` of every query) found three that did
+not: the default list orders (`order_date`, `ship_date`) and the request-log `create_date` filter (dashboard 24 h window, purge)
+scanned whole tables, 95-180 ms per list page at 100k rows. Indexes were added (list page 97 -> 0.3 ms, 24 h window 37 -> 1.4 ms,
+measured with the same indexes on the scale database) and `TestHotPathIndexes` keeps them. Still full-table by nature: Operations
+Home mirror count and instance totals (counts/sums over everything; would need cached counters). Order-number `ilike` search stays a
+scan (~100 ms at 100k): its btree index also serves the exact-match identity lookups. No version was more than 1.7x the same-session
+Odoo 19 baseline.
 
 ## 2. Defects found by real execution (all fixed, each with a regression test)
 
@@ -125,6 +133,36 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 17. **Revenue never available for real orders.** V1 orders state no currency, so every mirror's currency was blank and the dashboard
     reported revenue as unavailable. Each connection now has an optional **Order Currency** (empty = company currency) used when a
     payload states none; the upgrade fills blank mirror currencies from it.
+18. **Every order push was rejected by the real API (found live, 2026-11-10).** Items were sent with a decimal quantity (`1.0`)
+    and a bare number as weight (`0.5`); ShipStation answered HTTP 400: "Input string '1.0' is not a valid integer" and "Error
+    converting value 0.5 to type 'Weight'". Mocks accepted both. Quantities are now whole numbers (a fractional quantity fails that
+    order with a clear message and nothing is sent) and weights are Weight objects in the database's unit (kilograms are sent as
+    grams, pounds as pounds; no weight when the product has none). The undocumented product push (`POST /products`, which V1 does not
+    offer) now refuses explicitly. Six tests in `tests/test_store_contract.py` (`TestRealApiItemFormat`) pin the accepted format.
+19. **A missing Ship From location locked orders as "outcome unknown" (found live).** Without one, ShipStation answers
+    `createlabelfororder` with HTTP 500 "No warehouse has been selected". A 500 is rightly treated as "a label may have been bought",
+    so the order was locked for an administrator although nothing could have been bought. The label button now reads `GET /warehouses`
+    first (read-only, before the durable claim) and stops with an actionable message; locked or bought orders skip the check. Verified
+    live: message shown, order not locked, no paid request sent, carrier balance unchanged.
+
+### Live API verification (real ShipStation account, owner-approved, 2026-11-10)
+
+Run from a disposable Odoo 19 database with a guard that let through only GETs, `POST /shipments/getrates` and one
+`POST /orders/createorder`. No label was bought, nothing was voided, no webhook was registered.
+
+| Check | Result |
+|---|---|
+| V1 authentication, `GET /stores`, `/carriers`, `/webhooks` | 200; 1 store, carriers `stamps_com`, `ups_walleted`, `fedex_walleted` |
+| Rate limit headers | `X-Rate-Limit-Limit: 40` as documented |
+| Rate quotes through the module (`action_get_rates`) | USPS 19 and UPS 8 services stored; response shape `serviceName/serviceCode/shipmentCost/otherCost` as coded. FedEx answered 500 "One or more providers reported an error" (carrier-side; shown to the user, POST not retried) |
+| Order push through `_push_orders` | first attempt 400 (defect 18); after the fix 200, order created in the configured store |
+| The real order as ShipStation stores it | **no top-level `storeId`**, store only at `advancedOptions.storeId` (= configured store); **no `customerName`, no `currencyCode`**; `billTo.name` present. Confirms defects 16 and 17 against reality |
+| Re-sync of that order (`_sync_orders`, cron mode) | updated the same sale order (no duplicate); mirror store, currency (company currency) and customer name filled; checkpoint advanced |
+| Pacific time | an order dated 08:32 UTC came back as `00:32` (PST), as the converter assumes |
+| Label purchase (owner-approved, `testLabel=true`, USPS only) | not possible on this account: no Ship From location (defect 19); the pre-flight stopped it cleanly, balance 0.00 before and after |
+| Order delete (`DELETE /orders/{id}`) | 200 "The requested order has been deleted"; re-pushing the same order key afterwards returns 404 (README troubleshooting) |
+
+Not verified live: shipments (none exist without a label), label purchase, void, webhook delivery, V2 key.
 
 ## 3. Decisions made by the owner
 
@@ -136,7 +174,7 @@ The query plans use indexes on every hot path. Nothing exceeded 130 ms; the larg
 
 | # | Blocker | Why it matters | Action |
 |---|---|---|---|
-| B1 | **No real ShipStation call has ever been made.** | All behaviour is verified against mocks and ShipStation's published docs only. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
+| B1 | **Labels, voids, shipments and webhooks are not verified against the real API.** Read paths, rate quotes, order push and order import are (see "Live API verification"). | These are the money-moving paths. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
 
 ## 5. Residual risks (not blockers)
 
