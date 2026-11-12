@@ -738,6 +738,10 @@ class ShipStationOrderSync(models.Model):
             self._release_label_request("failed")  # nothing was bought
             raise
         shipment_id = str((response or {}).get("shipmentId") or "").strip() if isinstance(response, dict) else ""
+        # Seen on the real API: a test label comes back with shipmentId -1 (no shipment exists, nothing can be
+        # voided). Only a positive id names a real shipment; never record or void anything else.
+        if not (shipment_id.isdigit() and int(shipment_id) > 0):
+            shipment_id = ""
         tracking = (response or {}).get("trackingNumber") if isinstance(response, dict) else False
         if not shipment_id and not tracking:
             raise UserError(_(
