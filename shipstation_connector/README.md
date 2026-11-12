@@ -149,14 +149,19 @@ it can never reach ShipStation or buy a label.
 
 ## Known limitations
 
-- Verified against mocked HTTP and ShipStation's published documentation only; **no real authenticated
-  ShipStation account has been exercised.** Run the checklist in `devtools/` against a sandbox store first.
+- Verified against a real ShipStation account (V1, from Odoo 19, disposable database): connection and reads, rate
+  quotes, order push (create and update), order import without duplicates, Pacific-time handling, order delete, the
+  Ship From check, and one USPS **test** label (accepted, PDF stored, tracking recorded, no charge). A test label comes
+  back with `shipmentId` -1: no shipment exists, it is not listed by the shipments API and cannot be voided, so the
+  connector records no shipment for it. **Not verified live:** a paid label, a void, shipment import of a real label,
+  webhook delivery from ShipStation and V2. Run the checklist in `devtools/` against your own store first.
 - V2 is used for the connection test and optional product/inventory reads; orders, shipments, rates and
   labels use V1. V2 webhooks (signed) are not supported.
 - The numbered V1 hosts (`ssapiN.shipstation.com`) in webhook URLs are accepted on the strength of
   third-party reports; the supplied URL is never fetched, so this has no network impact.
 - The void request (`POST /shipments/voidlabel`, reply `approved`/`message`) follows ShipStation's
-  published documentation and is covered by mocked tests only; verify it with a sandbox label before enabling it.
+  published documentation and is covered by mocked tests only (a test label cannot be voided, see above); verify it
+  with one real label before enabling it.
   ShipStation may keep the order's status as shipped after a void; use **Pull from ShipStation** before buying a replacement.
 - Tested on Odoo 19 Community, on-premise. Enterprise and Odoo.sh are expected to work (standard apps only) but are not verified.
 
