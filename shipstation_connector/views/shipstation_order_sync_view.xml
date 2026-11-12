@@ -40,7 +40,7 @@
                             invisible="label_state not in ('requested', 'failed', 'void_requested')"
                             confirm="Only reset after you have confirmed in ShipStation what happened to this order's label. Continue?"/>
                     <button name="action_open_label" type="object" string="Open Label" class="btn-secondary"
-                            invisible="not shipstation_shipment_id and not label_url"/>
+                            invisible="not shipstation_shipment_id and not label_url and label_state != 'created'"/>
                 </header>
                 <sheet>
                     <group>
