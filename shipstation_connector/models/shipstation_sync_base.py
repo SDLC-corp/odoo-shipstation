@@ -162,7 +162,7 @@ class ShipStationSyncBase(models.AbstractModel):
     # Transport
     # ------------------------------------------------------------------
     def _http_call(self, label, method, url, endpoint, *, auth=None, headers=None,
-                   params=None, data=None, log=True):
+                   params=None, data=None, log=True, quick=False):
         """Single HTTP transport for V1 and V2.
 
         * GET/HEAD are retried with back-off; every other verb is sent exactly once so a
@@ -170,11 +170,13 @@ class ShipStationSyncBase(models.AbstractModel):
         * Rate-limit responses wait for the server-provided reset time (capped).
         * Failures raise :class:`ShipStationAPIError`, flagged ambiguous when the remote
           side may have acted.
+        * ``quick``: one attempt with a short timeout, for read-only checks made in the same request
+          as a paid POST, so they cannot use up the worker's time limit before that POST is sent.
         """
         method = str(method).upper()
-        retries = 3 if method in ("GET", "HEAD") else 0
+        retries = 3 if method in ("GET", "HEAD") and not quick else 0
         backoff = 1.0
-        kwargs = {"params": params, "json": data, "timeout": 30}
+        kwargs = {"params": params, "json": data, "timeout": 10 if quick else 30}
         if auth is not None:
             kwargs["auth"] = auth
         if headers is not None:
@@ -241,7 +243,7 @@ class ShipStationSyncBase(models.AbstractModel):
 
         return {}
 
-    def _ss_request(self, method, endpoint, params=None, data=None):
+    def _ss_request(self, method, endpoint, params=None, data=None, quick=False):
         """Perform ShipStation V1 requests (HTTP Basic, ``ssapi.shipstation.com``)."""
         self.ensure_one()
         credentials = self._get_shipstation_auth_record()
@@ -252,7 +254,7 @@ class ShipStationSyncBase(models.AbstractModel):
             endpoint = f"/{endpoint}"
         return self._http_call(
             "v1", method, f"{SHIPSTATION_V1_BASE_URL}{endpoint}", endpoint,
-            auth=(credentials.api_key, credentials.api_secret), params=params, data=data,
+            auth=(credentials.api_key, credentials.api_secret), params=params, data=data, quick=quick,
         )
 
     def _ss_v2_request(self, method, endpoint, params=None, data=None):
