@@ -137,6 +137,17 @@ class TestLabelPurchase(ShipStationCommon):
         self.assertEqual(order.label_state, "requested")
         self.assertFalse(order.shipstation_shipment_id)
 
+    def test_a_non_positive_shipment_id_is_not_recorded_as_a_shipment(self):
+        """Seen on the real API: a test label returns shipmentId -1. No shipment exists, so nothing may be
+        recorded under that id or later sent to the void endpoint."""
+        order = self._ready_order()
+        self.http.add("POST", "/orders/createlabelfororder", dict(LABEL_OK, shipmentId=-1))
+        self._buy(order)
+        self.assertEqual(order.label_state, "created")
+        self.assertEqual(order.tracking_number, "1ZTEST000")
+        self.assertFalse(order.shipstation_shipment_id)
+        self.assertFalse(self.env["shipstation.shipment.sync"].search([("shipstation_shipment_id", "in", ["-1", "0"])]))
+
     def test_reset_is_refused_once_a_shipment_exists(self):
         order = self._ready_order()
         self.http.add("POST", "/orders/createlabelfororder", LABEL_OK)
