@@ -86,7 +86,8 @@ class SourceChecks(unittest.TestCase):
     def test_both_api_adapters_never_retry_post(self):
         # V1 and V2 now share ONE transport, so the "only GET/HEAD are retried" rule exists exactly once.
         s=(MODULE/'models/shipstation_sync_base.py').read_text()
-        self.assertEqual(s.count('retries = 3 if method in ("GET", "HEAD") else 0'),1)
+        # 'quick' (read-only pre-flights) only ever lowers retries to 0; a POST is never retried either way.
+        self.assertEqual(s.count('retries = 3 if method in ("GET", "HEAD") and not quick else 0'),1)
         self.assertEqual(s.count('return self._http_call('),2)
 
     def test_label_repurchase_guard_before_api(self):
