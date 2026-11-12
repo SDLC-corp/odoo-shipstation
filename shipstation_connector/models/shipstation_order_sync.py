@@ -371,8 +371,11 @@ class ShipStationOrderSync(models.Model):
 
     @staticmethod
     def _rate_notice(title, message, level="success"):
+        # The buttons that return this change the order (selected service, new quotes, label state). A bare
+        # notification leaves the open form showing the old values until a manual reload, so reload it after.
         return {"type": "ir.actions.client", "tag": "display_notification", "params": {
             "title": title, "message": message, "type": level, "sticky": False,
+            "next": {"type": "ir.actions.client", "tag": "soft_reload"},
         }}
 
     def action_apply_package_preset(self):
@@ -787,16 +790,8 @@ class ShipStationOrderSync(models.Model):
                   "The purchase is recorded; run a shipment sync to complete the rest.",
                   tracking=tracking or "pending", problems=", ".join(problems)),
                 "warning")
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Label Created"),
-                "message": _("Shipment label created in ShipStation (tracking %s).", tracking or "pending"),
-                "type": "success",
-                "sticky": False,
-            },
-        }
+        return self._rate_notice(
+            _("Label Created"), _("Shipment label created in ShipStation (tracking %s).", tracking or "pending"))
 
     def action_void_label(self):
         """Ask ShipStation to void (refund) THIS order's label. Explicit, single order, admin only.
@@ -920,16 +915,7 @@ class ShipStationOrderSync(models.Model):
             self.shipstation_order_number = order_number
         self.synced_on = fields.Datetime.now()
         self.payload = str(response or payload)
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Order Pushed"),
-                "message": _("Order updated in ShipStation."),
-                "type": "success",
-                "sticky": False,
-            },
-        }
+        return self._rate_notice(_("Order Pushed"), _("Order updated in ShipStation."))
 
     def action_pull_from_shipstation(self):
         self.ensure_one()
@@ -978,16 +964,7 @@ class ShipStationOrderSync(models.Model):
                     "payload": synced.payload,
                 }
             )
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Order Pulled"),
-                "message": _("Order refreshed from ShipStation."),
-                "type": "success",
-                "sticky": False,
-            },
-        }
+        return self._rate_notice(_("Order Pulled"), _("Order refreshed from ShipStation."))
 
     def _upsert_from_payload(self, instance, order_data):
         overrides = self._extract_listing_overrides_from_mapping(instance, order_data)
