@@ -146,6 +146,10 @@ class TestLabelPurchase(ShipStationCommon):
         self.assertEqual(order.tracking_number, "1ZTEST000")
         self.assertFalse(order.shipstation_shipment_id)
         self.assertFalse(self.env["shipstation.shipment.sync"].search([("shipstation_shipment_id", "in", ["-1", "0"])]))
+        # the stored PDF stays reachable although there is no shipment id (review finding)
+        self.assertEqual(order.action_open_label()["type"], "ir.actions.act_url")
+        form = self.env["shipstation.order.sync"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("label_state != 'created'", form, "Open Label must show for a created label without shipment id")
 
     def test_reset_is_refused_once_a_shipment_exists(self):
         order = self._ready_order()
@@ -212,3 +216,21 @@ class TestLabelShipFromPreflight(ShipStationCommon):
             order.with_user(self.user_manager).action_create_label()
         self.assertFalse(self.http.calls_to("POST", "/orders/createlabelfororder"), "the paid request is never sent")
         self.assertIn(order.label_state, (False, "none"), "nothing was claimed, so nothing is locked")
+
+    def test_a_failing_or_odd_pre_flight_never_locks_and_is_not_retried(self):
+        """Review finding: the pre-flight runs in the same request as the paid POST, so it gets one short
+        attempt (a retried GET could take minutes and push the POST past the worker's time limit)."""
+        for name, route in (("server error", dict(payload={"Message": "down"}, status=503)),
+                            ("not a list", dict(payload={"warehouses": []}))):
+            with self.subTest(name):
+                self.http.reset()
+                order = self.make_order_sync(shipstation_order_number="SO-PF-" + name, carrier_code="stamps_com",
+                                             service_code="usps_ground_advantage", package_code="package",
+                                             status="awaiting_shipment")
+                self.http.add("GET", "/warehouses", route["payload"], status=route.get("status", 200))
+                self.http.add("POST", "/orders/createlabelfororder", {"shipmentId": 1, "trackingNumber": "X"})
+                self.attempt(lambda: order.with_user(self.user_manager).action_create_label(), UserError)
+                self.assertEqual(len(self.http.calls_to("GET", "/warehouses")), 1, "one attempt only")
+                self.assertFalse(self.http.calls_to("POST", "/orders/createlabelfororder"))
+                self.assertIn(order.label_state, (False, "none"))
+                self.assertEqual(self.http.calls_to("GET", "/warehouses")[0].get("timeout"), 10)

@@ -88,7 +88,7 @@ class HttpRouter:
         parts = urlsplit(url)
         record = {"method": method, "url": url, "host": parts.netloc, "path": parts.path,
                   "params": kwargs.get("params"), "json": kwargs.get("json"),
-                  "headers": kwargs.get("headers"), "auth": kwargs.get("auth")}
+                  "headers": kwargs.get("headers"), "auth": kwargs.get("auth"), "timeout": kwargs.get("timeout")}
         self.calls.append(record)
         matches = [(len(r["path"]), i, r) for i, r in enumerate(self.routes)
                    if r["method"] == method and parts.path.startswith(r["path"])]
