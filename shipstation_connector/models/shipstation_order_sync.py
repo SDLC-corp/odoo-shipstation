@@ -692,7 +692,9 @@ class ShipStationOrderSync(models.Model):
         selected". A 500 is (correctly) treated as "a label may have been bought", which would lock the order
         although nothing could have been bought. Checking first turns that into a plain, actionable message.
         """
-        warehouses = self.instance_id._ss_request("GET", "/warehouses")
+        # quick: one short attempt. Retrying here could take minutes and push the paid POST past the worker's
+        # time limit; a failure only asks the user to try again (nothing is claimed or bought yet).
+        warehouses = self.instance_id._ss_request("GET", "/warehouses", quick=True)
         if not isinstance(warehouses, list):
             raise UserError(_("ShipStation returned an unexpected Ship From location list; no label was requested."))
         if not warehouses:
@@ -743,7 +745,7 @@ class ShipStationOrderSync(models.Model):
         shipment_id = str((response or {}).get("shipmentId") or "").strip() if isinstance(response, dict) else ""
         # Seen on the real API: a test label comes back with shipmentId -1 (no shipment exists, nothing can be
         # voided). Only a positive id names a real shipment; never record or void anything else.
-        if not (shipment_id.isdigit() and int(shipment_id) > 0):
+        if not (shipment_id.isascii() and shipment_id.isdecimal() and int(shipment_id) > 0):
             shipment_id = ""
         tracking = (response or {}).get("trackingNumber") if isinstance(response, dict) else False
         if not shipment_id and not tracking:
