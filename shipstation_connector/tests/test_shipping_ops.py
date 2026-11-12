@@ -33,6 +33,11 @@ class TestRates(ShipStationCommon):
         self.assertEqual(order.rate_ids.mapped("service_code"), ["ups_ground", "ups_saver", "ups_2nd_day_air"],
                          "cheapest first; equal prices keep a stable order")
         self.assertIn("No label has been purchased", result["params"]["message"])
+        # found in the browser: without a reload the open form kept showing the old service and quotes
+        self.assertEqual(result["params"]["next"], {"type": "ir.actions.client", "tag": "soft_reload"})
+        selected = order.rate_ids.filtered(lambda r: r.service_code == "ups_saver").action_apply_rate()
+        self.assertEqual(selected["params"]["next"]["tag"], "soft_reload")
+        self.assertEqual(order.service_code, "ups_saver")
         request = self.http.calls[0]["json"]
         self.assertEqual((request["carrierCode"], request["toCountry"], request["fromPostalCode"]),
                          ("ups", "US", "78701"))
