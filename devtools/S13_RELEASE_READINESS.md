@@ -20,7 +20,7 @@
 >   orders (`_flush_search`) and read_group groupby/aggregates, so no module-level guard was needed; the probe test proves it.
 
 
-Status: **one blocker remains: no real ShipStation account has ever been used (B1).** Everything that can be
+Status: **one blocker remains: paid labels, voids, real shipments and webhook delivery are not verified against the real API (B1).** Everything that can be
 verified without one has been, including an upgrade from the build published on the Store, behaviour at
 100k-row scale and a real-browser pass over every screen. Licensing and edition wording were decided by the owner.
 
@@ -145,6 +145,9 @@ Odoo 19 baseline.
     so the order was locked for an administrator although nothing could have been bought. The label button now reads `GET /warehouses`
     first (read-only, before the durable claim) and stops with an actionable message; locked or bought orders skip the check. Verified
     live: message shown, order not locked, no paid request sent, carrier balance unchanged.
+20. **A test label's `shipmentId` of -1 was recorded as a real shipment (found live).** ShipStation answers a `testLabel` purchase
+    with a tracking number, a PDF and `shipmentId: -1`; no shipment exists. The module stored "-1" on the order and created a
+    shipment record under it, and the Void button would have offered to void it. Only a positive id is now treated as a shipment.
 
 ### Live API verification (real ShipStation account, owner-approved, 2026-11-10)
 
@@ -161,9 +164,10 @@ Run from a disposable Odoo 19 database with a guard that let through only GETs, 
 | Re-sync of that order (`_sync_orders`, cron mode) | updated the same sale order (no duplicate); mirror store, currency (company currency) and customer name filled; checkpoint advanced |
 | Pacific time | an order dated 08:32 UTC came back as `00:32` (PST), as the converter assumes |
 | Label purchase (owner-approved, `testLabel=true`, USPS only) | not possible on this account: no Ship From location (defect 19); the pre-flight stopped it cleanly, balance 0.00 before and after |
+| Label purchase, 2026-11-12 (owner-approved; Ship From location added; `testLabel=true`, USPS Ground Advantage) | 200 through `action_create_label`: tracking number and PDF stored, mirror `created`, USPS balance 0.00 before and after. **The reply carries `shipmentId: -1`**: a test label is not a shipment, `GET /shipments` does not list it and it cannot be voided (defect 20: the module had recorded `-1` as a shipment id; it now keeps only positive ids). The test order was deleted afterwards |
 | Order delete (`DELETE /orders/{id}`) | 200 "The requested order has been deleted"; re-pushing the same order key afterwards returns 404 (README troubleshooting) |
 
-Not verified live: shipments (none exist without a label), label purchase, void, webhook delivery, V2 key.
+Not verified live: a paid label, a void and shipment import of a real label (a test label creates no shipment), webhook delivery, V2 key.
 
 ## 3. Decisions made by the owner
 
@@ -176,7 +180,7 @@ Not verified live: shipments (none exist without a label), label purchase, void,
 
 | # | Blocker | Why it matters | Action |
 |---|---|---|---|
-| B1 | **Labels, voids, shipments and webhooks are not verified against the real API.** Read paths, rate quotes, order push and order import are (see "Live API verification"). | These are the money-moving paths. | Run the staging checklists in `devtools/` against a sandbox store with a **test label** (`testLabel` is USPS-only per the docs; confirm what it charges), and exercise the void request before enabling it for customers. |
+| B1 | **Paid labels, voids, real shipments and webhook delivery are not verified against the real API.** Read paths, rate quotes, order push/import/delete and a USPS test label are (see "Live API verification"). | These are the money-moving paths. | A test label cannot prove void or shipment import (it returns `shipmentId` -1). Buy one cheap real label on a funded account, sync it, void it, and confirm the refund before enabling Void for customers. |
 
 ## 5. Residual risks (not blockers)
 
